@@ -17,14 +17,11 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
 
   def google_oauth2
     @provider = provider_from_omniauth_callback
-    require 'pry'
-    binding.pry
     @user = @provider.user
     sign_in_omniauth_user
   end
 
   def failure
-    super
     redirect_to :back
   end
 
