@@ -1,23 +1,24 @@
 #
 class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
+  before_action :make_view_helper
   # Implemented per: https://github.com/plataformatec/devise/wiki/OmniAuth:-Overview
   # Flow is generally the same for all. But customize as needed here.
 
   def slack
-    @provider = provider_from_omniauth_callback
-    @user = @provider.user
+    @view.provider = provider_from_omniauth_callback
+    @view.user = @view.provider.user
     sign_in_omniauth_user
   end
 
   def github
-    @provider = provider_from_omniauth_callback
-    @user = @provider.user
+    @view.provider = provider_from_omniauth_callback
+    @view.user = @view.provider.user
     sign_in_omniauth_user
   end
 
   def google_oauth2
-    @provider = provider_from_omniauth_callback
-    @user = @provider.user
+    @view.provider = provider_from_omniauth_callback
+    @view.user = @view.provider.user
     sign_in_omniauth_user
   end
 
@@ -35,8 +36,12 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   def sign_in_omniauth_user
     # Note: sign_in_and_redirect method is at:
     # .rvm/gems/ruby-2.3.0/gems/devise-3.5.6/lib/devise/controllers/helpers.rb
-    sign_in_and_redirect @user, event: :authentication
-    set_flash_message(:notice, :success, kind: @provider.name.capitalize) if is_navigational_format?
+    sign_in_and_redirect @view.user, event: :authentication
+    set_flash_message(:notice, :success, kind: @view.provider.name.capitalize) if is_navigational_format?
+  end
+
+  def make_view_helper
+    @view = ApplicationHelper::View.new(self, resource || User.new)
   end
 
   #

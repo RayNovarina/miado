@@ -38,9 +38,9 @@ class ApplicationController < ActionController::Base
       # Our view makes up it own welcome msg.
       @view.flash_messages[:notice] = ''
     end
-    if params.key?('oauth')
-      # Get here via oauth callback after sign_up or sign_in.
-      auth_action = @view.current_user.auth_params_json['state']
+    if @view.controller.is_a?(Devise::OmniauthCallbacksController)
+      # Got here via oauth callback after sign_up or sign_in.
+      auth_action = @view.provider.auth_params_json['state']
       return welcome_new_path  if auth_action == 'sign_up'
       return welcome_back_path if auth_action == 'sign_in'
     end

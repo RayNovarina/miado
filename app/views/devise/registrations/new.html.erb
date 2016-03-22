@@ -1,4 +1,19 @@
-<h2>Sign Up</h2>
+<h2>Sign Up With</h2>
+<div class="row">
+  <div class="col-md-12">
+    <%= link_to "Google",
+                new_user_registration_path(oauth: 'google_oauth2'),
+                class: 'btn btn-sm btn-primary' %>
+    <%= link_to "GitHub",
+                new_user_registration_path(oauth: 'github'),
+                class: 'btn btn-sm btn-primary' %>
+    <%= link_to "Slack",
+                new_user_registration_path(oauth: 'slack'),
+                class: 'btn btn-sm btn-primary' %>
+  </div>
+</div>
+
+<br><br><p><strong>Or the old fashion way</strong</p>
 
 <div class="css-views_devise">
   <%= form_for(resource, as: resource_name, url: registration_path(resource_name)) do |f| %>

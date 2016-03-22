@@ -5,11 +5,12 @@ class Users::RegistrationsController < Devise::RegistrationsController
   before_filter :configure_account_update_params, only: [:update]
 
   # GET /resource/sign_up
+  # IF a http GET, then we want a sign up page or oauth permissions page.
   def new
     if params.key?('oauth')
-      # assume params[:oauth] == 'slack'
+      # if oauth we want to auto start a login.
       redirect_to user_omniauth_authorize_path(
-        :slack,
+        params[:oauth].to_sym,
         state: 'sign_up')
       return
     end

@@ -4,7 +4,7 @@ class Users::SessionsController < Devise::SessionsController
   # before_filter :configure_sign_in_params, only: [:create]
 
   # GET /resource/sign_in
-  # IF a http GET, then we want a sign in page.
+  # IF a http GET, then we want a sign in page or oauth permissions page.
   def new
     if params.key?('oauth')
       # if oauth we want to auto start a login.
