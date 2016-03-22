@@ -11,6 +11,21 @@
 // about supported directives.
 //
 //= require jquery
+// -------------------------------------------
+// per: http://www.sitepoint.com/devise-authentication-in-depth/
+// If you are using Bootstrap's dropdown menu. Dropdown relies on JavaScript code
+// and, using Turbolinks, it won't be executed correctly when navigating between
+// pages. Use jquery-turbolinks to fix this:
+//= require jquery.turbolinks
+// -----------------------------------
 //= require jquery_ujs
 //= require turbolinks
+// ------------------------------
+// For Twitter Bootstrap per:
+//   https://www.bloc.io/users/ray-novarina/checkpoints/1634#css-frameworks-and-bootstrap
+//= require bootstrap
+// -------------------------------
+// per: // per: http://www.sitepoint.com/devise-authentication-in-depth/
+//= require bootstrap/dropdown
+// ------------------------------
 //= require_tree .

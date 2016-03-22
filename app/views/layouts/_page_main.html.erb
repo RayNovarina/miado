@@ -1,0 +1,48 @@
+
+<!-- # ======= Begin: PAGE MAIN -global- ===== -->
+<main class="css-page-main" >
+  <!-- # == Begin: PAGE MAIN HEADER -global- -->
+  <header>
+    <!-- # == Begin: PAGE MAIN HEADER messages -global- -->
+    <section>
+      <div class="container css-flash-messages">
+        <!-- Begin: Render Flash messages -->
+        <%= render 'shared/page_main_header_flash_messages' %>
+        <!-- End: Render Flash messages -->
+        <!-- Optional: Other general messages. -->
+        <% if content_for?(:page_main_header_other_messages) %>
+          <!-- # == Begin: yield :Page Header Other Messages == -->
+          <%= yield :page_main_header_other_messages %>
+          <!-- # == End: yield :Page Header Other Messages == -->
+        <% end %>
+      </div>
+    </section>
+    <!-- # == End: PAGE MAIN HEADER messages -global- -->
+  </header>
+  <!-- # == End: PAGE MAIN HEADER -global- -->
+
+  <!-- # == Begin: PAGE MAIN BODY -Global- -->
+  <main>
+    <!-- # == Begin: PAGE MAIN BODY container - Jumbotron == -->
+    <div class="jumbotron">
+      <div class="container css-body">
+        <!-- # == Begin: yield :Page Main Body Content AtLast -Default- == -->
+        <%= yield %>
+        <!-- # == End: yield :Page Main Body Content AtLast -Default- == -->
+      </div>
+  </div>
+  <!-- # == End: PAGE MAIN BODY container - Jumbotron == -->
+  </main>
+  <!-- # == End: PAGE MAIN BODY -Global- -->
+
+  <!-- # == Begin: PAGE MAIN FOOTER -optional- -->
+  <footer>
+    <% if content_for?(:page_main_footer) %>
+      <!-- # == Begin: yield :Page Main Footer == -->
+      <%= yield :page_main_footer %>
+      < !-- # == End: yield :Page Main Content Footer == -->
+    <% end %>
+    <!-- # == End: PAGE MAIN FOOTER -optional- -->
+  </footer>
+</main>
+<!-- # == End: PAGE MAIN -global- == -->

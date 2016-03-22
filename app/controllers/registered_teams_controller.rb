@@ -1,0 +1,2 @@
+class RegisteredTeamsController < ApplicationController
+end

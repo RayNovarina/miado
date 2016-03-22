@@ -1,6 +1,6 @@
 require 'rails_helper'
 
-RSpec.describe WelcomeController, type: :controller do
+RSpec.describe UsersController, type: :controller do
 
   describe "GET #index" do
     it "returns http success" do
@@ -9,9 +9,16 @@ RSpec.describe WelcomeController, type: :controller do
     end
   end
 
-  describe "GET #about" do
+  describe "GET #show" do
     it "returns http success" do
-      get :about
+      get :show
+      expect(response).to have_http_status(:success)
+    end
+  end
+
+  describe "GET #settings" do
+    it "returns http success" do
+      get :settings
       expect(response).to have_http_status(:success)
     end
   end

@@ -1,0 +1,23 @@
+<!-- Global flash messages -->
+<div class="row">
+  <div class="col-md-6">
+    <% @view.flash_messages.each do |message_type, message| %>
+      <% if !message.empty? %>
+        <div class="alert css-flash-alert
+            <%= @view.flash_messages.now ? 'alert-danger' : \
+                      message_type == 'notice' ? 'alert-success' : 'alert-info'%>">
+          <%= message %>
+          <a class="close" data-dismiss="alert">&#215;</a>
+        </div>
+        <script>
+          /* hide/fade the alert messages after 2 seconds */
+          $('.css-flash-alert')
+            .fadeTo(2000, 500)
+            .slideUp(500, function(){ $('css-flash-alert')
+            .alert('close');
+          });
+        </script>
+      <% end %>
+    <% end %>
+  </div>
+</div>

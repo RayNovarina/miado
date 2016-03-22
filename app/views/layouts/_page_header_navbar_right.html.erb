@@ -1,0 +1,27 @@
+<div class="css-navbar-right">
+  <ul class="nav navbar-nav pull-right">
+
+    <% if @view.user_signed_in? %>
+      <% if true # policy(RegisteredApplication).index? %>
+        <li><%= link_to 'My Teams',
+                'registered_applications_path',
+                class: 'css-apps-link' %></li>
+        <li><%= link_to '|', '' %></li>
+      <% end %>
+        <li><%= link_to 'Sign out', destroy_user_session_path, method: :delete %></li>
+      <% if true # policy(User).edit? %>
+        <li><%= link_to '|', '' %></li>
+        <li><%= link_to settings_path,
+                title: "Settings" do %>
+                <i class="glyphicon glyphicon-cog glyph-1-5x"> </i>&nbsp;<% end %>
+      <% end %>
+        </li>
+
+    <% else %>
+        <li><%= link_to 'Sign In', new_user_session_path %></li>
+        <li><%= link_to '|', '' %></li>
+        <li><%= link_to 'Sign Up', new_user_registration_path %></li>
+    <% end %>
+
+  </ul>
+</div>
