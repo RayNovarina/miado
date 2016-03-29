@@ -68,6 +68,25 @@ gem 'faker'
 # use postgre SQL db server for Active Record
 gem 'pg'
 #--------------------------------------------
+# Slack bot gem.
+# per: https://github.com/dblock/slack-ruby-bot/tree/v0.7.0
+gem 'slack-ruby-bot'
+#-----------------------------------------------
+# Slack Notifier gem per:
+# http://rubyinrails.com/2015/09/14/rails-slack-integration-with-slack-notifier-gem/
+# gem 'exception_notification'
+gem 'slack-notifier'
+#------------------------------------------------
+# Slack Ruby Client per:
+# https://github.com/dblock/slack-ruby-client
+gem 'slack-ruby-client'
+#-------------------------------------------------
+# For concurrency when using the slack-ruby-client gem with the Slack web api
+# plus the Slack real time api.
+gem 'eventmachine'
+gem 'faye-websocket'
+#------------------------------------------------------
+#
 #
 #============== DEVELOPMENT only GEMS =================
 group :development do

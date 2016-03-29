@@ -1,3 +1,4 @@
+require 'slack-notifier'
 #
 class Users::SessionsController < Devise::SessionsController
   before_action :make_view_helper
@@ -7,6 +8,28 @@ class Users::SessionsController < Devise::SessionsController
   # IF a http GET, then we want a sign in page or oauth permissions page.
   def new
     if params.key?('oauth')
+      notifier = Slack::Notifier.new(
+        'https://hooks.slack.com/services/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')
+      notifier.username = 'ray'
+      notifier.channel = '#random'
+      notifier.ping 'Hello World from sessions_controller.rb.'
+
+      client = Slack::Web::Client.new
+      client.auth_test
+      client.chat_postMessage(
+        channel: '#general',
+        text: 'Hello from slack ruby client gem in sessions_controller/sign_in',
+        as_user: true)
+      channels = client.channels_list.channels
+      text = ''
+      channels.each_with_index do |c, index|
+        text.concat("[#{index}] #{c.name.capitalize}/n")
+      end
+      client.chat_postMessage(
+        channel: '#general',
+        text: text,
+        as_user: true)
+
       # if oauth we want to auto start a login.
       redirect_to user_omniauth_authorize_path(
         params[:oauth].to_sym,
@@ -14,7 +37,8 @@ class Users::SessionsController < Devise::SessionsController
       return
     end
     super
-    # else fall thru to devise users/sessions/new
+    # else fall thru to devise users/sessions/new and render the
+    # views/users/sessions/new.html.erb page
   end
 
   # POST /resource/sign_in

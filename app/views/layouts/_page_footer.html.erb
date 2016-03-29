@@ -10,20 +10,7 @@
   </header>
   <nav>
     <div class="container">
-      <p class="text-muted">
-        Created by
-        <a href="#"
-           data-toggle="popover"
-           title="A student at Block.io"
-           data-placement="top"
-           data-trigger="hover"
-           data-html="true"
-           data-content="<img src='https://cdn-photos.bloc.io/medium/2317655/photo.JPG?1450380571'>"
-          >A student at Block.io
-        </a>
-        <% #who is on %>
-        <% #= link_to 'LinkedIn', 'https://www.linkedin.com/in/raynovarina' %>
-      </p>
+      <p class="text-muted"><%= render 'layouts/page_footer_created_by' %></p>
     </div>
   </nav>
 </footer>

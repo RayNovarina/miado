@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  get 'messages/index'
+
   #
   # per: https://github.com/plataformatec/devise#getting-started
   #   "you can customize each controller", "Tell the router to use this
@@ -16,11 +18,15 @@ Rails.application.routes.draw do
   resources :users, only: [:index, :show]
   get '/settings', to: 'users#settings', as: 'settings'
 
+  # for ruby-slack-bot?
+  resources :messages, only: :index
+
   # -------------------------------
   # App:
   # Landing page, About
   root 'pages#welcome'
   get  'about', to: 'pages#about'
+  get '/add_to_slack', to: 'pages#add_to_slack', as: 'add_to_slack'
   get '/welcome/new', to: 'pages#welcome_new', as: 'welcome_new'
   get '/welcome/back', to: 'pages#welcome_back', as: 'welcome_back'
   # -------------------------------

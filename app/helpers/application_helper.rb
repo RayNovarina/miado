@@ -49,23 +49,34 @@ module ApplicationHelper
 
     # Let each controller decide where the back button goes.
     def back_path
-      if (defined? @controller.page_back_button_path).nil?
-        :back
-      else
-        @controller.page_back_button_path
-      end
+      return :back if (defined? @controller.page_back_button_path).nil?
+      @controller.page_back_button_path
+    end
+
+    def show_header?
+
     end
 
     def policy(arg1, arg2)
-      if arg1 == :include
-        if arg2 == :back_button
-          !@controller.is_a?(::PagesController)
-        else
-          true
-        end
+      return include_policy(arg2) if arg1 == :include
+      true
+    end
+
+    private
+
+    def include_policy(element)
+      if element == :back_button
+        !@controller.is_a?(::PagesController)
+      elsif element == :header
+        return true if (defined? @controller.show_header).nil?
+        @controller.show_header
+      elsif element == :footer
+        return true if (defined? @controller.show_footer).nil?
+        @controller.show_header
       else
         true
       end
     end
-  end
+    #
+  end # class View
 end

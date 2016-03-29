@@ -42,10 +42,12 @@ html {
  min-height: 100%;
 }
 body {
+ /* Note: .jumbotron becomes our body element, i.e. override it if needed. */
  /* Margin bottom by footer height */
  margin-bottom: 90px;
- background-color: #f5f5f5;
+ /*background-color: #f5f5f5;*/
 }
+
 .css-page-footer {
   position: absolute;
   bottom: 0;
@@ -125,7 +127,23 @@ body {
     }
   }
 }
-/*=================== For devise because we don't have a devise.scss file.
+
+/*=================== Special layout for Add to Slack button landing page */
+.css-pages-add_to_slack {
+  .jumbotron {
+    background-color: white;
+    margin-bottom: 0px;
+    padding: 20px;
+    .css-add-to-slack {
+      .jumbotron {
+        margin-top: 20px;
+        background-color: #f5f5f5;
+      }
+    }
+ }
+}
+
+/*=================== For devise because we don't have a devise.scss file. */
 /* /view/devise/..... */
 .css-views_devise {
   /* /views/devise/.... .new_user for /registrations/new.html.erb  */

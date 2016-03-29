@@ -14,6 +14,19 @@ class PagesController < ApplicationController
   def welcome_back
   end
 
+  def add_to_slack
+  end
+
+  def show_header
+    return true unless @view.name == 'pages-add_to_slack'
+    false
+  end
+
+  def show_footer
+    return true unless @view.name == 'pages-add_to_slack'
+    false
+  end
+
   private
 
   def make_view_helper
