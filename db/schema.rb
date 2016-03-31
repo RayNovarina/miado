@@ -11,19 +11,10 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160322043145) do
+ActiveRecord::Schema.define(version: 20160331071350) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
-
-  create_table "events", force: :cascade do |t|
-    t.string   "name"
-    t.integer  "registered_application_id"
-    t.datetime "created_at",                null: false
-    t.datetime "updated_at",                null: false
-  end
-
-  add_index "events", ["registered_application_id"], name: "index_events_on_registered_application_id", using: :btree
 
   create_table "omniauth_providers", force: :cascade do |t|
     t.integer  "user_id"
@@ -34,19 +25,11 @@ ActiveRecord::Schema.define(version: 20160322043145) do
     t.jsonb    "auth_params_json"
     t.datetime "created_at",       null: false
     t.datetime "updated_at",       null: false
+    t.string   "uid_email"
+    t.string   "uid_name"
   end
 
   add_index "omniauth_providers", ["user_id"], name: "index_omniauth_providers_on_user_id", using: :btree
-
-  create_table "registered_applications", force: :cascade do |t|
-    t.string   "name"
-    t.string   "url"
-    t.integer  "user_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-  end
-
-  add_index "registered_applications", ["user_id"], name: "index_registered_applications_on_user_id", using: :btree
 
   create_table "registered_teams", force: :cascade do |t|
     t.string   "name"
@@ -72,11 +55,6 @@ ActiveRecord::Schema.define(version: 20160322043145) do
     t.datetime "created_at",                          null: false
     t.datetime "updated_at",                          null: false
     t.string   "name"
-    t.string   "provider"
-    t.string   "uid"
-    t.string   "auth_token"
-    t.jsonb    "auth_json"
-    t.jsonb    "auth_params_json"
     t.string   "confirmation_token"
     t.datetime "confirmed_at"
     t.datetime "confirmation_sent_at"

@@ -14,6 +14,9 @@ class PagesController < ApplicationController
   def welcome_back
   end
 
+  def welcome_add_to_slack_new
+  end
+
   def add_to_slack
   end
 

@@ -38,12 +38,8 @@ class ApplicationController < ActionController::Base
       # Our view makes up it own welcome msg.
       @view.flash_messages[:notice] = ''
     end
-    if @view.controller.is_a?(Devise::OmniauthCallbacksController)
-      # Got here via oauth callback after sign_up or sign_in.
-      auth_action = @view.provider.auth_params_json['state']
-      return welcome_new_path  if auth_action == 'sign_up'
-      return welcome_back_path if auth_action == 'sign_in'
-    end
+    return omniauth_landing_page if @view.controller.is_a?(
+      Devise::OmniauthCallbacksController)
     welcome_back_path
   end
 
@@ -65,5 +61,16 @@ class ApplicationController < ActionController::Base
   def user_not_authorized
     flash[:alert] = 'You are not authorized to perform this action.'
     redirect_to(request.referrer || root_path)
+  end
+
+  def omniauth_landing_page
+    # Got here via oauth callback after sign_up or sign_in.
+    auth_action = @view.provider.auth_params_json['state']
+    if auth_action == 'sign_up'
+      return welcome_add_to_slack_new_path if @view.provider.name == 'slack'
+      welcome_new_path
+    else # auth_action == 'sign_in'
+      welcome_back_path
+    end
   end
 end

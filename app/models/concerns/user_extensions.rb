@@ -20,50 +20,34 @@ module UserExtensions
     #
     # Note: include helper methods for all models, such as return_view_hash_of.
     # include ModelHelper # /models/concerns/model_helper.rb
-    #
-    #-------------------- For Devise and omniauth support ----------------------
-    # per: https://github.com/plataformatec/devise/wiki/OmniAuth:-Overview
-    #
-    def from_omniauth(auth, params)
-      provider = get_or_create_from_omniauth(auth, params)
-      # Return authenticated oauth User with current auth callback info.
-      provider.auth_json = auth
-      provider.auth_params_json = params
+
+    # If source = :omniauth_callback, then data = OmniAuthProvider
+    def find_or_create_from(source, data)
+      return find_or_create_from_omniauth_provider(data) if source == :omniauth_provider
+    end
+
+    def find_or_create_from_omniauth_provider(provider)
+      return provider.user unless provider.user.nil?
+      # We have not authenticated with this oauth server for the oauth user
+      # before. But we may have already created a user via a email/pwd sign-up.
+      if (user = User.where(email: provider.uid_email.downcase).first).nil?
+        user = create_from_omniauth_provider(provider)
+      end
+      # We have the user, link it to the OmniauthProvider.
+      provider.user = user
       provider.save!
-      provider
+      # And link the OmniauthProvider to the user.
+      user.omniauth_providers << provider
+      user.save!
+      user
     end
 
     private
 
-    # IF we allow multiple oath login providers, i.e. login with GitHub and
-    # Gmail, then we need a OmniAuthProviders model with provider, uid and
-    # auth_token fields. To find the user, first query the Providers model for
-    # the provider/uid.
-    def get_or_create_from_omniauth(auth, params)
-      if (provider = OmniauthProvider.where(name: auth.provider,
-                                            uid: auth.uid).first).nil?
-        # We have not authenticated this oauth user before.
-        if (user = User.where(email: auth.info.email.downcase).first).nil?
-          # We don't have this oauth user currently in our db. i.e. they haven't
-          # authenticated with another provider already or have logged in with
-          # username/password manually before.
-          user = make_new_oauth_user(auth, params)
-        end
-        # We have the oauth user in our db, make sure provider, providerId,
-        # name, email addr are all in our db.
-        provider = OmniauthProvider.create(
-          name: auth.provider,
-          uid: auth.uid,
-          auth_token: auth.credentials[:token])
-        user.omniauth_providers << provider
-      end
-      provider
-    end
-
-    def make_new_oauth_user(auth, _params)
-      User.create!(email: auth.info.email.downcase,
+    def create_from_omniauth_provider(provider)
+      User.create!(email: provider.uid_email.downcase,
                    password: 'password',
-                   name: auth.info.name)
+                   name: provider.uid_name)
     end
     #
   end # module ClassMethods

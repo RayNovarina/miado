@@ -25,9 +25,11 @@ class OmniauthSlackSetup
       return {}
     end
     if query == 'state=sign_up'
-      return { scope: 'incoming-webhook,commands,'\
-             'channels:write,channels:read,chat:write:user,'\
-             'files:write:user,files:read,team:read,users:read' }
+      # return { scope: 'incoming-webhook,commands,'\
+      #       'channels:write,channels:read,chat:write:user,'\
+      #       'files:write:user,files:read,team:read,users:read' }
+      return { scope: 'channels:write,channels:read,chat:write:user,'\
+                      'files:write:user,files:read,team:read,users:read' }
     end
     return { scope: 'identify' } if query == 'state=sign_in'
     {}

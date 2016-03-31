@@ -7,13 +7,14 @@
       <%= link_to "GitHub",
                   new_user_session_path(oauth: 'github'),
                   class: 'btn btn-sm btn-primary' %>
-      <%= link_to "Slack",
-                  new_user_session_path(oauth: 'slack'),
-                  class: 'btn btn-sm btn-primary' %>
+      <% #= link_to "Slack",
+         #         new_user_session_path(oauth: 'slack'),
+         #         class: 'btn btn-sm btn-primary'
+      %>
     </div>
   </div>
 
-  <br><br><p><strong>Or the old fashion way</strong</p>
+  <br><br><p><strong>Or the old fashioned-way</strong</p>
 
   <div class="css-views_devise">
   <%= form_for(resource, as: resource_name, url: session_path(resource_name)) do |f| %>

@@ -18,10 +18,6 @@ class Users::RegistrationsController < Devise::RegistrationsController
     # else name/pwd, drop thru to views/reg/new
   end
 
-  # Sign up via Add to Slack button
-  def new_slack
-  end
-
   # POST /resource
   # def create
   # end

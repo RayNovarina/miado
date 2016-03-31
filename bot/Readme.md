@@ -118,7 +118,7 @@ https://github.com/dblock/slack-bot-on-rails
 
 3) Log into Slack with email addr Rnova9.... and add custom integration to team
    Shadow Htrac Team. Add a bot:
-     Bot name: miabot
+     Bot name: miabot or mia-lists?
      Api token: xoxb-29764368535-jbZJAh45c7qDHkmwTNAqjSUl
      Icon: used dog head image from miado web app page.
      Channels: none
