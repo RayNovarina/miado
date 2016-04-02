@@ -1,0 +1,5 @@
+<div class="container">
+  <h1>Welcome <%= "#{@view.current_user.name}" %></h1>
+  <p>Start managing lists for your Slack teams.</p><br>
+  <p><%= link_to 'Add new Teams', 'new_registered_team_path', class: 'btn btn-primary btn-lg' %></p>
+</div>

@@ -1,0 +1,45 @@
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-md-10 col-md-offset-1">
+      <div class="jumbotron">
+        <center>
+          <h3>Thank you,&nbsp;<%= "#{@view.current_user.name.capitalize }" %>
+              &nbsp;for installing @do
+          </h3>
+          <br>
+          ------------------------------- * ------------------------------------
+          <br><br>
+          <p>Start managing lists for your Slack teams in
+            <%= link_to 'Slack', 'https://shadowhtracteam.slack.com/', class: 'btn btn-primary btn-sm' %>
+            &nbsp;or here in <%= link_to 'MiaDo', 'registered_teams_path' %>
+          </p>
+          <br>
+          <div class="row">
+            <div class="col-md-6 col-md-offset-3">
+                <div class="well well-lg text-left">
+                  <small>
+                    <div style="margin-bottom: 4px;">
+                      <%= image_tag 'dog_head_icon.png', class: 'img-rounded',
+                          style: 'margin-left: -4px; ',
+                          size: '22x22' %>
+                      <strong style="margin-left: -4px; padding-right: 2px;">
+                        @do</strong> Bot 11:06 PM<br>
+                        <span class="text-primary">#weeklycalls</span>
+                        &nbsp;to-do list
+                    </div>
+                    1) order flow CRM @dawn<br>
+                    2) Brent & shipping info @tony<br>
+                    3) Kendra todo invoices @tony<br>
+                    4) CSM leads in @susan<br>
+                    5) SMP @tony<br>
+                    6) NEXT/APTA @susan /jun<br>
+                    7) example newsletter @tony<br>
+                  </small>
+                </div>
+            </div>
+          </div>
+        </center>
+      </div>
+    </div>
+  </div>
+</div>

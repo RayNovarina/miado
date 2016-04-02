@@ -1,0 +1,154 @@
+/*
+ * This is a manifest file that'll be compiled into application.css, which will include all the files
+ * listed below.
+ *
+ * Any CSS and SCSS file within this directory, lib/assets/stylesheets, vendor/assets/stylesheets,
+ * or any plugin's vendor/assets/stylesheets directory can be referenced here using a relative path.
+ *
+ * You're free to add application-wide styles to this file and they'll appear at the bottom of the
+ * compiled file so the styles you add here take precedence over styles defined in any styles
+ * defined in the other CSS/SCSS files in this directory. It is generally better to create a new
+ * file per style scope.
+ *
+ *= require_tree .
+ *= require_self
+ */
+/* ------------------------------------------ */
+/* Twitter Bootstrap 3 per:
+ * https://www.bloc.io/users/ray-novarina/checkpoints/1634#css-frameworks-and-bootstrap
+ * Add the following lines to the bottom of application.scss, to integrate
+ * the newly installed Bootstrap with our application:
+ */
+@import "bootstrap-sprockets";
+@import "bootstrap";
+/* For Sitepoint styling as for devise demo from:
+ *   http://www.sitepoint.com/devise-authentication-in-depth/
+ */
+@import 'bootstrap/theme';
+/* ----------------------------------------- */
+
+/*============== Global app css =========================
+ * For controller/app page specific css see
+ * /assets/stylesheets/<controllerName>.scss, i.e. topics.scss
+ */
+
+/* Make our page footer always stick to the bottom:
+ * per:
+ */
+/* Sticky footer styles
+ -------------------------------------------------- */
+html {
+ position: relative;
+ min-height: 100%;
+}
+body {
+ /* Note: .jumbotron becomes our body element, i.e. override it if needed. */
+ /* Margin bottom by footer height */
+ margin-bottom: 90px;
+ /*background-color: #f5f5f5;*/
+}
+
+.css-page-footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 90px;
+  background-color: #f5f5f5;
+}
+
+/* Bootstrap overrides: */
+.jumbotron {
+  background-color: #f5f5f5; /* a lighter grey so our Carousel shows well. */
+}
+
+/* Bootstrap extensions: */
+
+/* Glyphicon size */
+.glyph-1-5x {font-size: 1.5em;}
+.glyph-2x   {font-size: 2em;}
+.glyph-3x   {font-size: 3em;}
+.glyph-4x   {font-size: 4em;}
+.glyph-5x   {font-size: 5em;}
+
+/* general purpose hide element class.
+ * But best practice is to use bootstrap collaspe class and anchor per:
+   http://stackoverflow.com/questions/23873005/hide-div-by-default-and-show-it-on-click-with-bootstrap
+*/
+.css-hide {
+  display: none;
+}
+
+/* View pages: */
+
+/* Common view template at /views/layouts/application.html.erb */
+.css-page-header {
+  .navbar {
+    .css-navbar-left  {
+      .css-user-name {
+        font-weight: bold;
+        color: cornflowerblue;
+      }
+    }
+    .css-apps-link {
+      font-size: 1.5em;
+    }
+  /* We generate <a> without href to stop browser from refreshing page. But need
+     a mouse pointer for consistency. */
+    .css-navbar-no-href {
+      cursor:pointer;
+    }
+  }
+}
+
+.css-page_main_body_container.container {
+  h2 { /* page_title */
+    padding-bottom: 20px;
+  }
+}
+
+.css-actions { /* form action button */
+  margin-top: 14px;
+  margin-bottom: 8px;
+}
+/* Common page footer popover */
+.css-page-footer {
+  .popover-title {
+    background-color: #dcdcdc;
+    text-align:center;
+  }
+  .popover-content {
+    padding: 1em;
+    text-align:center;
+    img {
+      border-color: green;
+      width: 8em;
+      height: 8em;
+    }
+  }
+}
+
+/*=================== Special layout for Add to Slack button landing page */
+.css-pages-add_to_slack, .css-pages-welcome_add_to_slack_new {
+  .jumbotron {
+    background-color: white;
+    margin-bottom: 0px;
+    padding: 20px;
+    .css-add-to-slack {
+      .jumbotron {
+        margin-top: 20px;
+        background-color: #f5f5f5;
+      }
+    }
+ }
+}
+
+/*=================== For devise because we don't have a devise.scss file. */
+/* /view/devise/..... */
+.css-views_devise {
+  /* /views/devise/.... .new_user for /registrations/new.html.erb  */
+  /*                    .edit_user for /reg.../edit.html.erb  */
+  .field {  /* form fields */
+    margin-bottom: 6px;
+  }
+}

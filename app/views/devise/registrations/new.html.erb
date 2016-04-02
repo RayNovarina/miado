@@ -1,0 +1,51 @@
+<h2>Sign Up With</h2>
+<div class="row">
+  <div class="col-md-12">
+    <%= link_to "Google",
+                new_user_registration_path(oauth: 'google_oauth2'),
+                class: 'btn btn-sm btn-primary' %>
+    <%= link_to "GitHub",
+                new_user_registration_path(oauth: 'github'),
+                class: 'btn btn-sm btn-primary' %>
+    <%= link_to "Slack",
+                new_user_registration_path(oauth: 'slack'),
+                class: 'btn btn-sm btn-primary' %>
+  </div>
+</div>
+
+<br><br><p><strong>Or the old fashion way</strong</p>
+
+<div class="css-views_devise">
+  <%= form_for(resource, as: resource_name, url: registration_path(resource_name)) do |f| %>
+    <%= devise_error_messages! %>
+
+    <div class="field">
+      <%= f.label :name %><br />
+      <%= f.text_field :name, autofocus: true, placeholder: 'Pick a user name' %>
+    </div>
+
+    <div class="field">
+      <%= f.label :email %><br />
+      <%= f.email_field :email, placeholder: 'Enter email' %>
+    </div>
+
+    <div class="field">
+      <%= f.label :password %>
+      <% if @minimum_password_length %>
+        <em>(<%= @minimum_password_length %> characters minimum)</em>
+      <% end %><br />
+      <%= f.password_field :password, autocomplete: 'off', placeholder: 'Enter password' %>
+    </div>
+
+    <div class="field">
+      <%= f.label :password_confirmation %><br />
+      <%= f.password_field :password_confirmation, autocomplete: 'off', placeholder: 'Re-Enter password' %>
+    </div>
+
+    <div class="css-actions">
+      <%= f.submit 'Sign Up', class: 'btn btn-primary btn-sm' %>
+    </div>
+  <% end %>
+
+  <%= render 'devise/shared/links' %>
+</div>

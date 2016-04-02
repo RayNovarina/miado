@@ -60,10 +60,6 @@ Rails.application.configure do
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.action_controller.asset_host = 'http://assets.example.com'
 
-  # Ignore bad email addresses and do not raise email delivery errors.
-  # Set this to true and configure the email server for immediate delivery to raise delivery errors.
-  # config.action_mailer.raise_delivery_errors = false
-
   # Enable locale fallbacks for I18n (makes lookups for any locale fall back to
   # the I18n.default_locale when a translation cannot be found).
   config.i18n.fallbacks = true
@@ -76,4 +72,45 @@ Rails.application.configure do
 
   # Do not dump schema after migrations.
   config.active_record.dump_schema_after_migration = false
+
+  # ====== EMAIL ========
+  # Ignore bad email addresses and do not raise email delivery errors.
+  # Set this to true and configure the email server for immediate delivery to
+  # raise delivery errors.
+  # config.action_mailer.raise_delivery_errors = false
+  #
+  # ------ email delivery method/smtp server:
+  # Note: if .delivery_method not specified then? smtp msg goes to ActiveMailer
+  # listener off of localhost:3000??
+  # 1) Email goes to the console.
+  # config.action_mailer.delivery_method = nil
+  # For ActionMailer to auto include :host when generating absolute urls.
+  # config.action_mailer.default_url_options =
+  #  { host: 'mighty-waters-61717.herokuapp.com' }
+  #
+  # 2) heroku install of SendGrid email lib and Figaro gem to store
+  # credentials in the production server environment.
+  #
+  # For smtp server settings.
+  # SendGrid email lib and credentials are in the production environment.
+  # config.action_mailer.delivery_method = :smtp
+  # ActionMailer::Base.smtp_settings = {
+  #  address:        'smtp.sendgrid.net',
+  #  port:           '2525',
+  #  authentication: :plain,
+  #  user_name:      ENV['SENDGRID_USERNAME'],
+  #  password:       ENV['SENDGRID_PASSWORD'],
+  #  domain:         'heroku.com',
+  #  enable_starttls_auto: true
+  # }
+  #
+  # 3) heroku install of Mailgun:
+  # Note: ActionMailer config is done in config/initializers/mail.rb
+  config.action_mailer.delivery_method = :smtp
+  #
+  # For ActionMailer to auto include :host when generating absolute urls.
+  # Ref: 2.6 Generating URLs in Action Mailer Views at
+  # http://guides.rubyonrails.org/action_mailer_basics.html
+  config.action_mailer.default_url_options =
+    { host: 'miado.herokuapp.com' }
 end

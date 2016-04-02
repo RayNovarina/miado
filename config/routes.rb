@@ -1,6 +1,36 @@
 Rails.application.routes.draw do
+  get 'messages/index'
+
   #
-  root 'welcome#index'
+  # per: https://github.com/plataformatec/devise#getting-started
+  #   "you can customize each controller", "Tell the router to use this
+  #   controller"
+  # and for oauth per:
+  #   https://github.com/plataformatec/devise/wiki/OmniAuth:-Overview
+  devise_for :users,
+             controllers: {
+               sessions: 'users/sessions',
+               registrations: 'users/registrations',
+               omniauth_callbacks: 'users/omniauth_callbacks'
+             }
+  get '/auth/slack/setup', to: 'sessions#setup', as: 'oauth_setup'
+
+  resources :users, only: [:index, :show]
+  get '/settings', to: 'users#settings', as: 'settings'
+
+  # for ruby-slack-bot?
+  resources :messages, only: :index
+
+  # -------------------------------
+  # App:
+  # Landing page, About
+  root 'pages#welcome'
+  get  'about', to: 'pages#about'
+  get '/add_to_slack', to: 'pages#add_to_slack', as: 'add_to_slack'
+  get '/welcome/new', to: 'pages#welcome_new', as: 'welcome_new'
+  get '/welcome/add_to_slack_new', to: 'pages#welcome_add_to_slack_new', as: 'welcome_add_to_slack_new'
+  get '/welcome/back', to: 'pages#welcome_back', as: 'welcome_back'
+  # -------------------------------
 
   # The priority is based upon order of creation:
   # first created -> highest priority.

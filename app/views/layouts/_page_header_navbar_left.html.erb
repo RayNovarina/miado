@@ -1,0 +1,28 @@
+<div class="css-navbar-left">
+  <ul class="nav navbar-nav">
+    <li><%= image_tag 'dog_head_icon.png', size: '50x50' %></li>
+    <li><%= link_to 'MiaDo', root_path, class: 'navbar-brand' %></li>
+
+  <% if @view.user_signed_in? %>
+    <li><%= link_to 'user_path(@view.current_user)' do %>
+      <i class="glyphicon glyphicon-home"> </i>&nbsp; Home<% end %>
+    </li>
+    <li><%= link_to about_path do %>
+      <i class="glyphicon glyphicon-info-sign"> </i>&nbsp; About<% end %>
+    </li>
+    <li><%= link_to edit_user_registration_path(@view.current_user),
+      title: "#{@view.current_user.name} (#{@view.current_user.email})" do %>
+      <i class="glyphicon glyphicon-user"> </i>&nbsp;
+      <span class="css-user-name">
+        <%= "#{@view.current_user.email.split('@').first[0,14]}" %>
+      </span><% end %>
+    </li>
+
+  <% else %>
+    <li><%= link_to about_path do %>
+      <i class="glyphicon glyphicon-info-sign"> </i>&nbsp; About<% end %>
+    </li>
+  <% end %>
+
+  </ul>
+</div>

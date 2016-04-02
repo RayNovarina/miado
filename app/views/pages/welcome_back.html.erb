@@ -1,0 +1,13 @@
+<div class="container">
+  <% num_teams = 0 # @view.teams.size # RegisteredTeam.where('user_id = ?', current_user.id).count
+     welcome_msg = "Welcome Back #{@view.current_user.name}"
+     if num_teams > 0
+
+     end
+  %>
+  <h2><%= welcome_msg %>
+      <% if num_teams > 0 %>
+
+      <% end %>
+  </h2>
+</div>

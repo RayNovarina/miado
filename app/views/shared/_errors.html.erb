@@ -1,0 +1,10 @@
+<% if @view.locals[:obj].errors.any? %>
+  <div class="alert alert-danger css-page-errors">
+    <h5>Please correct the following <%= pluralize(@view.locals[:obj].errors.count, "error") %>:</h5>
+    <ul>
+      <% @view.locals[:obj].errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+      <% end %>
+    </ul>
+  </div>
+<% end %>

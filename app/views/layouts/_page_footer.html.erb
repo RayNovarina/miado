@@ -1,0 +1,17 @@
+<!--  # ======== Begin: PAGE FOOTER -global- ========== -->
+<footer class="css-page-footer">
+  <header>
+    <% if @view.policy(:include, :back_button) %>
+      <div class="container">
+        <%= link_to 'Back', @view.back_path, class: 'btn btn-xs btn-primary' %>
+      </div>
+    <% end %>
+    <hr>
+  </header>
+  <nav>
+    <div class="container">
+      <p class="text-muted"><%= render 'layouts/page_footer_created_by' %></p>
+    </div>
+  </nav>
+</footer>
+<!-- # ======== End: PAGE FOOTER - global ========== -->

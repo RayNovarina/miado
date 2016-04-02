@@ -1,0 +1,36 @@
+<div class="container">
+  <h2>Simple Task Management for Slack Teams</h2>
+  <% if true #policy(User).create? %>
+    <p>
+      <%= link_to 'Start using Now', new_user_registration_path, class: 'btn btn-primary' %>
+    </p>
+  <% end %>
+  <p>
+    <h4><%= link_to 'Learn More', '#learn-more-link', name: 'learn-more-link',
+                    'data-toggle' => 'collapse',
+                    'data-target' => '#learn-more'
+        %>
+    </h4>
+  </p>
+</div>
+
+<br><br><br>
+<div id="learn-more" class="container collapse css-learn-more">
+<div class="row">
+  <div class="col-md-4">
+    <h2>Simple to add Slack teams</h2>
+    <p>Just ??.
+    </p>
+  </div>
+  <div class="col-md-4">
+    <h2>Simple yyyyy</h2>
+      <p>Just yyyyyyy.
+      </p>
+  </div>
+  <div class="col-md-4">
+    <h2>Simple xxx</h2>
+      <p>Just xxxxxx.
+      </p>
+  </div>
+</div>
+</div>
