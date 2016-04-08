@@ -23,8 +23,6 @@ module OmniauthProviderExtensions
     def find_or_create_from_omniauth_callback(response_env)
       auth = response_env['omniauth.auth']
       auth_params = response_env['omniauth.params']
-      require 'pry'
-      binding.pry
       if (provider = find_by_oauth(auth).first).nil?
         # We have not authenticated this oauth user before.
         provider = create_from_oauth(auth, auth_params)

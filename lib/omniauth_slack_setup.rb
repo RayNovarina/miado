@@ -1,4 +1,5 @@
 # lib/omniauth_slack_setup.rb
+# included by /initializers/devise.rb at 'config.omniauth :slack'
 class OmniauthSlackSetup
   # OmniAuth expects the class passed to setup to respond to the #call method.
   # env - Rack environment
@@ -21,6 +22,8 @@ class OmniauthSlackSetup
   end
 
   def customize_options
+    require 'pry'
+    binding.pry
     if (query = @env['QUERY_STRING']).nil?
       return {}
     end
@@ -28,8 +31,15 @@ class OmniauthSlackSetup
       # return { scope: 'incoming-webhook,commands,'\
       #       'channels:write,channels:read,chat:write:user,'\
       #       'files:write:user,files:read,team:read,users:read' }
-      return { scope: 'channels:write,channels:read,chat:write:user,'\
-                      'files:write:user,files:read,team:read,users:read' }
+      return { scope: 'bot,commands,'\
+                      'channels:history,channels:read'\
+                      'im:history,im:read,'\
+                      'pins:read,pins:write,'\
+                      'chat:write:bot,'\
+                      'files:write:bot,files:read,'\
+                      'search:read,'\
+                      'team:read,'\
+                      'users:read' }
     end
     return { scope: 'identify' } if query == 'state=sign_in'
     {}

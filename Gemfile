@@ -42,14 +42,17 @@ gem 'figaro', '1.0'
 # Use Pry as alternative Rails console shell (alternative to IRB)
 # To use: add    " require 'pry' " at head of file.
 #         insert " binding.pry " in the code to where you want the breakpoint.
-gem 'pry'
+# gem 'pry'
+gem 'pry-rails'
 #-------------------------------------------
 # Use Devise authentication
 gem 'devise'
 #-------------------------------------------
 # Add omniauth strategy for Slack
 # per: https://github.com/kmrshntr/omniauth-slack
-gem 'omniauth-slack'
+# gem 'omniauth-slack'
+# If you need to use the latest HEAD version, you can do so with:
+gem 'omniauth-slack', github: 'kmrshntr/omniauth-slack'
 #-------------------------------------------
 # Add omniauth strategy for GitHub
 # per: https://github.com/intridea/omniauth-github
@@ -91,6 +94,7 @@ gem 'faye-websocket'
 #============== DEVELOPMENT only GEMS =================
 group :development do
   gem 'web-console', '~> 2.0'
+  gem 'pry-stack_explorer'
 end
 
 #

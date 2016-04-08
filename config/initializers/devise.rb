@@ -289,6 +289,7 @@ Devise.setup do |config|
   config.omniauth :slack,
                   ENV['SLACK_CLIENT_ID'],
                   ENV['SLACK_CLIENT_SECRET'],
+                  scope: 'bot',
                   # Hook into the omniauth flow and let us fiddle the oauth
                   # params. per: http://www.createdbypete.com/articles/dynamic-omniauth-provider-setup/
                   # at /lib/omniauth_slack_setup.rb
