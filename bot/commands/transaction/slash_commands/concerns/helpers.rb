@@ -1,39 +1,31 @@
-# Returns json response with text, attachments fields.
+require_relative 'helpers/reformat_slash_command'
+require_relative 'helpers/submit_request'
+require_relative 'helpers/reformat_browser_response'
+
 def slash_response(text, attachments = nil, debug = false)
-  options = {
+  web_api_client_options = {
     # Required fields.
     response_type: 'ephemeral',
     text: debug_headers(debug).concat(text)
   }
   # Optional fields.
-  options[:attachments] = attachments unless (defined? attachments).nil?
-  options
+  web_api_client_options[:attachments] = attachments unless (defined? attachments).nil?
+  web_api_client_options
 end
 
 def debug_headers(debug)
   return '' unless debug
-  # "`MiaDo User: #{'??'}. " \
+  "`MiaDo User: #{'??'}. " \
   "Slack Team: #{params['team_domain']}. " \
   "Member: #{params['user_name']}. Channel: #{params['channel_name']}`\n"
 end
 
-# Returns status msg.
-#   If ok: empty string.
-#   If err: err msg string.
-def handoff_slash_command_to_bot
-  # bot_name = '@miabot'
-  bot_user_id = 'U0XTWH45N'
-  bot_dm_channel_id = 'D0XTWH508'
+def defer_slash_command_to_bot
   @view.slack_client ||= make_slack_client
-  text =
-    "<@#{bot_user_id}> transaction "
-    .concat({ json_target: '> transaction {',
-              type: 'slash_command',
-              url_params: params
-            }.to_json)
+  text = 'transaction '.concat({ type: 'slash_command', url_params: params }.to_json)
   api_resp = @view.slack_client.web_client
                   .chat_postMessage(
-                    channel: bot_dm_channel_id,
+                    channel: 'D0XTWH508',
                     text: text)
   api_resp['ok'] ? '' : '*err: defer_slash_command_to_bot*'
 end
