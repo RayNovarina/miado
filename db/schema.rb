@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160331071350) do
+ActiveRecord::Schema.define(version: 20160401000012) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -33,10 +33,14 @@ ActiveRecord::Schema.define(version: 20160331071350) do
 
   create_table "registered_teams", force: :cascade do |t|
     t.string   "name"
-    t.string   "auth_token"
     t.integer  "user_id"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at",       null: false
+    t.datetime "updated_at",       null: false
+    t.string   "url"
+    t.string   "slack_team_id"
+    t.string   "api_token"
+    t.string   "bot_user_id"
+    t.string   "bot_access_token"
   end
 
   add_index "registered_teams", ["user_id"], name: "index_registered_teams_on_user_id", using: :btree

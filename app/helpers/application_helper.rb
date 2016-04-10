@@ -5,7 +5,8 @@ module ApplicationHelper
   #
   class View
     attr_reader :id, :name, :controller, :model
-    attr_accessor :locals, :signed_out_user, :user, :teams, :team, :provider
+    attr_accessor :locals, :signed_out_user, :user, :teams, :team, :provider,
+                  :slack_client
 
     def initialize(controller, model)
       @id = object_id

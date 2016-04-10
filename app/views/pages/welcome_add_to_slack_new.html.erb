@@ -3,14 +3,15 @@
     <div class="col-md-10 col-md-offset-1">
       <div class="jumbotron">
         <center>
-          <h3>Thank you,&nbsp;<%= "#{@view.current_user.name.capitalize }" %>
-              &nbsp;for installing @do
+          <h3>Thanks ! &nbsp;<%= "#{@view.current_user.name.capitalize}" %>
+              for adding @do<br>
+              to your <%= @view.team.name %> team.
           </h3>
           <br>
           ------------------------------- * ------------------------------------
           <br><br>
           <p>Start managing lists for your Slack teams in
-            <%= link_to 'Slack', 'https://shadowhtracteam.slack.com/', class: 'btn btn-primary btn-sm' %>
+            <%= link_to 'Slack', @view.team.url, class: 'btn btn-primary btn-sm' %>
             &nbsp;or here in <%= link_to 'MiaDo', 'registered_teams_path' %>
           </p>
           <br>
