@@ -4,7 +4,7 @@
       <div class="jumbotron">
         <center>
           <h3>Thanks ! &nbsp;<%= "#{@view.current_user.name.capitalize}" %>
-              for adding @do<br>
+              for adding <%= (defined? @view.team.bot).nil? ? '@miabot' : @view.team.bot.name %>.<br>
               to your <%= @view.team.name %> team.
           </h3>
           <br>
@@ -12,7 +12,7 @@
           <br><br>
           <p>Start managing lists for your Slack teams in
             <%= link_to 'Slack', @view.team.url, class: 'btn btn-primary btn-sm' %>
-            &nbsp;or here in <%= link_to 'MiaDo', 'registered_teams_path' %>
+            &nbsp;or here in <%= link_to 'MiaDo', 'registered_teams_path' %>.
           </p>
           <br>
           <div class="row">

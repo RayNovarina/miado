@@ -18,7 +18,7 @@
             </a>
           </p>
           <br>
-          <h4><%= RegisteredTeam.count %>&nbsp;registered active teams!</h4>
+          <h4><%= "#{RegisteredTeam.count} registered active #{'team'.pluralize(RegisteredTeam.count)}!" %></h4>
           <br>
           <h5><mark>MiaDo is alpha software. Please report bugs to admin@miado.net</mark></h5>
           <h6 class="text-muted"><%= render 'layouts/page_footer_created_by' %></h6>
