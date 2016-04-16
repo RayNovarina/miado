@@ -1,4 +1,3 @@
-require 'slack-notifier'
 #
 class Users::SessionsController < Devise::SessionsController
   before_action :make_view_helper

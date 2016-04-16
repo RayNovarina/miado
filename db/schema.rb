@@ -11,10 +11,47 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160401000012) do
+ActiveRecord::Schema.define(version: 20160415203040) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "channels", force: :cascade do |t|
+    t.string   "slack_id"
+    t.string   "name"
+    t.integer  "member_id"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  add_index "channels", ["member_id"], name: "index_channels_on_member_id", using: :btree
+
+  create_table "list_items", force: :cascade do |t|
+    t.string   "description"
+    t.datetime "due_date"
+    t.integer  "channel_id"
+    t.integer  "member_id"
+    t.datetime "created_at",  null: false
+    t.datetime "updated_at",  null: false
+  end
+
+  add_index "list_items", ["channel_id"], name: "index_list_items_on_channel_id", using: :btree
+  add_index "list_items", ["member_id"], name: "index_list_items_on_member_id", using: :btree
+
+  create_table "members", force: :cascade do |t|
+    t.string   "name"
+    t.string   "first_name"
+    t.string   "last_name"
+    t.string   "real_name_normalized"
+    t.string   "image_72"
+    t.integer  "registered_team_id"
+    t.datetime "created_at",           null: false
+    t.datetime "updated_at",           null: false
+    t.string   "slack_user_id"
+    t.string   "slack_team_id"
+  end
+
+  add_index "members", ["registered_team_id"], name: "index_members_on_registered_team_id", using: :btree
 
   create_table "omniauth_providers", force: :cascade do |t|
     t.integer  "user_id"
@@ -31,7 +68,7 @@ ActiveRecord::Schema.define(version: 20160401000012) do
 
   add_index "omniauth_providers", ["user_id"], name: "index_omniauth_providers_on_user_id", using: :btree
 
-  create_table "registered_teams", force: :cascade do |t|
+  create_table "teams", force: :cascade do |t|
     t.string   "name"
     t.integer  "user_id"
     t.datetime "created_at",       null: false
@@ -43,7 +80,7 @@ ActiveRecord::Schema.define(version: 20160401000012) do
     t.string   "bot_access_token"
   end
 
-  add_index "registered_teams", ["user_id"], name: "index_registered_teams_on_user_id", using: :btree
+  add_index "teams", ["user_id"], name: "index_teams_on_user_id", using: :btree
 
   create_table "users", force: :cascade do |t|
     t.string   "email",                  default: "", null: false
@@ -67,6 +104,10 @@ ActiveRecord::Schema.define(version: 20160401000012) do
   add_index "users", ["email"], name: "index_users_on_email", unique: true, using: :btree
   add_index "users", ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true, using: :btree
 
+  add_foreign_key "channels", "members"
+  add_foreign_key "list_items", "channels"
+  add_foreign_key "list_items", "members"
+  add_foreign_key "members", "teams", column: "registered_team_id"
   add_foreign_key "omniauth_providers", "users"
-  add_foreign_key "registered_teams", "users"
+  add_foreign_key "teams", "users"
 end

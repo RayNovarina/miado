@@ -1,5 +1,5 @@
 Rails.application.routes.draw do
-  get 'messages/index'
+  # get 'messages/index'
 
   #
   # per: https://github.com/plataformatec/devise#getting-started
@@ -17,31 +17,6 @@ Rails.application.routes.draw do
 
   resources :users, only: [:index, :show]
   get '/settings', to: 'users#settings', as: 'settings'
-
-=begin
-  api/slack/slash/commands --> Api::BaseController::Commands
-  /users/teams/members/channels/tasks/index,show,new,edit,destroy
-  1) command:
-    /do rev 1 spec @susan /jun15
-    { "token"=>"tY1fGlQ1V2f6bskupMJa6ryY",
-      "team_id"=>"T0VN565N0",
-      "team_domain"=>"shadowhtracteam",
-      "channel_id"=>"C0VNKV7BK",
-      "channel_name"=>"general",
-      "user_id"=>"U0VNMUXNZ",
-      "user_name"=>"dawnnova",
-      "command"=>"/do",
-      "text"=>"help",
-      "response_url"=>"https://hooks.slack.com/commands/T0VN565N0/31996879410/vAludpuTljkWnSvOliaSgWvz",
-      "controller"=>"api/slack/slash/commands",
-      "action"=>"create"
-    }
-  2) becomes route:
-    channel_tasks POST /channels/:channel_id/tasks(.:format)  to: tasks#create
-  3) response:
-    :thumbs_up: Task 4 created and assigned to @susan. Due date is Tues. June 15. Type /do list for complete list.
-    :bulb: You can unassign someone from the task by running /do unassign @susan 4
-=end
 
   # For api. api/slack/slash for Slack slash commands.
   namespace :api do
