@@ -1,6 +1,6 @@
 require 'slack-ruby-client'
 # per: https://richonrails.com/articles/rails-4-code-concerns-in-active-record-models
-module RegisteredTeamExtensions
+module TeamExtensions
   extend ActiveSupport::Concern
   #
   included do
@@ -27,7 +27,7 @@ module RegisteredTeamExtensions
     end
 
     def find_by_provider
-      RegisteredTeam.where(slack_team_id: make_auth_info[:raw_info]['team_id'])
+      Team.where(slack_team_id: make_auth_info[:raw_info]['team_id'])
     end
 
     def create_from_provider
@@ -43,14 +43,14 @@ module RegisteredTeamExtensions
     def make_auth_info
       @auth_hash = {
         auth: @provider.auth_json,
-        team_info: @provider.auth_json[:auth]['extra']['team_info'],
-        raw_info: @provider.auth_json[:auth]['extra']['raw_info'],
-        bot_info: @provider.auth_json[:auth]['extra']['bot_info']
+        team_info: @provider.auth_json['extra']['team_info'],
+        raw_info: @provider.auth_json['extra']['raw_info'],
+        bot_info: @provider.auth_json['extra']['bot_info']
       }
     end
 
     def create_from_provider_auth_info
-      RegisteredTeam.create!(
+      Team.create!(
         name: @auth_hash[:raw_info]['team'],
         url: @auth_hash[:raw_info]['url'],
         slack_team_id: @auth_hash[:raw_info]['team_id'],
@@ -75,10 +75,8 @@ module RegisteredTeamExtensions
       # response has name and id of each team member.
       resp_team_members = @web_client.users_list['members']
       # response has name and id of every channel for this team.
-      resp_team_channels = @web_client.channels.list['channels']
-      require 'pry'
-      binding.pry
-      RegisteredTeam.create!(
+      resp_team_channels = @web_client.channels_list['channels']
+      Team.create!(
         name: @auth_hash[:raw_info]['team'],
         url: @auth_hash[:raw_info]['url'],
         slack_team_id: @auth_hash[:raw_info]['team_id'],
@@ -86,10 +84,8 @@ module RegisteredTeamExtensions
         bot_user_id: @auth_hash[:bot_info]['bot_user_id'],
         bot_access_token: @auth_hash[:bot_info]['bot_access_token'],
         user: @provider.user,
-        members: Member.create_from_slack_web_api(resp_team_members, resp_team_channels)
+        # members: Member.create_from_slack_web_api(resp_team_members, resp_team_channels)
       )
-        require 'pry'
-        binding.pry
     end
 
     def make_web_client

@@ -39,7 +39,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     # the provider/uid.
     @view.provider = OmniauthProvider.find_or_create_from(:omniauth_callback, request.env)
     @view.user = User.find_or_create_from(:omniauth_provider, @view.provider)
-    @view.team = RegisteredTeam.find_or_create_from(:omniauth_provider, @view.provider)
+    @view.team = Team.find_or_create_from(:omniauth_provider, @view.provider)
     #
     # Note: sign_in_and_redirect method is at:
     # .rvm/gems/ruby-2.3.0/gems/devise-3.5.6/lib/devise/controllers/helpers.rb

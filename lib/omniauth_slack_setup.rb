@@ -40,7 +40,9 @@ class OmniauthSlackSetup
       #                'users:read' }
       return { scope: 'commands,'\
                       'team:read,'\
-                      'users:read' }
+                      'users:read,'\
+                      'channels:read'
+             }
     end
     return { scope: 'identify' } if query == 'state=sign_in'
     {}

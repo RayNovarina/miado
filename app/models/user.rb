@@ -1,6 +1,6 @@
 #
 class User < ActiveRecord::Base
-  has_many :registered_teams, dependent: :destroy
+  has_many :teams, dependent: :destroy
   has_many :omniauth_providers, dependent: :destroy
 
   # Include default devise modules. Others available are:

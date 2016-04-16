@@ -15,7 +15,7 @@ class PagesController < ApplicationController
   end
 
   def welcome_add_to_slack_new
-    @view.team = RegisteredTeam.first
+    @view.team = Team.first
   end
 
   def add_to_slack
