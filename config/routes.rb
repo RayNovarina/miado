@@ -1,5 +1,6 @@
 Rails.application.routes.draw do
-  # get 'messages/index'
+  resources :posts
+  get 'messages/index', to: 'messages#index'
 
   #
   # per: https://github.com/plataformatec/devise#getting-started

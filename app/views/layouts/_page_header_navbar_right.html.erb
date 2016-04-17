@@ -2,7 +2,12 @@
   <ul class="nav navbar-nav pull-right">
 
     <% if @view.user_signed_in? %>
-      <% if true # policy(RegisteredApplication).index? %>
+      <% if @view.current_user.admin? %>
+        <li><%= link_to 'Admin Dashboard',
+                users_path,
+                class: 'css-apps-link' %></li>
+        <li><%= link_to '|', '' %></li>
+      <% elsif true # policy(Team).index? %>
         <li><%= link_to 'My Teams',
                 'registered_applications_path',
                 class: 'css-apps-link' %></li>

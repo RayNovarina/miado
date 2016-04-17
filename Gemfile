@@ -99,6 +99,7 @@ group :development, :test do
   #-------------------------------------------
   gem 'spring'
   #-------------------------------------------
+  # rails integration with rspec, which depends upon rspec itself.
   gem 'rspec-rails'
   #-------------------------------------------
   # Rspec extension that add "shoulda" test syntax.
@@ -106,6 +107,23 @@ group :development, :test do
   gem 'shoulda'
   #-------------------------------------------
   gem 'factory_girl_rails'
+  # helps you test web applications by simulating how a real user would interact
+  # with your app.
+  gem 'capybara'
+  # rspec integration with guard which makes rerunning tests a snap, by watching
+  # the filesystem for when you save files and triggering events automatically
+  gem 'guard-rspec'
+  # lets you integrate rspec with spring, which means that your tests will run
+  # much faster.
+  gem 'spring-commands-rspec'
+  # record your test suite's HTTP interactions and replay them during future
+  # test runs for fast, deterministic, accurate tests
+  gem 'vcr'
+end
+#
+group :test do
+  # locks down your test environment from talking to the internet
+  gem 'webmock'
 end
 
 #

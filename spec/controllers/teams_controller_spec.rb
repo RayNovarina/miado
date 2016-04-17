@@ -1,5 +1,5 @@
 require 'rails_helper'
 
-RSpec.describe RegisteredTeamsController, type: :controller do
+RSpec.describe TeamsController, type: :controller do
 
 end
