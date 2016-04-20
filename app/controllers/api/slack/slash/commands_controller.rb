@@ -23,12 +23,12 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   #   If command handed over to bot: empty string or err msg.
   # In all cases, @view hash has url_params with Slack slash command form parms.
   def static_response_or_bot_msg
-    command = params[:text]
-    return add_command(false) if command.starts_with?('add')
-    return help_command(false) if command.starts_with?('help')
-    return list_command(false) if command.starts_with?('list')
+    command, debug = check_for_debug(params)
+    return add_command(debug) if command.starts_with?('add')
+    return help_command(debug) if command.starts_with?('help')
+    return list_command(debug) if command.starts_with?('list')
     # handoff_slash_command_to_bot
-    add_command(false)
+    add_command(debug)
   end
 
   def make_view_helper

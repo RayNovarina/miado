@@ -1,4 +1,4 @@
-def help_command(_command, debug)
+def help_command(debug)
   text =
     '• `/do rev 1 spec @susan /jun15`' \
     ' Adds "rev 1 spec" to this channel, assigns it to Susan and sets' \

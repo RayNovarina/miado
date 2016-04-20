@@ -1,6 +1,6 @@
 def add_command(debug)
   params = @view.url_params
-  text = process_add_cmd(params)
+  text = process_add_cmd(params, debug)
   text.concat("\n`Original command: `  ").concat(params[:text]) if debug
   slash_response(text, nil, debug)
 end
@@ -19,11 +19,11 @@ user_id	U0VLZ5P51
 user_name	ray
 =end
 
-def process_add_cmd(params)
+def process_add_cmd(params, debug)
   parsed_cmd = parse_slash_cmd(:add, params)
   item = ListItem.create!(
     channel_name: params[:channel_name],
-    command_text:  params[:text],
+    command_text:  parsed_cmd[:command],
     team_domain: params[:team_domain],
     team_id: params[:team_id],
     slack_user_id: params[:user_id],
@@ -37,12 +37,15 @@ def process_add_cmd(params)
     add_assigned_member(parsed_cmd)
   item.assigned_due_date, due_date_clause =
     add_due_date(parsed_cmd)
-
   item.description =
-    "#{task_num_clause}#{assigned_to_clause}#{due_date_clause}" \
-    'Type `/do list` for a current list.'
+    "#{parsed_cmd[:command]}#{assigned_to_clause}#{due_date_clause}"
+
+  response =
+      "#{task_num_clause}#{assigned_to_clause}#{due_date_clause}" \
+      'Type `/do list` for a current list.'
+  item.debug_trace = response if debug
   item.save!
-  item.description
+  response
 end
 
 def add_assigned_channel(params)
@@ -63,11 +66,4 @@ def add_due_date(parsed_cmd)
   [parsed_cmd[:due_date],
    "| *Due* #{parsed_cmd[:due_date.strftime('%a, %d %b')]}."
   ]
-end
-
-def parse_slash_cmd(_cmd, _params)
-  { assigned_member_id: nil,
-    assigned_members_name: nil,
-    due_date: nil
-  }
 end
