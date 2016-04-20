@@ -1,0 +1,20 @@
+<header class="css-body-header">
+  <%= render partial: 'shared/index_page_header',
+             locals: @view.locals = { title: 'Admin Dashboard - Teams' }
+  %>
+</header>
+
+<main class="css-body-main">
+  <div class="container">
+    <h2>All Teams<%= " (#{@view.teams.length})" %></h2>
+    <table class="table table-bordered table-hover">
+      <tbody>
+        <% @view.teams.each do |team| %>
+          <%= render partial: 'teams/admin_views/index_team',
+                     locals: @view.locals = { user: team.user, team: team }
+          %>
+        <% end %>
+      </tbody>
+    </table>
+    </div>
+</main>

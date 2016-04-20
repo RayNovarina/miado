@@ -9,13 +9,16 @@ class PagesController < ApplicationController
   end
 
   def welcome_new
+    @view.user = @view.current_user
   end
 
   def welcome_back
+    @view.user = @view.current_user
   end
 
   def welcome_add_to_slack_new
-    @view.team = RegisteredTeam.first
+    @view.user = @view.current_user
+    @view.team = Team.last
   end
 
   def add_to_slack
@@ -27,8 +30,9 @@ class PagesController < ApplicationController
   end
 
   def show_footer
-    return true unless @view.name == 'pages-add_to_slack'
-    false
+    # return true unless @view.name == 'pages-add_to_slack'
+    # false
+    true
   end
 
   private

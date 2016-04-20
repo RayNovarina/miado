@@ -36,13 +36,15 @@
   <!-- # == End: PAGE MAIN BODY -Global- -->
 
   <!-- # == Begin: PAGE MAIN FOOTER -optional- -->
+<% if content_for?(:page_main_footer) %>
   <footer>
-    <% if content_for?(:page_main_footer) %>
+
       <!-- # == Begin: yield :Page Main Footer == -->
       <%= yield :page_main_footer %>
       < !-- # == End: yield :Page Main Content Footer == -->
-    <% end %>
+
     <!-- # == End: PAGE MAIN FOOTER -optional- -->
   </footer>
+  <% end %>
 </main>
 <!-- # == End: PAGE MAIN -global- == -->

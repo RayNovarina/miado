@@ -1,0 +1,9 @@
+<% if @view.admin_user? %>
+  <%= render partial: 'teams/admin_views/show',
+             locals: @view.locals = {}
+  %>
+<% else %>
+
+<h2>Show Team "<%= @view.team.name %>" for user "<%= @view.user.name %>"<h2>
+
+<% end %>

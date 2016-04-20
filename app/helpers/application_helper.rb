@@ -4,16 +4,18 @@
 module ApplicationHelper
   #
   class View
-    attr_reader :id, :name, :controller, :model
-    attr_accessor :locals, :signed_out_user, :user, :teams, :team, :provider,
-                  :slack_client
+    attr_reader :id, :name, :controller, :model, :url_params
+    attr_accessor :locals, :signed_out_user, :users, :user, :teams, :team,
+                  :provider, :web_client, :rtm_client, :members, :member,
+                  :channels, :channel, :items, :item
 
     def initialize(controller, model)
       @id = object_id
-      url_params = controller.params || []
+      @url_params = controller.params || []
       @name = "#{url_params[:controller]}-#{url_params[:action]}"
       @controller = controller
       @model = model
+      @user = current_user
     end
 
     # If authentication system (i.e. Devise) active.
@@ -43,6 +45,10 @@ module ApplicationHelper
       devise? ? @controller.current_user : User.new
     end
 
+    def admin_user?
+      current_user.admin?
+    end
+
     # Get flash msgs from controller so we can override em.
     def flash_messages
       @controller.flash
@@ -55,7 +61,6 @@ module ApplicationHelper
     end
 
     def show_header?
-
     end
 
     def policy(arg1, arg2)

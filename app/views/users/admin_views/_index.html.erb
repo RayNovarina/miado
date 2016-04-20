@@ -1,0 +1,28 @@
+<header class="css-body-header">
+  <%= render partial: 'shared/index_page_header',
+             locals: @view.locals = { title: 'Admin Dashboard - Users' }
+  %>
+</header>
+
+<main class="css-body-main">
+  <div class="container">
+    <h2>Users<%= " (#{@view.users.count})" %></h2>
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>SignUp Date</th>
+          <th><%= link_to 'Teams', teams_path %><%= " (#{@view.teams.count})" %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @view.users.each do |user| %>
+          <%= render partial: 'users/admin_views/index_user',
+                     locals: @view.locals = { user: user }
+          %>
+        <% end %>
+      </tbody>
+    </table>
+    </div>
+</main>

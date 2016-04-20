@@ -1,7 +1,9 @@
 #
 class User < ActiveRecord::Base
-  has_many :registered_teams, dependent: :destroy
+  has_many :teams, dependent: :destroy
   has_many :omniauth_providers, dependent: :destroy
+
+  before_save { self.role ||= :member }
 
   # Include default devise modules. Others available are:
   # :lockable, :timeoutable,
@@ -11,6 +13,8 @@ class User < ActiveRecord::Base
          :omniauthable, omniauth_providers: [:github, :slack, :google_oauth2]
 
   validates :name, length: { minimum: 1, maximum: 100 }, presence: true
+
+  enum role: [:member, :admin]
 
   # CLASS and Instance methods that extend the User ActiveRecord class via
   # /models/concerns files. And add useful helper routines and to put biz logic

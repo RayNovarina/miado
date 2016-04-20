@@ -45,7 +45,7 @@ body {
  /* Note: .jumbotron becomes our body element, i.e. override it if needed. */
  /* Margin bottom by footer height */
  margin-bottom: 90px;
- /*background-color: #f5f5f5;*/
+   background-color: white;
 }
 
 .css-page-footer {
@@ -54,12 +54,17 @@ body {
   width: 100%;
   /* Set the fixed height of the footer here */
   height: 90px;
-  background-color: #f5f5f5;
+  .css-page-footer-header {
+    background-color: white;
+  }
+  .css-page-footer-nav {
+    background-color: #f5f5f5;
+  }
 }
 
 /* Bootstrap overrides: */
 .jumbotron {
-  background-color: #f5f5f5; /* a lighter grey so our Carousel shows well. */
+  background-color: white;
 }
 
 /* Bootstrap extensions: */
@@ -121,26 +126,11 @@ body {
     padding: 1em;
     text-align:center;
     img {
-      border-color: green;
+      /* border-color: green; */
       width: 8em;
       height: 8em;
     }
   }
-}
-
-/*=================== Special layout for Add to Slack button landing page */
-.css-pages-add_to_slack, .css-pages-welcome_add_to_slack_new {
-  .jumbotron {
-    background-color: white;
-    margin-bottom: 0px;
-    padding: 20px;
-    .css-add-to-slack {
-      .jumbotron {
-        margin-top: 20px;
-        background-color: #f5f5f5;
-      }
-    }
- }
 }
 
 /*=================== For devise because we don't have a devise.scss file. */

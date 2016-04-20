@@ -1,0 +1,15 @@
+<tr>
+  <td><%= link_to @view.locals[:team].name,
+                  team_path(@view.locals[:team]),
+                  title: "Created on #{@view.locals[:team].created_at.strftime('%a, %d %b %Y')}" %>
+  </td>
+  <td><%= link_to 'Members', team_members_path(@view.locals[:team]) %>
+      <%= " (#{@view.locals[:team].members.length})" %>
+  </td>
+  <td><%= link_to 'Channels', team_channels_path(@view.locals[:team]) %>
+      <%= " (#{@view.locals[:team].channels.length})" %>
+  </td>
+  <td><%= link_to 'Lists', team_items_path(@view.locals[:team]) %>
+      <%= " (#{@view.locals[:team].channels.length})" %>
+  </td>
+</tr>

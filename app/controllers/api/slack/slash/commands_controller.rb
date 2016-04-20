@@ -21,10 +21,14 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   #   If command processed by controller:
   #      json response with text, attachments fields.
   #   If command handed over to bot: empty string or err msg.
+  # In all cases, @view hash has url_params with Slack slash command form parms.
   def static_response_or_bot_msg
     command = params[:text]
-    return help_command(command, false) if command.starts_with?('help')
-    handoff_slash_command_to_bot
+    return add_command(false) if command.starts_with?('add')
+    return help_command(false) if command.starts_with?('help')
+    return list_command(false) if command.starts_with?('list')
+    # handoff_slash_command_to_bot
+    add_command(false)
   end
 
   def make_view_helper

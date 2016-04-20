@@ -1,9 +1,11 @@
 #
 class UsersController < ApplicationController
+  before_action :authenticate_user!
   before_action :make_view_helper
 
   def index
     @view.users = User.all
+    @view.teams = Team.all
   end
 
   def show
@@ -11,6 +13,22 @@ class UsersController < ApplicationController
   end
 
   def settings
+  end
+
+  # Note: We get here via Admin Dashboard. Devise has cancel function in the
+  # registrations edit page.
+  def destroy
+    @view.user = User.find(params[:id])
+    authorize @view.user
+    # Response: redirect to or forward_to to a view.
+    if @view.user.destroy
+      flash[:notice] = "\"#{@view.user.name}\" was deleted successfully."
+      # Display list of users.
+      redirect_to users_path
+    else
+      flash.now[:alert] = 'There was an error deleting this User.'
+      render :show
+    end
   end
 
   private

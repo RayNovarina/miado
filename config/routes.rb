@@ -1,5 +1,23 @@
 Rails.application.routes.draw do
-  get 'messages/index'
+  get 'items/index'
+
+  get 'items/show'
+
+  get 'items/destroy'
+
+  get 'channels/index'
+
+  get 'channels/show'
+
+  get 'channels/destroy'
+
+  get 'members/index'
+
+  get 'members/show'
+
+  get 'members/destroy'
+
+  get 'messages/index', to: 'messages#index'
 
   #
   # per: https://github.com/plataformatec/devise#getting-started
@@ -15,33 +33,22 @@ Rails.application.routes.draw do
              }
   get '/auth/slack/setup', to: 'sessions#setup', as: 'oauth_setup'
 
-  resources :users, only: [:index, :show]
-  get '/settings', to: 'users#settings', as: 'settings'
+  resources :users, only: [:index, :show, :destroy] do
+    resources :teams, only: [:index]
+  end
 
-=begin
-  api/slack/slash/commands --> Api::BaseController::Commands
-  /users/teams/members/channels/tasks/index,show,new,edit,destroy
-  1) command:
-    /do rev 1 spec @susan /jun15
-    { "token"=>"tY1fGlQ1V2f6bskupMJa6ryY",
-      "team_id"=>"T0VN565N0",
-      "team_domain"=>"shadowhtracteam",
-      "channel_id"=>"C0VNKV7BK",
-      "channel_name"=>"general",
-      "user_id"=>"U0VNMUXNZ",
-      "user_name"=>"dawnnova",
-      "command"=>"/do",
-      "text"=>"help",
-      "response_url"=>"https://hooks.slack.com/commands/T0VN565N0/31996879410/vAludpuTljkWnSvOliaSgWvz",
-      "controller"=>"api/slack/slash/commands",
-      "action"=>"create"
-    }
-  2) becomes route:
-    channel_tasks POST /channels/:channel_id/tasks(.:format)  to: tasks#create
-  3) response:
-    :thumbs_up: Task 4 created and assigned to @susan. Due date is Tues. June 15. Type /do list for complete list.
-    :bulb: You can unassign someone from the task by running /do unassign @susan 4
-=end
+  resources :teams, only: [:index, :show, :destroy] do
+    resources :members, only: [:index]
+    resources :channels, only: [:index]
+    resources :items, only: [:index]
+  end
+
+  resources :members, only: [:index, :show, :destroy]
+
+  resources :channels, only: [:index, :show, :destroy] do
+    resources :items, only: [:index]
+  end
+  get '/settings', to: 'users#settings', as: 'settings'
 
   # For api. api/slack/slash for Slack slash commands.
   namespace :api do

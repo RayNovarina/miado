@@ -73,12 +73,7 @@ gem 'pg'
 #--------------------------------------------
 # Slack bot gem.
 # per: https://github.com/dblock/slack-ruby-bot/tree/v0.7.0
-gem 'slack-ruby-bot'
-#-----------------------------------------------
-# Slack Notifier gem per:
-# http://rubyinrails.com/2015/09/14/rails-slack-integration-with-slack-notifier-gem/
-# gem 'exception_notification'
-gem 'slack-notifier'
+# gem 'slack-ruby-bot'
 #------------------------------------------------
 # Slack Ruby Client per:
 # https://github.com/dblock/slack-ruby-client
@@ -86,8 +81,8 @@ gem 'slack-ruby-client'
 #-------------------------------------------------
 # For concurrency when using the slack-ruby-client gem with the Slack web api
 # plus the Slack real time api.
-gem 'eventmachine'
-gem 'faye-websocket'
+# gem 'eventmachine'
+# gem 'faye-websocket'
 #------------------------------------------------------
 #
 #
@@ -100,10 +95,11 @@ end
 #
 #============ DEVELOPMENT, TEST only GEMS =============
 group :development, :test do
-  gem 'byebug'
+  # gem 'byebug'
   #-------------------------------------------
   gem 'spring'
   #-------------------------------------------
+  # rails integration with rspec, which depends upon rspec itself.
   gem 'rspec-rails'
   #-------------------------------------------
   # Rspec extension that add "shoulda" test syntax.
@@ -111,6 +107,23 @@ group :development, :test do
   gem 'shoulda'
   #-------------------------------------------
   gem 'factory_girl_rails'
+  # helps you test web applications by simulating how a real user would interact
+  # with your app.
+  gem 'capybara'
+  # rspec integration with guard which makes rerunning tests a snap, by watching
+  # the filesystem for when you save files and triggering events automatically
+  gem 'guard-rspec'
+  # lets you integrate rspec with spring, which means that your tests will run
+  # much faster.
+  gem 'spring-commands-rspec'
+  # record your test suite's HTTP interactions and replay them during future
+  # test runs for fast, deterministic, accurate tests
+  gem 'vcr'
+end
+#
+group :test do
+  # locks down your test environment from talking to the internet
+  gem 'webmock'
 end
 
 #
