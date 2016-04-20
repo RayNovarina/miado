@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160419202249) do
+ActiveRecord::Schema.define(version: 20160420071007) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -29,13 +29,21 @@ ActiveRecord::Schema.define(version: 20160419202249) do
   create_table "list_items", force: :cascade do |t|
     t.string   "description"
     t.datetime "due_date"
-    t.integer  "channel_id"
     t.integer  "member_id"
-    t.datetime "created_at",  null: false
-    t.datetime "updated_at",  null: false
+    t.datetime "created_at",                  null: false
+    t.datetime "updated_at",                  null: false
+    t.string   "channel_name"
+    t.string   "command_text"
+    t.string   "team_domain"
+    t.string   "team_id"
+    t.string   "slack_user_id"
+    t.string   "slack_user_name"
+    t.string   "slack_deferred_response_url"
+    t.string   "channel_id"
+    t.string   "assigned_member_id"
+    t.datetime "assigned_due_date"
   end
 
-  add_index "list_items", ["channel_id"], name: "index_list_items_on_channel_id", using: :btree
   add_index "list_items", ["member_id"], name: "index_list_items_on_member_id", using: :btree
 
   create_table "members", force: :cascade do |t|
@@ -110,7 +118,6 @@ ActiveRecord::Schema.define(version: 20160419202249) do
   add_index "users", ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true, using: :btree
 
   add_foreign_key "channels", "teams"
-  add_foreign_key "list_items", "channels"
   add_foreign_key "list_items", "members"
   add_foreign_key "members", "channels"
   add_foreign_key "members", "teams"
