@@ -4,16 +4,18 @@
 module ApplicationHelper
   #
   class View
-    attr_reader :id, :name, :controller, :model
+    attr_reader :id, :name, :controller, :model, :url_params
     attr_accessor :locals, :signed_out_user, :users, :user, :teams, :team,
-                  :provider, :web_client, :rtm_client
+                  :provider, :web_client, :rtm_client, :members, :member,
+                  :channels, :channel, :items, :item
 
     def initialize(controller, model)
       @id = object_id
-      url_params = controller.params || []
+      @url_params = controller.params || []
       @name = "#{url_params[:controller]}-#{url_params[:action]}"
       @controller = controller
       @model = model
+      @user = current_user
     end
 
     # If authentication system (i.e. Devise) active.
@@ -41,6 +43,10 @@ module ApplicationHelper
       #       Method defined at:
       # /gems/ruby-2.2.4/gems/devise-3.5.6/lib/devise/controllers/helpers.rb
       devise? ? @controller.current_user : User.new
+    end
+
+    def admin_user?
+      current_user.admin?
     end
 
     # Get flash msgs from controller so we can override em.

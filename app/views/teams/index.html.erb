@@ -1,0 +1,26 @@
+<% if @view.admin_user? %>
+  <%= render partial: 'teams/admin_views/index',
+             locals: @view.locals = {}
+  %>
+<% else %>
+
+<header class="css-body-header">
+  <%= render partial: 'shared/index_page_header',
+             locals: @view.locals = { title: "My Teams (#{@view.teams.length}) for #{@view.user.name}" }
+  %>
+</header>
+
+<main class="css-body-main">
+  <div class="container">
+    <table class="table table-bordered table-hover">
+      <tbody>
+        <% @view.teams.each do |team| %>
+          <%= render partial: 'teams/index_team',
+                     locals: @view.locals = { user: team.user, team: team }
+          %>
+        <% end %>
+      </tbody>
+    </table>
+    </div>
+</main>
+<% end %>

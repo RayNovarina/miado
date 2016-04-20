@@ -1,0 +1,8 @@
+<% if @view.locals[:teams_index] > 0 %>
+  </tr>
+  <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+<% end %>
+<td><%= link_to @view.locals[:team].name,
+            team_path(@view.locals[:team]),
+            title: "Team added #{@view.locals[:team].created_at.strftime("%a, %d %b %Y")}" %>
+</td>

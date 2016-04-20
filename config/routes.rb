@@ -1,5 +1,22 @@
 Rails.application.routes.draw do
-  resources :posts
+  get 'items/index'
+
+  get 'items/show'
+
+  get 'items/destroy'
+
+  get 'channels/index'
+
+  get 'channels/show'
+
+  get 'channels/destroy'
+
+  get 'members/index'
+
+  get 'members/show'
+
+  get 'members/destroy'
+
   get 'messages/index', to: 'messages#index'
 
   #
@@ -16,7 +33,21 @@ Rails.application.routes.draw do
              }
   get '/auth/slack/setup', to: 'sessions#setup', as: 'oauth_setup'
 
-  resources :users, only: [:index, :show]
+  resources :users, only: [:index, :show, :destroy] do
+    resources :teams, only: [:index]
+  end
+
+  resources :teams, only: [:index, :show, :destroy] do
+    resources :members, only: [:index]
+    resources :channels, only: [:index]
+    resources :items, only: [:index]
+  end
+
+  resources :members, only: [:index, :show, :destroy]
+
+  resources :channels, only: [:index, :show, :destroy] do
+    resources :items, only: [:index]
+  end
   get '/settings', to: 'users#settings', as: 'settings'
 
   # For api. api/slack/slash for Slack slash commands.

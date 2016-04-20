@@ -10,11 +10,10 @@
   <%= csrf_meta_tags %>
   <!-- ==== End: HTML HEAD TAG === -->
 </head>
-<body>
+<body class="css-<%= @view.name %>" >
 
 
 <% # ===== Blocmarks Page LAYOUT: ====   %>
-<div class="css-<%= @view.name %>" >
 <% # Note: default/global content can be override via content_for/yeild hooks %>
 <% #------------------------------------------------------- %>
 <% # Section0: (CSS: doc#header) -Global- %>
@@ -48,6 +47,5 @@
       <% # <nav> Page Footer navigation  %>
   <% end %>
 <% #------------------------------------------------------- %>
-</div>
 </body>
 </html>

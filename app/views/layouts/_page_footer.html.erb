@@ -1,14 +1,14 @@
 <!--  # ======== Begin: PAGE FOOTER -global- ========== -->
 <footer class="css-page-footer">
-  <header>
+  <header class="css-page-footer-header">
     <% if @view.policy(:include, :back_button) %>
-      <div class="container">
+      <div class="container css-page-footer-header-back">
         <%= link_to 'Back', @view.back_path, class: 'btn btn-xs btn-primary' %>
       </div>
     <% end %>
-    <hr>
   </header>
-  <nav>
+  <nav class="css-page-footer-nav">
+    <hr>
     <div class="container">
       <p class="text-muted"><%= render 'layouts/page_footer_created_by' %></p>
     </div>

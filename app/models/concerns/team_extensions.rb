@@ -61,21 +61,21 @@ module TeamExtensions
     end
 
     def create_from_slack_web_api
-      @web_client ||= make_web_client
+      # @web_client ||= make_web_client
       # response has name of member installing slack app.
-      resp_auth_test = @web_client.auth_test
-      install_member_name = resp_auth_test['user']
-      install_member_slack_id = resp_auth_test['user_id']
-      install_member_team_url = resp_auth_test['url']
+      # resp_auth_test = @web_client.auth_test
+      # install_member_name = resp_auth_test['user']
+      # install_member_slack_id = resp_auth_test['user_id']
+      # install_member_team_url = resp_auth_test['url']
       # response has name of team, team.id
-      resp_team = @web_client.team_info['team']
-      team_id = resp_team['id']
-      team_name = resp_team['name']
-      team_icon_88 = resp_team['icon']['image_88']
+      # resp_team = @web_client.team_info['team']
+      # team_id = resp_team['id']
+      # team_name = resp_team['name']
+      # team_icon_88 = resp_team['icon']['image_88']
       # response has name and id of each team member.
-      resp_team_members = @web_client.users_list['members']
+      # resp_team_members = @web_client.users_list['members']
       # response has name and id of every channel for this team.
-      resp_team_channels = @web_client.channels_list['channels']
+      # resp_team_channels = @web_client.channels_list['channels']
       Team.create!(
         name: @auth_hash[:raw_info]['team'],
         url: @auth_hash[:raw_info]['url'],
@@ -83,8 +83,8 @@ module TeamExtensions
         api_token: @auth_hash[:auth]['credentials']['token'],
         bot_user_id: @auth_hash[:bot_info]['bot_user_id'],
         bot_access_token: @auth_hash[:bot_info]['bot_access_token'],
-        user: @provider.user,
-        # members: Member.create_from_slack_web_api(resp_team_members, resp_team_channels)
+        user: @provider.user
+      # members: Member.create_from_slack_web_api(resp_team_members, resp_team_channels)
       )
     end
 

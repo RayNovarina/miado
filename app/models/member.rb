@@ -1,5 +1,5 @@
 #
 class Member < ActiveRecord::Base
-  belongs_to :registered_team
-  has_many :channels, dependent: :destroy
+  belongs_to :team
+  has_many :list_items, dependent: :destroy
 end

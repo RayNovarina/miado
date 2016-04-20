@@ -9,7 +9,7 @@
         <li><%= link_to '|', '' %></li>
       <% elsif true # policy(Team).index? %>
         <li><%= link_to 'My Teams',
-                'registered_applications_path',
+                user_teams_path(@view.current_user),
                 class: 'css-apps-link' %></li>
         <li><%= link_to '|', '' %></li>
       <% end %>

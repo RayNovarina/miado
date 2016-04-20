@@ -1,3 +1,17 @@
 // Place all the styles related to the Pages controller here.
 // They will automatically be included in application.css.
 // You can use Sass (SCSS) here: http://sass-lang.com/
+
+/*=================== Special layout for Add to Slack button landing page */
+.css-pages-add_to_slack, .css-pages-welcome_add_to_slack_new {
+  .jumbotron {
+    margin-bottom: 0px;
+    padding: 20px;
+    .css-add-to-slack {
+      .jumbotron {
+        margin-top: 20px;
+        background-color: #f5f5f5;
+      }
+    }
+ }
+}

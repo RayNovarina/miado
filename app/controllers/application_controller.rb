@@ -40,6 +40,7 @@ class ApplicationController < ActionController::Base
     end
     return omniauth_landing_page if @view.controller.is_a?(
       Devise::OmniauthCallbacksController)
+    return users_path if @view.current_user.admin?
     welcome_back_path
   end
 

@@ -1,0 +1,18 @@
+<header class="css-body-header">
+  <%= render partial: 'shared/index_page_header',
+             locals: @view.locals =
+                 { title: "Admin Dashboard - User (id:#{@view.url_params[:id]})"
+                 }
+  %>
+</header>
+
+<main class="css-body-main">
+  <div class="container">
+    <h2><%= "#{@view.user.name}:  #{@view.user.email}" %></h2>
+    <p>
+      <%= button_to 'Delete account', user_path(@view.user),
+          class: 'btn btn-primary btn-sm',
+          data: { confirm: 'Are you sure?' }, method: :delete %>
+    </p>
+  </div>
+</main>
