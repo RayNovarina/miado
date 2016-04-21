@@ -1,8 +1,15 @@
 def check_for_debug(url_params)
   command = url_params[:text]
   debug = command.starts_with?('$')
-  command = command.slice(1, command.length) if debug
+  command = command.slice(1, command.length).lstrip if debug
   [command, debug]
+end
+
+def add_debug_header(params, text)
+  text.concat("\n`Original command: `  ")
+      .concat(params[:command])
+      .concat(' ')
+      .concat(params[:text])
 end
 
 # Returns json response with text, attachments fields.

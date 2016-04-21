@@ -13,7 +13,7 @@ command	/do
 response_url	https://hooks.slack.com/commands/T0VN565N0/36163731489/YAHWUMXlBdviTE1rBILELuFK
 team_domain	shadowhtracteam
 team_id	T0VN565N0
-text	add
+text	call GoDaddy @susan /fri
 token	3ZQVG7rk4p7EZZluk1gTH3aN
 user_id	U0VLZ5P51
 user_name	ray
@@ -21,7 +21,9 @@ user_name	ray
 
 def process_add_cmd(params, debug)
   parsed_cmd = parse_slash_cmd(:add, params)
-  item = ListItem.create!(
+  return parsed_cmd[:err_msg] unless parsed_cmd[:err_msg].empty?
+
+  item = ListItem.new(
     channel_name: params[:channel_name],
     command_text:  parsed_cmd[:command],
     team_domain: params[:team_domain],
@@ -41,11 +43,11 @@ def process_add_cmd(params, debug)
     "#{parsed_cmd[:command]}#{assigned_to_clause}#{due_date_clause}"
 
   response =
-      "#{task_num_clause}#{assigned_to_clause}#{due_date_clause}" \
-      'Type `/do list` for a current list.'
+    "#{task_num_clause}#{assigned_to_clause}#{due_date_clause}" \
+    ' Type `/do list` for a current list.'
   item.debug_trace = response if debug
-  item.save!
-  response
+  return response if item.save
+  'Error creating registered site. Please try again.'
 end
 
 def add_assigned_channel(params)
@@ -57,7 +59,7 @@ end
 def add_assigned_member(parsed_cmd)
   return [nil, ''] if parsed_cmd[:assigned_member_id].nil?
   [parsed_cmd[:assigned_member_id],
-   "| *Assigned* to #{parsed_cmd[:assigned_members_name]}."
+   "| *Assigned* to @#{parsed_cmd[:assigned_member_name]}."
   ]
 end
 

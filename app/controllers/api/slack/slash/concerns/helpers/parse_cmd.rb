@@ -1,9 +1,111 @@
+=begin
 
-def parse_slash_cmd(_func, params)
+Form Params
+channel_id	C0VNKV7BK
+channel_name	general
+command	/do
+response_url	https://hooks.slack.com/commands/T0VN565N0/36163731489/YAHWUMXlBdviTE1rBILELuFK
+team_domain	shadowhtracteam
+team_id	T0VN565N0
+text	call GoDaddy @susan /fri
+token	3ZQVG7rk4p7EZZluk1gTH3aN
+user_id	U0VLZ5P51
+user_name	ray
+
+'• `/do rev 1 spec @susan /jun15`' \
+' Adds "rev 1 spec" to this channel, assigns it to Susan and sets' \
+" a due date of June 15.\n" \
+'• `/do append 3 Contact Jim.`' \
+" Adds \"Contact Jim.\" to the end of task 3.\n" \
+'• `/do assign 3 @tony`' \
+" Assigns \"@tony\" to task 3 for this channel.\n" \
+'• `/do unassign 4 @joe`' \
+" Removes \"@joe\" from task 4.\n" \
+'• `/do done 4`' \
+" Marks task 4 as completed.\n" \
+'• `/do remove 4`' \
+" Deletes task number 4 from the list.\n" \
+'• `/do due 4 /wed`' \
+" Sets the task due date to Wednesday for task 4.\n" \
+'• `/do redo 1 Send out newsletter by /fri.`' \
+' Deletes tasks 1 and replaces it with ' \
+"\"Send out newsletter by /fri\"\n" \
+'• `/do list`' \
+" Lists your tasks for this channel.\n" \
+'• `/do list due`' \
+" Lists your open tasks for this channel and their due dates.\n" \
+'• `/do list all`' \
+" Lists all team tasks for this channel.\n" \
+'• `/do help more`' \
+" Display /do keyboard shortcuts, misc. commands.\n" \
+':bulb: Click on the "mia-lists" member to see all of your up to date ' \
+'lists.\n' \
+'• `-- more help --`' \
+'• `/do list me`' \
+" Lists your open tasks for all channels and their due dates.\n" \
+=end
+
+def parse_slash_cmd(func, params)
   command, _debug = check_for_debug(params)
-  { command: command,
-    assigned_member_id: nil,
-    assigned_members_name: nil,
-    due_date: nil
-  }
+  p_hash =
+    { command: command,
+      err_msg: '',
+      assigned_member_id: nil,
+      assigned_members_name: nil,
+      due_date: nil,
+      task_num: nil
+    }
+  case func
+  when :add
+    adjust_add_command(p_hash)
+    scan4_member(p_hash)
+    scan4_due_date(p_hash) if p_hash[:err_msg].empty?
+  when :list
+  when :help
+  when :remove
+    scan4_task_num(p_hash)
+  end
+  p_hash
+end
+
+def adjust_add_command(p_hash)
+  return unless p_hash[:command].starts_with?('add')
+  blank_pos = p_hash[:command].index(' ')
+  return 'Error: no task specified.' if blank_pos.nil?
+  p_hash[:command] = p_hash[:command].slice(blank_pos..-1).lstrip
+end
+
+def scan4_task_num(p_hash)
+  p_hash[:task_num] = p_hash[:command][/\d+/]
+  p_hash[:err_msg] =
+    'Syntax error: no task number specified.' if p_hash[:task_num].nil?
+end
+
+# s = 'get donuts @susan /fri all kinds'
+def scan4_member(p_hash)
+  at_pos = p_hash[:command].index('@')
+  return if at_pos.nil?
+  blank_pos = p_hash[:command].index(' ', at_pos)
+
+  end_of_name_pos = p_hash[:command].length - 1 if blank_pos.nil?
+  end_of_name_pos = blank_pos - 1 unless blank_pos.nil?
+
+  name = p_hash[:command].slice(at_pos + 1, end_of_name_pos - at_pos)
+
+  p_hash[:assigned_member_id], p_hash[:assigned_member_name] =
+    slack_member_from_name(p_hash, name)
+end
+
+def scan4_due_date(p_hash)
+end
+
+def slack_member_from_name(p_hash, name)
+  return [p_hash[:user_id], p_hash[:user_name]] if name == 'me'
+  member = Member.where(name: name).first
+  if member.nil?
+    p_hash[:err_msg] =
+      "Member @#{name} not found."
+    return [nil, name]
+  end
+  [member.slack_user_id, name]
 end

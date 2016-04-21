@@ -24,7 +24,12 @@ def help_command(debug)
     " Lists your open tasks for this channel and their due dates.\n" \
     '• `/do list all`' \
     " Lists all team tasks for this channel.\n" \
+    '• `/do help more`' \
+    " Display /do keyboard shortcuts, misc. commands.\n" \
     ':bulb: Click on the "mia-lists" member to see all of your up to date ' \
-    'lists.'
+    "lists.\n" \
+    "• `-- more help --`\n" \
+    "• `/do list me`\n" \
+    ' Lists your open tasks for all channels and their due dates.'
   slash_response(text, nil, debug)
 end

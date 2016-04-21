@@ -13,7 +13,7 @@ end
   response_url	https://hooks.slack.com/commands/T0VN565N0/36163731489/YAHWUMXlBdviTE1rBILELuFK
   team_domain	shadowhtracteam
   team_id	T0VN565N0
-  text	add
+  text	list me
   token	3ZQVG7rk4p7EZZluk1gTH3aN
   user_id	U0VLZ5P51
   user_name	ray
@@ -21,7 +21,8 @@ end
 
 def process_list_cmd(params)
   # parsed_cmd = parse_slash_cmd(:list, params)
-  list = ListItem.where(channel_id: params[:channel_id])
+  list =
+    ListItem.where(channel_id: params[:channel_id]).reorder('created_at ASC')
   text = "<##{params['channel_id']}|#{params['channel_name']}> to-do list" \
          "#{list.empty? ? ' (empty)' : ''}"
   attachments = []
