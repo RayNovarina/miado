@@ -2,7 +2,8 @@ def remove_command(debug)
   params = @view.url_params
   text = process_remove_cmd(params, debug)
   add_debug_header(params, text) if debug
-  slash_response(text, nil, debug)
+  # slash_response(text, nil, debug)
+  append_to_list_command(text, debug)
 end
 
 =begin
@@ -27,8 +28,7 @@ def process_remove_cmd(params, _debug)
     ListItem.where(channel_id: params[:channel_id]).reorder('created_at ASC')
   return 'Error: List empty.' if channel_list.empty?
   if (channel_list[parsed_cmd[:task_num].to_i - 1]).destroy
-    return "Removed task #{parsed_cmd[:task_num]}. " \
-           'Type `/do list` for a current list.'
+    return "Removed task #{parsed_cmd[:task_num]}. "
   end
   'There was an error deleting this Task.'
 end

@@ -5,6 +5,15 @@ def list_command(debug)
   slash_response(text, attachments, debug)
 end
 
+def append_to_list_command(prepend_text, debug)
+  list_text, list_attachments = process_list_cmd(@view.url_params)
+  combined_text =
+    prepend_text
+    .concat(" Updated list as follows: \n")
+    .concat(list_text)
+  slash_response(combined_text, list_attachments, debug)
+end
+
 =begin
   Form Params
   channel_id	C0VNKV7BK
