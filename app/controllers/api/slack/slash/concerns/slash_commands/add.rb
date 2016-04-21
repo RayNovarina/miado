@@ -66,6 +66,6 @@ end
 def add_due_date(parsed_cmd)
   return [nil, ''] if parsed_cmd[:due_date].nil?
   [parsed_cmd[:due_date],
-   "| *Due* #{parsed_cmd[:due_date.strftime('%a, %d %b')]}."
+   "| *Due* #{parsed_cmd[:due_date].strftime('%a, %d %b')}."
   ]
 end

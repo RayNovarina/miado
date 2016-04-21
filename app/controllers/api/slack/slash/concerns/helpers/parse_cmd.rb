@@ -96,9 +96,6 @@ def scan4_member(p_hash)
     slack_member_from_name(p_hash, name)
 end
 
-def scan4_due_date(p_hash)
-end
-
 def slack_member_from_name(p_hash, name)
   return [p_hash[:user_id], p_hash[:user_name]] if name == 'me'
   member = Member.where(name: name).first
@@ -108,4 +105,69 @@ def slack_member_from_name(p_hash, name)
     return [nil, name]
   end
   [member.slack_user_id, name]
+end
+
+def scan4_due_date(p_hash)
+  slash_pos = p_hash[:command].index('/')
+  return if slash_pos.nil?
+  blank_pos = p_hash[:command].index(' ', slash_pos)
+
+  end_of_date_pos = p_hash[:command].length - 1 if blank_pos.nil?
+  end_of_date_pos = blank_pos - 1 unless blank_pos.nil?
+
+  due_date_string =
+    p_hash[:command].slice(slash_pos + 1, end_of_date_pos - slash_pos)
+
+  p_hash[:due_date] = date_from_due_date(due_date_string)
+  return if p_hash[:due_date].nil?
+  p_hash[:err_msg] =
+    'Error: Due date has already passed.' if p_hash[:due_date] < DateTime.now
+end
+
+def date_from_due_date(due_date_string)
+  numeric_partition = due_date_string.partition(/\d/)
+  # Case: no numeric portion. /fri or /jun or /half
+  if numeric_partition[1].empty?
+    begin
+      due_date = due_date_string.to_datetime
+    rescue ArgumentError
+      return nil
+    end
+    # Assume standalone day or month refers to a future date.
+    # if due_date < DateTime.now
+    # end
+    return due_date
+  end
+
+  # Case: just day of month specified. /12
+  if numeric_partition[0].empty?
+    begin
+      due_date = DateTime.now.strftime('%b')
+                         .concat(' ').concat(due_date_string)
+                         .to_datetime
+    rescue ArgumentError
+      p_hash[:err_msg] = 'Error: invalid day of month.'
+      return nil
+    end
+    # Assume standalone day or month refers to a future date.
+    # if due_date < DateTime.now
+    # end
+    return due_date
+  end
+
+  # Case: normal. /jun15
+  begin
+    due_date = numeric_partition[0]
+               .concat(' ')
+               .concat(numeric_partition[1])
+               .concat(numeric_partition[2])
+               .to_datetime
+  rescue ArgumentError
+    p_hash[:err_msg] = 'Error: invalid day of month.'
+    return nil
+  end
+  # Assume standalone day or month refers to a future date.
+  # if due_date < DateTime.now
+  # end
+  due_date
 end
