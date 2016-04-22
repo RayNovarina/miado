@@ -1,7 +1,9 @@
 def add_command(debug)
   params = @view.url_params
   text = process_add_cmd(params, debug)
-  text.concat("\n`Original command: `  ").concat(params[:text]) if debug
+  text.concat("\n`You typed: `  ")
+      .concat(params[:command]).concat(' ')
+      .concat(params[:text]) if debug || text.starts_with?('Error:')
   slash_response(text, nil, debug)
 end
 
@@ -44,10 +46,10 @@ def process_add_cmd(params, debug)
 
   response =
     "#{task_num_clause}#{assigned_to_clause}#{due_date_clause}" \
-    ' Type `/do list` for a current list.'
+    " Type `#{params[:command]} list` for a current list."
   item.debug_trace = response if debug
   return response if item.save
-  'Error creating registered site. Please try again.'
+  'Error creating task. Please try again.'
 end
 
 def add_assigned_channel(params)

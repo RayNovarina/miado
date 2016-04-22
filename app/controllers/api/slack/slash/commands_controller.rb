@@ -4,7 +4,7 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   require_relative 'concerns/commands' # method for each slack command
   require_relative 'concerns/helpers' # various utility methods/controller lib.
 
-  # before_action :authenticate_user
+  before_action :authenticate_slash_user
   # before_action :authorize_user
 
   # Slash commands are handed off to the bot process generally.
@@ -16,6 +16,24 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   end
 
   private
+
+=begin
+
+  Form Params
+  channel_id	C0VNKV7BK
+  channel_name	general
+  command	/do
+  response_url	https://hooks.slack.com/commands/T0VN565N0/36163731489/YAHWUMXlBdviTE1rBILELuFK
+  team_domain	shadowhtracteam
+  team_id	T0VN565N0
+  text	call GoDaddy @susan /fri
+  token	3ZQVG7rk4p7EZZluk1gTH3aN
+  user_id	U0VLZ5P51
+  user_name	ray
+=end
+  def authenticate_slash_user
+    @view.team ||= Team.where(slack_team_id: params[:team_id]).first
+  end
 
   # Returns:
   #   If command processed by controller:

@@ -1,8 +1,10 @@
 def remove_command(debug)
   params = @view.url_params
   text = process_remove_cmd(params, debug)
-  add_debug_header(params, text) if debug
-  # slash_response(text, nil, debug)
+  text.concat("\n`You typed: `  ")
+      .concat(params[:command]).concat(' ')
+      .concat(params[:text]) if debug || text.starts_with?('Error:')
+  return slash_response(text, nil, debug) if text.starts_with?('Error:')
   append_to_list_command(text, debug)
 end
 
@@ -27,8 +29,9 @@ def process_remove_cmd(params, _debug)
   channel_list =
     ListItem.where(channel_id: params[:channel_id]).reorder('created_at ASC')
   return 'Error: List empty.' if channel_list.empty?
+  return 'Error: Task number is out of range for this list.' if parsed_cmd[:task_num].to_i > channel_list.size
   if (channel_list[parsed_cmd[:task_num].to_i - 1]).destroy
     return "Removed task #{parsed_cmd[:task_num]}. "
   end
-  'There was an error deleting this Task.'
+  'Error: There was an error deleting this Task.'
 end

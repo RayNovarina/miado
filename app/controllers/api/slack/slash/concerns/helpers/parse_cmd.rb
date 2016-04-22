@@ -78,7 +78,7 @@ end
 def scan4_task_num(p_hash)
   p_hash[:task_num] = p_hash[:command][/\d+/]
   p_hash[:err_msg] =
-    'Syntax error: no task number specified.' if p_hash[:task_num].nil?
+    'Error: no task number specified.' if p_hash[:task_num].nil?
 end
 
 # s = 'get donuts @susan /fri all kinds'
@@ -98,10 +98,10 @@ end
 
 def slack_member_from_name(p_hash, name)
   return [p_hash[:user_id], p_hash[:user_name]] if name == 'me'
-  member = Member.where(name: name).first
+  member = Member.find_or_create_from_slack(@view, name)
   if member.nil?
     p_hash[:err_msg] =
-      "Member @#{name} not found."
+      "Error: Member @#{name} not found."
     return [nil, name]
   end
   [member.slack_user_id, name]

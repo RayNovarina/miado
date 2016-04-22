@@ -1,7 +1,9 @@
 def list_command(debug)
   params = @view.url_params
   text, attachments = process_list_cmd(params)
-  text.concat("\n`Original command: `  ").concat(params[:text]) if debug
+  text.concat("\n`You typed: `  ")
+      .concat(params[:command]).concat(' ')
+      .concat(params[:text]) if debug || text.starts_with?('Error:')
   slash_response(text, attachments, debug)
 end
 
