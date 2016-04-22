@@ -33,26 +33,35 @@ end
 def process_list_cmd(params, type = nil)
   parsed_cmd = parse_slash_cmd(:list, params)
   type ||= parsed_cmd[:sub_func]
-  list = list_all(params) if type == :all
-  list = list_mine(params) if type == :mine
-  list = list_due(params) if type == :due
+
+  list = list_item_query(parsed_cmd, params)
+  # return 'Error: List empty.' if list.empty?
+
   format_display_list(type, list, params)
 end
 
-def list_all(params)
-  # All list items for this Team Channel.
-  ListItem.where(channel_id: params[:channel_id]).reorder('created_at ASC')
-end
-
-def list_mine(params)
-  # All list items for this Team Channel assigned to this Slack member
-  ListItem.where(channel_id: params[:channel_id]).reorder('created_at ASC')
-end
-
-def list_due(params)
-  # All list items for this Team Channel assigned to this Slack member and
+def list_item_query(parsed_cmd, params)
+  # mine: All list items for this Team Channel assigned to this Slack member
+  return ListItem.where(channel_id: params[:channel_id],
+                        assigned_member_id: params[:user_id]
+                       ) if parsed_cmd[:sub_func] == :mine
+  # due: All list items for this Team Channel assigned to this Slack member and
   # with a due date.
-  ListItem.where(channel_id: params[:channel_id]).reorder('created_at ASC')
+  return ListItem.where(channel_id: params[:channel_id],
+                        assigned_member_id: params[:user_id],
+                        due_date: nil
+                       ) if parsed_cmd[:sub_func] == :due
+  # team: All list items for this Team Channel.
+  return ListItem.where(channel_id: params[:channel_id]
+                       ) if parsed_cmd[:sub_func] == :team
+  # member: All list items for this Team Channel assigned to a Slack member
+  return ListItem.where(channel_id: params[:channel_id],
+                        assigned_member_id: parsed_cmd[:assigned_member_id]
+                       ) if parsed_cmd[:sub_func] == :member
+  # all: All list items for ALL Channels assigned to this Slack member
+  return ListItem.where(team_id: params[:team_id],
+                        assigned_member_id: params[:user_id]
+                       ) if parsed_cmd[:sub_func] == :all
 end
 
 def format_display_list(type, list, params)

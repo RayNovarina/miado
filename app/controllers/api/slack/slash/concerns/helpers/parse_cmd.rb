@@ -51,7 +51,7 @@ def parse_slash_cmd(func, params)
     { command: command,
       err_msg: '',
       assigned_member_id: nil,
-      assigned_members_name: nil,
+      assigned_member_name: nil,
       due_date: nil,
       task_num: nil,
       func: func,
@@ -66,6 +66,7 @@ def parse_slash_cmd(func, params)
     scan4_sub_func(p_hash)
   when :help
   when :delete
+    scan4_sub_func(p_hash)
     scan4_task_num(p_hash)
   end
   p_hash
@@ -78,14 +79,28 @@ def adjust_add_command(p_hash)
   p_hash[:command] = p_hash[:command].slice(blank_pos..-1).lstrip
 end
 
+# p_hash = { command: 'list all', func: :list, sub_func: nil }
 def scan4_sub_func(p_hash)
-  return unless p_hash[:func] == :list
-  p_hash[:sub_func] = :mine
-  p_hash[:sub_func] = :all if p_hash[:command].starts_with?('list all')
-  p_hash[:sub_func] = :due if p_hash[:command].starts_with?('list due')
+  sub_funcs = %w(due all team mine me)
+  # Do we have pattern 'list<b>'?
+  if p_hash[:command].index(p_hash[:func].to_s.concat(' ')).nil?
+    # no
+    p_hash[:sub_func] = :mine if p_hash[:func] == :list
+    return
+  end
+  # yes
+  sub_func_begin_pos = p_hash[:command].index(' ', 1) + 1
+  sub_func_end_pos =
+    p_hash[:command].index(' ', sub_func_begin_pos) ||
+    sub_func_begin_pos + p_hash[:command].length - sub_func_begin_pos - 1
+  sub_func =
+    p_hash[:command].slice(sub_func_begin_pos, sub_func_end_pos)
+  p_hash[:sub_func] = sub_funcs.include?(sub_func) ? sub_func.to_sym : nil
+  p_hash[:sub_func] = :mine if sub_func == 'me'
 end
 
 def scan4_task_num(p_hash)
+  return unless p_hash[:sub_func].nil?
   p_hash[:task_num] = p_hash[:command][/\d+/]
   p_hash[:err_msg] =
     'Error: no task number specified.' if p_hash[:task_num].nil?

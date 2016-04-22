@@ -46,7 +46,8 @@ def process_add_cmd(params, debug)
 
   response =
     "#{task_num_clause}#{assigned_to_clause}#{due_date_clause}" \
-    " Type `#{params[:command]} list` for a current list."
+    " Type `#{params[:command]} list` for YOUR current list." \
+    " or `#{params[:command]} list team` for current TEAM list."
   item.debug_trace = response if debug
   return response if item.save
   'Error creating task. Please try again.'

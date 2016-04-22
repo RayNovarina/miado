@@ -19,17 +19,19 @@ def help_command(debug)
     ' Deletes tasks 1 and replaces it with ' \
     "\"Send out newsletter by /fri\"\n" \
     '• `/do list`' \
-    " Lists your tasks for this channel.\n" \
+    " Lists your ASSIGNED tasks for THIS channel. Includes DONE tasks.\n" \
     '• `/do list due`' \
-    " Lists your open tasks for this channel and their due dates.\n" \
+    " Lists your OPEN tasks for THIS channel. ASSIGNED but not DONE.\n" \
+    '• `/do list team`' \
+    " Lists all TEAM tasks for THIS channel.\n" \
     '• `/do list all`' \
-    " Lists all team tasks for this channel.\n" \
+    " Lists your ASSIGNED tasks for ALL channels.\n" \
     '• `/do help more`' \
     " Display /do keyboard shortcuts, misc. commands.\n" \
-    ':bulb: Click on the "mia-lists" member to see all of your up to date ' \
-    "lists.\n" \
-    "• `-- more help --`\n" \
-    "• `/do list me`\n" \
-    ' Lists your open tasks for all channels and their due dates.'
+    ':bulb: Click on the "miaDo" member to see all of your up to date lists.' \
+    "\n"
+    # "• `-- more help --`\n" \
+    # "• `/do list me`\n" \
+    # ' Lists your open tasks for all channels and their due dates.'
   slash_response(text, nil, debug)
 end
