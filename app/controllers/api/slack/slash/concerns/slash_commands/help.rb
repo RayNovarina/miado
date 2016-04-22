@@ -11,7 +11,7 @@ def help_command(debug)
     " Removes \"@joe\" from task 4.\n" \
     '• `/do done 4`' \
     " Marks task 4 as completed.\n" \
-    '• `/do remove 4`' \
+    '• `/do delete 4`' \
     " Deletes task number 4 from the list.\n" \
     '• `/do due 4 /wed`' \
     " Sets the task due date to Wednesday for task 4.\n" \

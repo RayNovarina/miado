@@ -46,7 +46,7 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
     return add_command(debug) if command.starts_with?('add')
     return help_command(debug) if command.starts_with?('help')
     return list_command(debug) if command.starts_with?('list')
-    return remove_command(debug) if command.starts_with?('remove')
+    return delete_command(debug) if command.starts_with?('delete')
     # handoff_slash_command_to_bot
     add_command(debug)
   end

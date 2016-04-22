@@ -53,7 +53,9 @@ def parse_slash_cmd(func, params)
       assigned_member_id: nil,
       assigned_members_name: nil,
       due_date: nil,
-      task_num: nil
+      task_num: nil,
+      func: func,
+      sub_func: nil
     }
   case func
   when :add
@@ -61,8 +63,9 @@ def parse_slash_cmd(func, params)
     scan4_member(p_hash)
     scan4_due_date(p_hash) if p_hash[:err_msg].empty?
   when :list
+    scan4_sub_func(p_hash)
   when :help
-  when :remove
+  when :delete
     scan4_task_num(p_hash)
   end
   p_hash
@@ -73,6 +76,13 @@ def adjust_add_command(p_hash)
   blank_pos = p_hash[:command].index(' ')
   return 'Error: no task specified.' if blank_pos.nil?
   p_hash[:command] = p_hash[:command].slice(blank_pos..-1).lstrip
+end
+
+def scan4_sub_func(p_hash)
+  return unless p_hash[:func] == :list
+  p_hash[:sub_func] = :mine
+  p_hash[:sub_func] = :all if p_hash[:command].starts_with?('list all')
+  p_hash[:sub_func] = :due if p_hash[:command].starts_with?('list due')
 end
 
 def scan4_task_num(p_hash)

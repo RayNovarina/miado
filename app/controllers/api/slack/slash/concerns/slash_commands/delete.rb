@@ -1,11 +1,11 @@
-def remove_command(debug)
+def delete_command(debug)
   params = @view.url_params
-  text = process_remove_cmd(params, debug)
+  text = process_delete_cmd(params, debug)
   text.concat("\n`You typed: `  ")
       .concat(params[:command]).concat(' ')
       .concat(params[:text]) if debug || text.starts_with?('Error:')
   return slash_response(text, nil, debug) if text.starts_with?('Error:')
-  append_to_list_command(text, debug)
+  prepend_to_list_command(:all, text, debug)
 end
 
 =begin
@@ -22,8 +22,8 @@ user_id	U0VLZ5P51
 user_name	ray
 =end
 
-def process_remove_cmd(params, _debug)
-  parsed_cmd = parse_slash_cmd(:remove, params)
+def process_delete_cmd(params, _debug)
+  parsed_cmd = parse_slash_cmd(:delete, params)
   return parsed_cmd[:err_msg] unless parsed_cmd[:err_msg].empty?
 
   channel_list =
@@ -31,7 +31,7 @@ def process_remove_cmd(params, _debug)
   return 'Error: List empty.' if channel_list.empty?
   return 'Error: Task number is out of range for this list.' if parsed_cmd[:task_num].to_i > channel_list.size
   if (channel_list[parsed_cmd[:task_num].to_i - 1]).destroy
-    return "Removed task #{parsed_cmd[:task_num]}. "
+    return "Deleted task #{parsed_cmd[:task_num]}. "
   end
   'Error: There was an error deleting this Task.'
 end
