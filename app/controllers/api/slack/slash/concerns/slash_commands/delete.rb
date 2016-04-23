@@ -27,7 +27,7 @@ user_name	ray
 def process_delete_cmd(params, parsed_cmd, _debug)
   return parsed_cmd[:err_msg] unless parsed_cmd[:err_msg].empty?
 
-  channel_list = list_item_query(parsed_cmd, params)
+  channel_list = delete_list_item_query(parsed_cmd, params)
 
   return 'Error: List empty.' if channel_list.empty?
   return delete_team(parsed_cmd, channel_list) if parsed_cmd[:sub_func] == :team
@@ -36,10 +36,16 @@ def process_delete_cmd(params, parsed_cmd, _debug)
   delete_one(parsed_cmd, channel_list)
 end
 
-def list_item_query(parsed_cmd, params)
-  return ListItem.where(channel_id: params[:channel_id]) if parsed_cmd[:sub_func] == :team
-  return ListItem.where(channel_id: params[:channel_id], assigned_member_id: params[:user_id]) if parsed_cmd[:sub_func] == :mine
-  ListItem.where(channel_id: params[:channel_id]).reorder('created_at ASC')
+def delete_list_item_query(parsed_cmd, params)
+  if parsed_cmd[:sub_func] == :team
+    ListItem.where(channel_id: params[:channel_id])
+  elsif parsed_cmd[:sub_func] == :mine
+    ListItem.where(channel_id: params[:channel_id],
+                   assigned_member_id: params[:user_id]
+                  )
+  else
+    ListItem.where(channel_id: params[:channel_id]).reorder('created_at ASC')
+  end
 end
 
 def delete_one(parsed_cmd, channel_list)

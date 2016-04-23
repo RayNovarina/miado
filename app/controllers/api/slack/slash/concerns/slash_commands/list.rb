@@ -33,50 +33,83 @@ end
 def process_list_cmd(params, type = nil)
   parsed_cmd = parse_slash_cmd(:list, params)
   type ||= parsed_cmd[:sub_func]
-
-  list = list_item_query(parsed_cmd, params)
+  list = list_list_item_query(parsed_cmd, params)
   # return 'Error: List empty.' if list.empty?
-
   format_display_list(type, list, params)
 end
 
-def list_item_query(parsed_cmd, params)
-  # mine: All list items for this Team Channel assigned to this Slack member
-  return ListItem.where(channel_id: params[:channel_id],
-                        assigned_member_id: params[:user_id]
-                       ) if parsed_cmd[:sub_func] == :mine
-  # due: All list items for this Team Channel assigned to this Slack member and
-  # with a due date.
-  return ListItem.where(channel_id: params[:channel_id],
-                        assigned_member_id: params[:user_id],
-                        due_date: nil
-                       ) if parsed_cmd[:sub_func] == :due
-  # team: All list items for this Team Channel.
-  return ListItem.where(channel_id: params[:channel_id]
-                       ) if parsed_cmd[:sub_func] == :team
-  # member: All list items for this Team Channel assigned to a Slack member
-  return ListItem.where(channel_id: params[:channel_id],
-                        assigned_member_id: parsed_cmd[:assigned_member_id]
-                       ) if parsed_cmd[:sub_func] == :member
-  # all: All list items for ALL Channels assigned to this Slack member
-  return ListItem.where(team_id: params[:team_id],
-                        assigned_member_id: params[:user_id]
-                       ) if parsed_cmd[:sub_func] == :all
+def list_list_item_query(parsed_cmd, params)
+  if parsed_cmd[:sub_func] == :mine
+    # mine: All list items for this Team Channel assigned to this Slack member
+    ListItem.where(channel_id: params[:channel_id],
+                   assigned_member_id: params[:user_id])
+  elsif parsed_cmd[:sub_func] == :due
+    # due: All list items for this Team Channel assigned to this Slack member
+    #      and with a due date.
+    ListItem.where(channel_id: params[:channel_id],
+                   assigned_member_id: params[:user_id])
+            .where.not(assigned_due_date: nil)
+  elsif parsed_cmd[:sub_func] == :team
+    # team: All list items for this Team Channel.
+    ListItem.where(channel_id: params[:channel_id])
+  elsif parsed_cmd[:sub_func] == :member
+    # member: All list items for this Team Channel assigned to a Slack member
+    ListItem.where(channel_id: params[:channel_id],
+                   assigned_member_id: parsed_cmd[:assigned_member_id])
+  elsif parsed_cmd[:sub_func] == :all
+    # all: All list items for ALL Channels assigned to this Slack member,
+    #     clumped by channel via sorted by channel name and creation date.
+    ListItem.where(team_id: params[:team_id], assigned_member_id: params[:user_id]).reorder('channel_name ASC, created_at ASC')
+  else
+    []
+  end
 end
 
 def format_display_list(type, list, params)
-  text = "<##{params['channel_id']}|#{params['channel_name']}> " \
-         "to-do list (#{type.to_s})" \
+  return format_all_display_list(type, list, params) if type == :all
+  list_display_list(type.to_s, params['channel_id'],
+                    params['channel_name'], list)
+end
+
+def list_display_list(type, channel_id, channel_name, list)
+  text = "<##{channel_id}|#{channel_name}> " \
+         "to-do list (#{type})" \
          "#{list.empty? ? ' (empty)' : ''}"
   attachments = []
   list.each_with_index do |item, index|
-    # { text: '1) rev 1 spec @susan /jun15 | *Assigned* to @susan',
-    #  mrkdwn_in: ['text']
-    # }
-    attachments << {
-      text: "#{index + 1}) #{item.description}",
-      mrkdwn_in: ['text']
-    }
+    list_add_item_to_display_list(attachments, item, index)
+  end
+  [text, attachments]
+end
+
+def list_add_item_to_display_list(attachments, item, index)
+  # { text: '1) rev 1 spec @susan /jun15 | *Assigned* to @susan',
+  #  mrkdwn_in: ['text']
+  # }
+  attachments << {
+    text: "#{index + 1}) #{item.description}",
+    mrkdwn_in: ['text']
+  }
+end
+
+def format_all_display_list(type, list, params)
+  text = "#all-channels " \
+         "to-do list (mine)" \
+         "#{list.empty? ? ' (empty)' : ''}"
+  attachments = []
+  channel_index = 0
+  current_channel_id = ''
+  list.each do |item|
+    unless current_channel_id == item.channel_id
+      channel_index = 0
+      current_channel_id = item.channel_id
+      attachments << {
+        text: "---- ##{item.channel_name} channel ----------",
+        mrkdwn_in: ['text']
+      }
+    end
+    list_add_item_to_display_list(attachments, item, channel_index)
+    channel_index += 1
   end
   [text, attachments]
 end
