@@ -1,15 +1,3 @@
-def delete_command(debug)
-  params = @view.url_params
-  parsed_cmd = parse_slash_cmd(:delete, params)
-  text = process_delete_cmd(params, parsed_cmd, debug)
-  text.concat("\n`You typed: `  ")
-      .concat(params[:command]).concat(' ')
-      .concat(params[:text]) if debug || text.starts_with?('Error:')
-  return slash_response(text, nil, debug) if text.starts_with?('Error:')
-  return slash_response(text, nil, debug) if parsed_cmd[:sub_func] == :team
-  prepend_to_list_command(:mine, text, debug)
-end
-
 =begin
 Form Params
 channel_id	C0VNKV7BK
@@ -24,49 +12,87 @@ user_id	U0VLZ5P51
 user_name	ray
 =end
 
-def process_delete_cmd(params, parsed_cmd, _debug)
-  return parsed_cmd[:err_msg] unless parsed_cmd[:err_msg].empty?
-
-  channel_list = delete_list_item_query(parsed_cmd, params)
-
-  return 'Error: List empty.' if channel_list.empty?
-  return delete_team(parsed_cmd, channel_list) if parsed_cmd[:sub_func] == :team
-  return delete_mine(parsed_cmd, channel_list) if parsed_cmd[:sub_func] == :mine
-  return delete_member(parsed_cmd, channel_list) if parsed_cmd[:sub_func] == :member
-  delete_one(parsed_cmd, channel_list)
-end
-
-def delete_list_item_query(parsed_cmd, params)
-  if parsed_cmd[:sub_func] == :team
-    ListItem.where(channel_id: params[:channel_id])
-  elsif parsed_cmd[:sub_func] == :mine
-    ListItem.where(channel_id: params[:channel_id],
-                   assigned_member_id: params[:user_id]
-                  )
-  else
-    ListItem.where(channel_id: params[:channel_id]).reorder('created_at ASC')
+# Inputs: parsed = parsed command line info that has been verified.
+#         before_action list: [ListItem.id] for the list that the user
+#                             is referencing.
+# Returns: [text, attachments]
+#          parsed[:err_msg] if needed.
+#          action list = deleted item removed.
+#-----------------------------------
+# LIST_SCOPES  = %w(one_member team)
+# CHANNEL_SCOPES = %w(one_channel all_channels)
+# SUB_FUNCS  = %w(open due more done)
+# list_owner = :team, :mine, <@name>
+# assigned_member_name = <@name>
+#------------------------------
+def delete_command(parsed)
+  text = delete_item(parsed)
+  if parsed[:err_msg].empty?
+    # Persist the channel.list_ids[] for the next transaction.
+    save_after_action_list_context(parsed, parsed, parsed[:list])
+    # Display modified list after deleting an item.
+    parsed[:display_after_action_list] = true
+    return [text, nil]
   end
+  [parsed[:err_msg], nil]
 end
 
-def delete_one(parsed_cmd, channel_list)
-  return 'Error: Task number is out of range for this list.' if parsed_cmd[:task_num].to_i > channel_list.size
-  if (channel_list[parsed_cmd[:task_num].to_i - 1]).destroy
-    return "Deleted task #{parsed_cmd[:task_num]}."
+def delete_item(parsed)
+  return parsed[:err_msg] = 'Error: Invalid to specify team and task number.' if parsed[:sub_func] == :team && !parsed[:task_num].nil?
+  return delete_all(parsed) if parsed[:task_num].nil?
+  return delete_one(parsed) unless parsed[:task_num].nil?
+end
+
+# Returns: text msg.
+#          parsed[:err_msg] if needed.
+#          list is adjusted for deleted item(s)
+def delete_one(parsed)
+  return if task_num_out_of_range?(parsed)
+  delete_task(parsed[:list][parsed[:task_num] - 1], parsed)
+  if parsed[:err_msg].empty?
+    parsed[:list].delete_at(parsed[:task_num] - 1)
+    return "Deleted #{parsed[:list_scope == :team ? 'team' : 'your']} " \
+           "task #{parsed[:task_num]}."
   end
-  'Error: There was an error deleting this Task.'
+  parsed[:err_msg]
 end
 
-def delete_team(_parsed_cmd, channel_list)
-  channel_list.destroy_all
-  'Deleted all tasks for your Team in this channel.'
+# Returns: text msg.
+#          parsed[:err_msg] if needed.
+#          list is adjusted for deleted item(s)
+def delete_task(id, parsed)
+  return if ListItem.find(id).destroy
+  parsed[:err_msg] = 'Error: There was an error deleting this Task.'
 end
 
-def delete_mine(_parsed_cmd, channel_list)
-  channel_list.destroy_all
-  'Deleted all of your ASSIGNED tasks in this channel.'
+def delete_all(parsed)
+  destroy_all_by_ids(parsed[:list], parsed)
+  if parsed[:err_msg].empty?
+    parsed[:list] = []
+    return delete_all_msg(parsed)
+  end
+  parsed[:err_msg]
 end
 
-def delete_member(_parsed_cmd, channel_list)
-  channel_list.destroy_all
-  "Deleted all ASSIGNED tasks in this channel for member #{parsed_cmd[:assigned_member_name]}."
+def delete_all_msg(parsed)
+  if parsed[:list_scope] == :team
+    return 'Deleted ALL tasks in this channel for ANY team member.' if parsed[:channel_scope] == :one_channel
+    return 'Deleted ALL tasks in ANY channel for ANY team member.' if parsed[:channel_scope] == :all_channels
+  end
+  # parsed[:list_scope] == :one_member
+  if parsed[:channel_scope] == :one_channel
+    return 'Deleted ALL of your ASSIGNED tasks in this channel.' if parsed[:list_owner] == :mine
+    return "Deleted ALL of #{parsed[:list_owner]} ASSIGNED tasks in this channel."
+  end
+  # parsed[:channel_scope] == :all_channels
+  return 'Deleted ALL of your ASSIGNED tasks in ALL channels.' if parsed[:list_owner] == :mine
+  "Deleted ALL of #{parsed[:list_owner]} ASSIGNED tasks in ALL channel."
+end
+
+def destroy_all_by_ids(list, parsed)
+  list.each_with_index do |id, index|
+    delete_task(id, parsed)
+    next if parsed[:err_msg].empty?
+    return parsed[:err_msg].concat("  ##{index} in list.")
+  end
 end

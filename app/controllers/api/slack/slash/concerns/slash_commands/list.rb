@@ -1,21 +1,3 @@
-def list_command(debug)
-  params = @view.url_params
-  text, attachments = process_list_cmd(params)
-  text.concat("\n`You typed: `  ")
-      .concat(params[:command]).concat(' ')
-      .concat(params[:text]) if debug || text.starts_with?('Error:')
-  slash_response(text, attachments, debug)
-end
-
-def prepend_to_list_command(type, prepend_text, debug)
-  list_text, list_attachments = process_list_cmd(@view.url_params, type)
-  combined_text =
-    prepend_text
-    .concat(" Updated list as follows: \n")
-    .concat(list_text)
-  slash_response(combined_text, list_attachments, debug)
-end
-
 =begin
   Form Params
   channel_id	C0VNKV7BK
@@ -30,58 +12,69 @@ end
   user_name	ray
 =end
 
-def process_list_cmd(params, type = nil)
-  parsed_cmd = parse_slash_cmd(:list, params)
-  type ||= parsed_cmd[:sub_func]
-  list = list_list_item_query(parsed_cmd, params)
-  # return 'Error: List empty.' if list.empty?
-  format_display_list(type, list, params)
+# Inputs: parsed = parsed command line info that has been verified.
+#         list = [ListItem.id] for the list that the user is referencing.
+# Returns: [text, attachments]
+#          parsed[:err_msg] if needed.
+#          parsed[:list_for_after_action] = based on the new parsed info.
+#-----------------------------------
+# LIST_SCOPES  = %w(one_member team)
+# CHANNEL_SCOPES = %w(one_channel all_channels)
+# SUB_FUNCS  = %w(open due more done)
+# list_owner = :team, :mine, :member
+# assigned_member_id = list.id of member assigned a task
+#------------------------------
+def list_command(parsed)
+  records = list_from_parsed(parsed) unless parsed[:display_after_action_list]
+  records = list_from_list_of_ids(parsed[:after_action_list_context][:list]) if parsed[:display_after_action_list]
+  parsed[:debug] = true if records.nil?
+  records = [] if records.nil?
+  context = parsed unless parsed[:display_after_action_list]
+  context = parsed[:after_action_list_context] if parsed[:display_after_action_list]
+  format_display_list(parsed, context, records)
 end
 
-def list_list_item_query(parsed_cmd, params)
-  if parsed_cmd[:sub_func] == :mine
-    # mine: All list items for this Team Channel assigned to this Slack member
-    ListItem.where(channel_id: params[:channel_id],
-                   assigned_member_id: params[:user_id])
-  elsif parsed_cmd[:sub_func] == :due
-    # due: All list items for this Team Channel assigned to this Slack member
-    #      and with a due date.
-    ListItem.where(channel_id: params[:channel_id],
-                   assigned_member_id: params[:user_id])
-            .where.not(assigned_due_date: nil)
-  elsif parsed_cmd[:sub_func] == :team
-    # team: All list items for this Team Channel.
-    ListItem.where(channel_id: params[:channel_id])
-  elsif parsed_cmd[:sub_func] == :member
-    # member: All list items for this Team Channel assigned to a Slack member
-    ListItem.where(channel_id: params[:channel_id],
-                   assigned_member_id: parsed_cmd[:assigned_member_id])
-  elsif parsed_cmd[:sub_func] == :all
-    # all: All list items for ALL Channels assigned to this Slack member,
-    #     clumped by channel via sorted by channel name and creation date.
-    ListItem.where(team_id: params[:team_id], assigned_member_id: params[:user_id]).reorder('channel_name ASC, created_at ASC')
-  else
-    []
-  end
+# Returns: slash_response() return values.
+def prepend_to_list_command(parsed, prepend_text)
+  list_text, list_attachments = list_command(parsed)
+  combined_text =
+    prepend_text.concat("   Updated list as follows: \n").concat(list_text)
+  slash_response(combined_text, list_attachments, parsed)
 end
 
-def format_display_list(type, list, params)
-  return format_all_display_list(type, list, params) if type == :all
-  list_display_list(type.to_s, params['channel_id'],
-                    params['channel_name'], list)
-end
-
-def list_display_list(type, channel_id, channel_name, list)
-  text = "<##{channel_id}|#{channel_name}> " \
-         "to-do list (#{type})" \
-         "#{list.empty? ? ' (empty)' : ''}"
-  attachments = []
-  list.each_with_index do |item, index|
-    list_add_item_to_display_list(attachments, item, index)
-  end
+# Returns: [text, attachments]
+def format_display_list(parsed, context, list_of_records)
+  text, attachments, list_ids = one_channel_display(parsed, context, list_of_records) if context[:channel_scope] == :one_channel
+  text, attachments, list_ids = all_channels_display(parsed, context, list_of_records) if context[:channel_scope] == :all_channels
+  # Persist the channel.list_ids[] for the next transaction.
+  save_after_action_list_context(parsed, context, list_ids) unless parsed[:display_after_action_list]
+  text.concat(parsed[:err_msg]) unless parsed[:err_msg].empty?
   [text, attachments]
 end
 
+# Returns: [text, attachments]
+def one_channel_display(parsed, context, list_of_records)
+  text = "<##{parsed[:url_params]['channel_id']}|#{parsed[:url_params]['channel_name']}> " \
+         "to-do list (#{format_owner_title(context)})" \
+         "#{list_of_records.empty? ? ' (empty)' : ''}"
+  list_ids = []
+  attachments = []
+  list_of_records.each_with_index do |item, index|
+    list_add_item_to_display_list(attachments, item, index)
+    list_ids << item.id
+  end
+  [text, attachments, list_ids]
+end
+
+def format_owner_title(context)
+  type = context[:list_owner_name] unless context[:list_scope] == :team
+  type = 'team' if context[:list_scope] == :team
+  return type if context[:channel_scope] == :one_channel
+  type.concat(' all') # context[:channel_scope] == :all_channels
+  type
+end
+
+# Returns: updated attachments array.
 def list_add_item_to_display_list(attachments, item, index)
   # { text: '1) rev 1 spec @susan /jun15 | *Assigned* to @susan',
   #  mrkdwn_in: ['text']
@@ -92,14 +85,16 @@ def list_add_item_to_display_list(attachments, item, index)
   }
 end
 
-def format_all_display_list(type, list, params)
-  text = "#all-channels " \
-         "to-do list (mine)" \
-         "#{list.empty? ? ' (empty)' : ''}"
+# Returns: [text, attachments, list_ids]
+def all_channels_display(_parsed, context, list_of_records)
+  text = '#all-channels ' \
+         "to-do list (#{format_owner_title(context)})" \
+         "#{list_of_records.empty? ? ' (empty)' : ''}"
+  list_ids = []
   attachments = []
   channel_index = 0
   current_channel_id = ''
-  list.each do |item|
+  list_of_records.each do |item|
     unless current_channel_id == item.channel_id
       channel_index = 0
       current_channel_id = item.channel_id
@@ -109,18 +104,8 @@ def format_all_display_list(type, list, params)
       }
     end
     list_add_item_to_display_list(attachments, item, channel_index)
+    list_ids << item.id
     channel_index += 1
   end
-  [text, attachments]
+  [text, attachments, list_ids]
 end
-
-=begin
-  1) order flow CRM
-  2) Brent & shipping info @tony | ​*Assigned:*​ @tony
-  3) Kendra todo invoices @tony | ​*Assigned:*​ @tony
-  4) CSM leads in @tony | ​*Assigned:*​ @tony
-  5) SMP @tony | ​*Assigned:*​ @tony
-  6) NEXT/APTA June @Tony | ​*Assigned:*​ @tony
-  7) example newsletter @tony | ​*Assigned:*​ @tony
-  8) 1 @tony | ​*Assigned:*​ @tony
-=end

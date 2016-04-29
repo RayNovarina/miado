@@ -7,32 +7,15 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   before_action :authenticate_slash_user
   # before_action :authorize_user
 
-  # Slash commands are handed off to the bot process generally.
-  # Static page responses are directly sent here to be more responsive to user.
   # Returns json slash command response. Empty text msg if command handed off
   # to bot.
   def create
-    render json: static_response_or_bot_msg, status: 200
+    render json: local_response_or_bot_msg, status: 200
   end
 
   private
 
-=begin
-
-  Form Params
-  channel_id	C0VNKV7BK
-  channel_name	general
-  command	/do
-  response_url	https://hooks.slack.com/commands/T0VN565N0/36163731489/YAHWUMXlBdviTE1rBILELuFK
-  team_domain	shadowhtracteam
-  team_id	T0VN565N0
-  text	call GoDaddy @susan /fri
-  token	3ZQVG7rk4p7EZZluk1gTH3aN
-  user_id	U0VLZ5P51
-  user_name	ray
-=end
   def authenticate_slash_user
-    @view.team ||= Team.where(slack_team_id: params[:team_id]).first
   end
 
   # Returns:
@@ -40,15 +23,43 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   #      json response with text, attachments fields.
   #   If command handed over to bot: empty string or err msg.
   # In all cases, @view hash has url_params with Slack slash command form parms.
-  def static_response_or_bot_msg
-    command, debug = check_for_debug(params)
-    return help_command(debug) if command.empty?
-    return add_command(debug) if command.starts_with?('add')
-    return help_command(debug) if command.starts_with?('help')
-    return list_command(debug) if command.starts_with?('list')
-    return delete_command(debug) if command.starts_with?('delete')
-    # handoff_slash_command_to_bot
-    add_command(debug)
+  def local_response_or_bot_msg
+    # Cmd Context: We need to know our team members and the last list displayed.
+    @view.channel, previous_action_parse_hash = recover_previous_action_list
+    # Note: previous_action_list_context: {} becomes our
+    # BEFORE action list(mine) or list(team) or list(all)
+    parsed = parse_slash_cmd(params, @view, previous_action_parse_hash)
+    return parsed[:err_msg] unless parsed[:err_msg].empty?
+    text, attachments = process_cmd(parsed)
+    # after_action_list_context: {} is AFTER action list(mine) or
+    # list(team) or list(all)
+    add_standard_err_help_info(parsed, text)
+    return slash_response(text, attachments, parsed) unless parsed[:err_msg].empty?
+    # Display an updated AFTER ACTION list if useful, i.e. task has been added
+    # or deleted.
+    return prepend_to_list_command(parsed, text) if parsed[:display_after_action_list]
+    slash_response(text, attachments, parsed)
+    # return handoff_slash_command_to_bot(parsed, list) if parsed[:handoff]
+  end
+
+  def recover_previous_action_list
+    @view.channel ||= Channel.find_or_create_from_slack_id(
+      @view, params[:channel_id], params[:team_id])
+    [@view.channel, @view.channel.after_action_parse_hash]
+  end
+
+  # Returns: [text, attachments]
+  def process_cmd(parsed)
+    return add_command(parsed) if parsed[:func] == :add
+    return append_command(parsed) if parsed[:func] == :append
+    return assign_command(parsed) if parsed[:func] == :assign
+    return done_command(parsed) if parsed[:func] == :done
+    return delete_command(parsed) if parsed[:func] == :delete
+    return due_command(parsed) if parsed[:func] == :due
+    return help_command(parsed) if parsed[:func] == :help
+    return list_command(parsed) if parsed[:func] == :list
+    return redo_command(parsed) if parsed[:func] == :redo
+    return unassign_command(parsed) if parsed[:func] == :unassign
   end
 
   def make_view_helper

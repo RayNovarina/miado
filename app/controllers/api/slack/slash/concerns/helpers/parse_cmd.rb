@@ -1,5 +1,5 @@
+require_relative './parser_class'
 =begin
-
 Form Params
 channel_id	C0VNKV7BK
 channel_name	general
@@ -11,103 +11,174 @@ text	call GoDaddy @susan /fri
 token	3ZQVG7rk4p7EZZluk1gTH3aN
 user_id	U0VLZ5P51
 user_name	ray
-
-'• `/do rev 1 spec @susan /jun15`' \
-' Adds "rev 1 spec" to this channel, assigns it to Susan and sets' \
-" a due date of June 15.\n" \
-'• `/do append 3 Contact Jim.`' \
-" Adds \"Contact Jim.\" to the end of task 3.\n" \
-'• `/do assign 3 @tony`' \
-" Assigns \"@tony\" to task 3 for this channel.\n" \
-'• `/do unassign 4 @joe`' \
-" Removes \"@joe\" from task 4.\n" \
-'• `/do done 4`' \
-" Marks task 4 as completed.\n" \
-'• `/do remove 4`' \
-" Deletes task number 4 from the list.\n" \
-'• `/do due 4 /wed`' \
-" Sets the task due date to Wednesday for task 4.\n" \
-'• `/do redo 1 Send out newsletter by /fri.`' \
-' Deletes tasks 1 and replaces it with ' \
-"\"Send out newsletter by /fri\"\n" \
-'• `/do list`' \
-" Lists your tasks for this channel.\n" \
-'• `/do list due`' \
-" Lists your open tasks for this channel and their due dates.\n" \
-'• `/do list all`' \
-" Lists all team tasks for this channel.\n" \
-'• `/do help more`' \
-" Display /do keyboard shortcuts, misc. commands.\n" \
-':bulb: Click on the "mia-lists" member to see all of your up to date ' \
-'lists.\n' \
-'• `-- more help --`' \
-'• `/do list me`' \
-" Lists your open tasks for all channels and their due dates.\n" \
 =end
 
-def parse_slash_cmd(func, params)
-  command, _debug = check_for_debug(params)
-  p_hash =
-    { command: command,
-      err_msg: '',
-      assigned_member_id: nil,
-      assigned_member_name: nil,
-      due_date: nil,
-      task_num: nil,
-      func: func,
-      sub_func: nil
-    }
-  case func
-  when :add
-    adjust_add_command(p_hash)
-    scan4_member(p_hash)
-    scan4_due_date(p_hash) if p_hash[:err_msg].empty?
-  when :list
-    scan4_sub_func(p_hash)
-  when :help
-  when :delete
-    scan4_sub_func(p_hash)
-    scan4_task_num(p_hash)
-  end
+def parse_slash_cmd(params, _view, previous_action_parse_hash)
+  p_hash = new_parse_hash(params, previous_action_parse_hash)
+  scan4_command_func(p_hash)
+  perform_scans_for_functions(p_hash)
+  add_list_scope(p_hash)
+  add_channel_scope(p_hash)
+  add_list_owner(p_hash)
+  build_action_list_context(p_hash)
   p_hash
 end
 
-def adjust_add_command(p_hash)
-  return unless p_hash[:command].starts_with?('add')
-  blank_pos = p_hash[:command].index(' ')
-  return 'Error: no task specified.' if blank_pos.nil?
-  p_hash[:command] = p_hash[:command].slice(blank_pos..-1).lstrip
-end
-
-# p_hash = { command: 'list all', func: :list, sub_func: nil }
-def scan4_sub_func(p_hash)
-  sub_funcs = %w(due all team mine me)
-  # Do we have pattern 'list<b>'?
-  if p_hash[:command].index(p_hash[:func].to_s.concat(' ')).nil?
-    # no
-    p_hash[:sub_func] = :mine if p_hash[:func] == :list
-    return
+def perform_scans_for_functions(p_hash)
+  case p_hash[:func]
+  when :add
+    scan4_mentioned_member(p_hash)
+    scan4_due_date(p_hash)
+  when :append
+    p_hash[:requires_task_num] = true
+    scan4_task_num(p_hash)
+  when :assign, :unassign
+    p_hash[:requires_task_num] = true
+    p_hash[:requires_member] = true
+    scan4_task_num(p_hash)
+    scan4_mentioned_member(p_hash)
+  when :delete
+    scan4_task_num(p_hash)
+    scan4_mentioned_member(p_hash)
+    scan4_sub_func(p_hash)
+  when :done
+    p_hash[:requires_task_num] = true
+    scan4_task_num(p_hash)
+    scan4_mentioned_member(p_hash)
+  when :due
+    p_hash[:requires_task_num] = true
+    scan4_task_num(p_hash)
+    scan4_due_date(p_hash)
+    scan4_mentioned_member(p_hash)
+  when :help
+    scan4_sub_func(p_hash)
+  when :list
+    scan4_sub_func(p_hash)
+    scan4_mentioned_member(p_hash)
   end
-  # yes
-  sub_func_begin_pos = p_hash[:command].index(' ', 1) + 1
-  sub_func_end_pos =
-    p_hash[:command].index(' ', sub_func_begin_pos) ||
-    sub_func_begin_pos + p_hash[:command].length - sub_func_begin_pos - 1
-  sub_func =
-    p_hash[:command].slice(sub_func_begin_pos, sub_func_end_pos)
-  p_hash[:sub_func] = sub_funcs.include?(sub_func) ? sub_func.to_sym : nil
-  p_hash[:sub_func] = :mine if sub_func == 'me'
 end
 
+# Case: command function split has been processed, leaving:
+#       '' was 'help' or 'list', '1 @tony' was 'assign 1 @tony',
+#       'team', was 'delete team', 'a new task @ray /jun15' is unchanged,
+#       'channel 5' was 'list channel 5'
+CMD_LIST_SCOPES = %w(one_member team).freeze
+CMD_FUNCS_INHERITING_LIST_SCOPE = [:add, :append, :assign, :delete, :due,
+                                   :help, :redo].freeze
+def add_list_scope(p_hash)
+  # Some funcs can only inherit list_scope from the list the user is looking at.
+  if CMD_FUNCS_INHERITING_LIST_SCOPE.include?(p_hash[:func])
+    return p_hash[:list_scope] = :one_member if p_hash[:previous_action_list_context].empty?
+    return p_hash[:list_scope] = p_hash[:previous_action_list_context][:list_scope]
+  end
+  p_hash[:list_scope] = :one_member unless p_hash[:sub_func] == :team
+  p_hash[:list_scope] = :team if p_hash[:sub_func] == :team
+end
+
+CMD_CHANNEL_SCOPES = %w(one_channel all_channels).freeze
+CMD_FUNCS_INHERITING_CHANNEL_SCOPE = [:add, :append, :assign, :done, :due, :help, :redo].freeze
+def add_channel_scope(p_hash)
+  # Some funcs can only inherit channel_scope from the list the user is looking at.
+  if CMD_FUNCS_INHERITING_CHANNEL_SCOPE.include?(p_hash[:func])
+    return p_hash[:channel_scope] = :one_channel if p_hash[:previous_action_list_context].empty?
+    return p_hash[:channel_scope] = p_hash[:previous_action_list_context][:channel_scope]
+  end
+  p_hash[:channel_scope] = :one_channel unless p_hash[:sub_func] == :all
+  p_hash[:channel_scope] = :all_channels if p_hash[:sub_func] == :all
+end
+
+def add_list_owner(p_hash)
+  return p_hash[:list_owner] = :team, p_hash[:list_owner_name] = 'team' if p_hash[:list_scope] == :team
+  p_hash[:list_owner] = :member
+  unless p_hash[:previous_action_list_context].empty?
+    # Some funcs can only inherit list_owner from the list the user is looking
+    # at. Note: we just inherited the list_scope.
+    if CMD_FUNCS_INHERITING_LIST_SCOPE.include?(p_hash[:func])
+      p_hash[:mentioned_member_name] = p_hash[:previous_action_list_context][:mentioned_member_name]
+      p_hash[:mentioned_member_id] = p_hash[:previous_action_list_context][:mentioned_member_id]
+    end
+  end
+  # list command is special case: @me member is implied if 'list' and no Other
+  # member is mentioned. However, 'list team' implies no member is mentioned.
+  p_hash[:mentioned_member_name] = p_hash[:url_params][:user_name] if p_hash[:mentioned_member_id].nil?
+  p_hash[:mentioned_member_id] = p_hash[:url_params][:user_id] if p_hash[:mentioned_member_id].nil?
+  p_hash[:list_owner_name] = "@#{p_hash[:mentioned_member_name]}"
+end
+
+CMD_FUNCS_REQUIRING_ACTION_LIST = [:add, :assign, :unassign, :delete, :done].freeze
+def build_action_list_context(p_hash)
+  return unless CMD_FUNCS_REQUIRING_ACTION_LIST.include?(p_hash[:func])
+  if p_hash[:previous_action_list_context].empty?
+    p_hash[:list] = []
+  elsif context_matches(p_hash, p_hash[:previous_action_list_context])
+    p_hash[:list] =
+      p_hash[:previous_action_list_context][:list]
+  else
+    p_hash[:list] =
+      ids_from_context(p_hash, p_hash[:previous_action_list_context])
+  end
+end
+
+def context_matches(context1, context2)
+  return false if context1.empty? || context2.empty?
+  true # if context1[:list_scope] == context2[:list_scope] &&
+  #               context1[:channel_scope] == context2[:channel_scope] &&
+  #               context1[:list_scope] == context2[:list_scope] &&
+  #               context1[:list_scope] == context2[:list_scope] &&
+  #               context1[:list_scope] == context2[:list_scope] &&
+  #               context1[:list_scope] == context2[:list_scope]
+end
+
+# Case: command is as entered from command line.
+#       'a new task', 'list team'
+CMD_FUNCS = %w(add append assign delete done due help list redo unasign).freeze
+def scan4_command_func(p_hash)
+  return p_hash[:func] = :help if p_hash[:next_cmd_split_to_parse] >= p_hash[:cmd_splits].length
+  maybe_func = p_hash[:cmd_splits][p_hash[:next_cmd_split_to_parse]]
+  p_hash[:func] = CMD_FUNCS.include?(maybe_func) ? maybe_func.to_sym : nil
+  # discard/consume func word if we have one.
+  p_hash[:next_cmd_split_to_parse] += 1 unless p_hash[:func].nil?
+  p_hash[:func] = :add if p_hash[:func].nil?
+end
+
+# Case: command function and scope have been processed, leaving:
+#       'open' was 'list open', '' was 'list ', '4' was 'delete team 4'
+CMD_SUB_FUNCS = %w(open due done all team more).freeze
+def scan4_sub_func(p_hash)
+  return unless p_hash[:err_msg].empty?
+  return if p_hash[:next_cmd_split_to_parse] >= p_hash[:cmd_splits].length
+  maybe_sub_func = p_hash[:cmd_splits][p_hash[:next_cmd_split_to_parse]]
+  p_hash[:sub_func] = CMD_SUB_FUNCS.include?(maybe_sub_func) ? maybe_sub_func.to_sym : nil
+  return (parsed[:err_msg] =
+           'Error: sub command required.') if p_hash[:sub_func].nil? &&
+                                              p_hash[:requires_sub_func]
+  p_hash[:sub_func] = nil if p_hash[:sub_func] == :more && !p_hash[:func] == :help
+  # discard/consume sub_func word if we have one.
+  p_hash[:next_cmd_split_to_parse] += 1 unless p_hash[:sub_func].nil?
+  rebuild_remaining_command_line(p_hash)
+end
+
+# Trim off the leading command func, scope and sub_func. Remainder is what
+# most of our following parse logic cares about.
+def rebuild_remaining_command_line(p_hash)
+  p_hash[:command] =
+    p_hash[:cmd_splits][p_hash[:next_cmd_split_to_parse]..-1].join(' ')
+end
+
+# Case: 'delete 4', 'delete team', 'assign 3 @tony'
 def scan4_task_num(p_hash)
-  return unless p_hash[:sub_func].nil?
+  return unless p_hash[:err_msg].empty?
   p_hash[:task_num] = p_hash[:command][/\d+/]
-  p_hash[:err_msg] =
-    'Error: no task number specified.' if p_hash[:task_num].nil?
+  if p_hash[:task_num].nil? && p_hash[:requires_task_num]
+    return p_hash[:err_msg] = 'Error: no task number specified.'
+  end
+  p_hash[:task_num] = p_hash[:task_num].to_i unless p_hash[:task_num].nil?
 end
 
+# Member is mentioned in channel, becomes the target for get a new list.
 # s = 'get donuts @susan /fri all kinds'
-def scan4_member(p_hash)
+def scan4_mentioned_member(p_hash)
+  return unless p_hash[:err_msg].empty?
   at_pos = p_hash[:command].index('@')
   return if at_pos.nil?
   blank_pos = p_hash[:command].index(' ', at_pos)
@@ -117,13 +188,14 @@ def scan4_member(p_hash)
 
   name = p_hash[:command].slice(at_pos + 1, end_of_name_pos - at_pos)
 
-  p_hash[:assigned_member_id], p_hash[:assigned_member_name] =
+  p_hash[:mentioned_member_id], p_hash[:mentioned_member_name] =
     slack_member_from_name(p_hash, name)
 end
 
 def slack_member_from_name(p_hash, name)
   return [p_hash[:user_id], p_hash[:user_name]] if name == 'me'
-  member = Member.find_or_create_from_slack(@view, name)
+  member = Member.find_or_create_from_slack_name(@view, name,
+                                                 p_hash[:url_params][:team_id])
   if member.nil?
     p_hash[:err_msg] =
       "Error: Member @#{name} not found."
@@ -133,6 +205,7 @@ def slack_member_from_name(p_hash, name)
 end
 
 def scan4_due_date(p_hash)
+  return unless p_hash[:err_msg].empty?
   slash_pos = p_hash[:command].index('/')
   return if slash_pos.nil?
   blank_pos = p_hash[:command].index(' ', slash_pos)
@@ -145,6 +218,11 @@ def scan4_due_date(p_hash)
 
   p_hash[:due_date] = date_from_due_date(due_date_string)
   return if p_hash[:due_date].nil?
+  adjust_and_verify_due_date(p_hash)
+end
+
+def adjust_and_verify_due_date(p_hash)
+  # ??Assume standalone day or month refers to a future date.
   p_hash[:err_msg] =
     'Error: Due date has already passed.' if p_hash[:due_date] < DateTime.now
 end
@@ -158,12 +236,8 @@ def date_from_due_date(due_date_string)
     rescue ArgumentError
       return nil
     end
-    # Assume standalone day or month refers to a future date.
-    # if due_date < DateTime.now
-    # end
     return due_date
   end
-
   # Case: just day of month specified. /12
   if numeric_partition[0].empty?
     begin
@@ -174,12 +248,8 @@ def date_from_due_date(due_date_string)
       p_hash[:err_msg] = 'Error: invalid day of month.'
       return nil
     end
-    # Assume standalone day or month refers to a future date.
-    # if due_date < DateTime.now
-    # end
     return due_date
   end
-
   # Case: normal. /jun15
   begin
     due_date = numeric_partition[0]
@@ -191,8 +261,5 @@ def date_from_due_date(due_date_string)
     p_hash[:err_msg] = 'Error: invalid day of month.'
     return nil
   end
-  # Assume standalone day or month refers to a future date.
-  # if due_date < DateTime.now
-  # end
   due_date
 end

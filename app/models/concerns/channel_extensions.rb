@@ -1,6 +1,6 @@
 require 'slack-ruby-client'
 # per: https://richonrails.com/articles/rails-4-code-concerns-in-active-record-models
-module MemberExtensions
+module ChannelExtensions
   extend ActiveSupport::Concern
   #
   included do
@@ -15,53 +15,50 @@ module MemberExtensions
   # User.find_by_email(email).authenticate(password).
   module ClassMethods
     attr_accessor :view
-    # member = Member.find_or_create_from_slack(@view, name)
-    # Find the slack team member in our db or get a current member list from
+    # channel = Channel.find_or_create_from_slack(@view, name)
+    # Find the slack channel in our db or get a current Team channel list from
     # Slack and merge those into our db.
-    def find_or_create_from_slack_name(view, name, slack_team_id)
+    def find_or_create_from_slack_id(view, slack_channel_id, slack_team_id)
       @view ||= view
-      member = Member.where(name: name).first
-      return member unless member.nil?
-      create_from_slack_name(view, name, slack_team_id)
+      channel = Channel.where(slack_id: slack_channel_id).first
+      return channel unless channel.nil?
+      create_from_slack_id(view, slack_channel_id, slack_team_id)
     end
 
-    def create_from_slack_name(view, name, slack_team_id)
+    def create_from_slack_id(view, slack_channel_id, slack_team_id)
       @view ||= view
       create_all_from_slack(@view, slack_team_id)
-      Member.where(name: name).first
+      Channel.where(slack_id: slack_channel_id).first
     end
 
     def create_all_from_slack(view, slack_team_id)
       @view ||= view
       @view.team ||= Team.find_or_create_from(:slack_id, slack_team_id)
-      slack_members = slack_members_from_rtm_data(@view)
-      slack_members.each do |slack_member|
-        next if slack_member[:deleted] ||
-                slack_member[:is_bot]  ||
-                slack_member[:name] == 'slackbot'
-        Member.find_or_create_by(
-          name: slack_member[:name],
-          slack_user_id: slack_member[:id],
-          team: @view.team,
-          real_name: slack_member[:real_name]
+      slack_channels = slack_channels_from_rtm_data(@view)
+      slack_channels.each do |slack_channel|
+        next if slack_channel[:is_archived]
+        Channel.find_or_create_by(
+          name: slack_channel[:name],
+          slack_id: slack_channel[:id],
+          team: @view.team
         )
       end
     end
 
     def all_or_create_all_from_slack(view)
       @view ||= view
-      return Member.all if Member.count > 0
+      return Channel.all if Channel.count > 0
       create_all_from_slack(@view)
-      Member.all
+      Channel.all
     end
 
     private
 
-    def slack_members_from_rtm_data(view)
+    def slack_channels_from_rtm_data(view)
       @view ||= view
       @view.web_client ||= make_web_client
-      # response is an array of hashes. Each has name and id of a team member.
-      @view.web_client.users_list['members']
+      # response is an array of hashes. Each has name and id of a team channel.
+      @view.web_client.channels_list['channels']
     end
 
     def make_web_client
