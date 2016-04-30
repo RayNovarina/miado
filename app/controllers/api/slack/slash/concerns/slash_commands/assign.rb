@@ -32,14 +32,12 @@ user_name	ray
 def assign_command(parsed)
   adjust_assign_cmd_action_context(parsed)
   text = assign_one(parsed)
-  if parsed[:err_msg].empty?
-    # Persist the channel.list_ids[], options for the next transaction.
-    save_after_action_list_context(parsed, parsed, parsed[:list])
-    # Display modified list after assigning an item.
-    parsed[:display_after_action_list] = true
-    return [text, nil]
-  end
-  [parsed[:err_msg], nil]
+  return [parsed[:err_msg], nil] unless parsed[:err_msg].empty?
+  # Persist the channel.list_ids[], options for the next transaction.
+  save_after_action_list_context(parsed, parsed, parsed[:list])
+  # Display modified list after assigning an item.
+  parsed[:display_after_action_list] = true
+  [text, nil]
 end
 
 def assign_one(parsed)
@@ -47,6 +45,7 @@ def assign_one(parsed)
   item = ListItem.find(parsed[:list][parsed[:task_num] - 1])
   return parsed[:err_msg] = "Error: Task #{parsed[:task_num]} is already " \
     "assigned to #{parsed[:assigned_member_name]}" if item.assigned_member_id == parsed[:assigned_member_id]
+  prev_assigned_member_name = item.assigned_member_name
   item.assigned_member_id = parsed[:assigned_member_id]
   item.assigned_member_name = parsed[:assigned_member_name]
   if item.save
@@ -55,8 +54,8 @@ def assign_one(parsed)
     task_owner = 'team' if parsed[:list_owner] == :team
     return "Assigned #{task_owner} task #{parsed[:task_num]} to " \
            "@#{parsed[:assigned_member_name]}." \
-           "#{item.assigned_member_id.nil? ? '' : '  NOTE: It was assigned ' \
-           "to @#{item.assigned_member_name}"}"
+           "#{prev_assigned_member_name.nil? ? '' : '  NOTE: It was previously assigned ' \
+           "to @#{prev_assigned_member_name}"}"
   end
   parsed[:err_msg] = 'Error: There was an error assigning this Task.'
 end

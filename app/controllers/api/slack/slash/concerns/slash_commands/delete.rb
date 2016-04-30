@@ -66,6 +66,7 @@ def delete_task(id, parsed)
 end
 
 def delete_all(parsed)
+  return parsed[:err_msg] = 'Error: Delete command requires \'task number\', \'team\' or \'all\' options.' unless parsed[:all_option] || parsed[:team_option]
   destroy_all_by_ids(parsed[:list], parsed)
   if parsed[:err_msg].empty?
     parsed[:list] = []

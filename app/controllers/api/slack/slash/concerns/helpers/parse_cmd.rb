@@ -32,8 +32,8 @@ def perform_scans_for_functions(p_hash)
     scan4_task_num(p_hash)
   when :assign
     p_hash[:requires_task_num] = true
-    p_hash[:requires_member] = true
     scan4_task_num(p_hash)
+    p_hash[:requires_mentioned_member] = true
     scan4_mentioned_member(p_hash)
   when :delete
     scan4_task_num(p_hash)
@@ -42,21 +42,21 @@ def perform_scans_for_functions(p_hash)
   when :done
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
-    scan4_mentioned_member(p_hash)
   when :due
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
+    p_hash[:requires_due_date] = true
     scan4_due_date(p_hash)
-    scan4_mentioned_member(p_hash)
   when :help
     scan4_options(p_hash)
   when :list
     scan4_mentioned_member(p_hash)
     scan4_options(p_hash)
   when :unassign
+    p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
+    p_hash[:requires_mentioned_member] = true
     scan4_mentioned_member(p_hash)
-    scan4_options(p_hash)
   end
 end
 
@@ -160,6 +160,7 @@ end
 def scan4_mentioned_member(p_hash)
   return unless p_hash[:err_msg].empty?
   at_pos = p_hash[:command].index('@')
+  return p_hash[:err_msg] = 'Error: team member must be mentioned.' if at_pos.nil? && p_hash[:requires_mentioned_member]
   return if at_pos.nil?
   blank_pos = p_hash[:command].index(' ', at_pos)
 
@@ -170,6 +171,17 @@ def scan4_mentioned_member(p_hash)
 
   p_hash[:mentioned_member_id], p_hash[:mentioned_member_name] =
     slack_member_from_name(p_hash, name)
+  return if p_hash[:mentioned_member_id].nil?
+  p_hash[:mentioned_member_name_begin_pos] = at_pos
+  p_hash[:mentioned_member_name_end_pos] = end_of_name_pos
+  remove_mentioned_member_from_command(p_hash)
+end
+
+def remove_mentioned_member_from_command(p_hash)
+  return if p_hash[:mentioned_member_name].nil?
+  begin_phrase = p_hash[:command].slice(0, p_hash[:mentioned_member_name_begin_pos]).rstrip
+  end_phrase = p_hash[:command].slice(p_hash[:mentioned_member_name_end_pos] + 1, p_hash[:command].length - p_hash[:mentioned_member_name_end_pos] - 1)
+  p_hash[:command] = begin_phrase.concat(end_phrase)
 end
 
 def slack_member_from_name(p_hash, name)
@@ -187,6 +199,7 @@ end
 def scan4_due_date(p_hash)
   return unless p_hash[:err_msg].empty?
   slash_pos = p_hash[:command].index('/')
+  return p_hash[:err_msg] = 'Error: due date is required.' if slash_pos.nil? && p_hash[:requires_due_date]
   return if slash_pos.nil?
   blank_pos = p_hash[:command].index(' ', slash_pos)
 
@@ -197,8 +210,18 @@ def scan4_due_date(p_hash)
     p_hash[:command].slice(slash_pos + 1, end_of_date_pos - slash_pos)
 
   p_hash[:due_date] = date_from_due_date(due_date_string)
-  return if p_hash[:due_date].nil?
   adjust_and_verify_due_date(p_hash)
+  return if p_hash[:due_date].nil?
+  p_hash[:due_date_begin_pos] = slash_pos
+  p_hash[:due_date_end_pos] = end_of_date_pos
+  remove_due_date_from_command(p_hash)
+end
+
+def remove_due_date_from_command(p_hash)
+  return if p_hash[:due_date].nil?
+  begin_phrase = p_hash[:command].slice(0, p_hash[:due_date_begin_pos] - 1)
+  end_phrase = p_hash[:command].slice(p_hash[:due_date_end_pos], p_hash[:command].length - (p_hash[:due_date_end_pos] + 1))
+  p_hash[:command] = begin_phrase.concat(end_phrase)
 end
 
 def adjust_and_verify_due_date(p_hash)
