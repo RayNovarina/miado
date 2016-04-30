@@ -37,8 +37,7 @@ def add_command(parsed)
     add_assigned_member(parsed)
   item.assigned_due_date, due_date_clause =
     add_due_date(parsed)
-  item.description =
-    "#{parsed[:command]}#{assigned_to_clause}#{due_date_clause}"
+  item.description = parsed[:command]
 
   response =
     "#{task_num_clause}#{assigned_to_clause}#{due_date_clause}" \
