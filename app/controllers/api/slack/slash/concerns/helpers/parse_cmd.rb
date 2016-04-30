@@ -93,7 +93,7 @@ end
 #       'delete all open tasks for @susan is a new task'
 # Case: command is as entered from command line.
 #       'a new task', 'list team'
-CMD_FUNCS = %w(append assign delete done due help list redo unasign).freeze
+CMD_FUNCS = %w(append assign delete done due help list redo unassign).freeze
 def scan4_command_func(p_hash)
   return p_hash[:func] = :help if p_hash[:cmd_splits].length == 0
   maybe_func = p_hash[:cmd_splits][0]

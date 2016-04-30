@@ -18,30 +18,100 @@ user_name	ray
 #          parsed[:err_msg] if needed.
 #          list = unmodified.
 #-------------------------------------------------
-# scope = %w(mine channel member team)
-# /do assign 3 @tony Assigns "@tony" to task 3 for this channel.
-# full syntax: /do assign channel 3 @tony
-#              /do assign team 3 @tony
+# /do unassign 3 @tony Unassigns "@tony" from task 3 for this channel.
 def unassign_command(parsed)
-  response = unassign_one(parsed)
+  adjust_unassign_cmd_action_context(parsed)
+  text = unassign_one(parsed)
   if parsed[:err_msg].nil?
+    # Persist the channel.list_ids[], options for the next transaction.
+    save_after_action_list_context(parsed, parsed, parsed[:list])
     # Display modified list after unassigning an item.
-    # This will also rebuild and save the channel.list_ids[]
     parsed[:display_after_action_list] = true
-    parsed[:scope_for_list_after_action] = parsed[:list_scope]
-    parsed[:list_for_after_action] = list
-    return [response, nil]
+    return [text, nil]
   end
   [parsed[:err_msg], nil]
 end
 
 def unassign_one(parsed)
-  # ASSUMES list[task_num] is verified as belonging to the @name in cmd line.
+  return if task_num_invalid?(parsed)
   item = ListItem.find(parsed[:list][parsed[:task_num] - 1])
+  return parsed[:err_msg] = "Error: Task #{parsed[:task_num]} is not " \
+    "assigned to #{parsed[:assigned_member_name]}" unless item.assigned_member_id == parsed[:assigned_member_id]
   item.assigned_member_id = nil
   if item.save
     return "Unassigned task #{parsed_cmd[:task_num]} to " \
            "@#{parsed_cmd[:assigned_member_name]}."
   end
   parsed[:err_msg] = 'Error: There was an error unassigning this Task.'
+end
+
+def adjust_unassign_cmd_action_context(parsed)
+  adjust_unassign_cmd_assigned_member(parsed)
+  # Figure out the list we are working on and its attributes.
+  adjust_unassign_cmd_action_list(parsed)
+  adjust_unassign_cmd_list_owner(parsed)
+end
+
+def adjust_unassign_cmd_assigned_member(parsed)
+  # Unassigned member info will be stored in db and persisted as after action info
+  parsed[:assigned_member_id] = parsed[:mentioned_member_id]
+  parsed[:assigned_member_name] = parsed[:mentioned_member_name]
+end
+
+# The user is looking at either:
+#   1) Items assigned to a member for one channel.
+#      i.e. 'list' or 'list @dawn open'
+#   2) All items for this channel.
+#      i.e. 'list team'
+#   3) All items for all channels.
+#      i.e. 'list all'
+def adjust_unassign_cmd_action_list(parsed)
+  # Inherit item list from what user is looking at.
+  return parsed[:list] = [] if parsed[:previous_action_list_context].empty?
+  return parsed[:list] = parsed[:previous_action_list_context][:list] if unassign_cmd_context_matches(parsed)
+  # Note: the assign_cmd_context_matches method has already adjusted parsed
+  #       attributes to fetch a correct list.
+  parsed[:list] = ids_from_parsed(parsed)
+end
+
+# The user is looking at either:
+#   1) Items assigned to a member for one channel.
+#      i.e. 'list' or 'list @dawn open'
+#   2) All items for this channel.
+#      i.e. 'list team'
+#   3) All items for all channels.
+#      i.e. 'list all'
+#------------------------------------
+# /do unassign 3 @tony Unassigns "@tony" from task 3 in this channel.
+def unassign_cmd_context_matches(parsed)
+  # Case: 'list @dawn' or 'list'
+  #       AND THEN 'unassign 3 @tony'
+  if parsed[:previous_action_list_context][:list_scope] == :one_member
+    # We are trying to unassign a task from a specific member on a member list.
+    # This is the only option to get here. We will err out if team syntax used.
+    return true
+  end
+  # Case  'list team @ray' OR 'list team'
+  #       AND THEN 'unassign 1 @dawn'
+  if parsed[:previous_action_list_context][:list_scope] == :team
+    # We are trying to unassign a task from a specific member on a team list.
+    # This is the only option to get here. We will err out if team syntax used.
+    return true
+  end
+  # Case 'list all' OR 'list all @dawn'
+  #       AND THEN 'unassign' anything is an err condition, already reported.
+  # Can not get here.
+  false
+end
+
+# @me member is implied if no Other member is mentioned. However, 'list team'
+# implies no member is mentioned.
+def adjust_unassign_cmd_list_owner(parsed)
+  return parsed[:list_owner] = :team, parsed[:list_owner_name] = 'team' if parsed[:list_scope] == :team
+  parsed[:list_owner] = :member
+  if parsed[:mentioned_member_id].nil?
+    parsed[:mentioned_member_name] = parsed[:url_params][:user_name]
+    parsed[:mentioned_member_id] = parsed[:url_params][:user_id]
+  end
+  parsed[:list_owner_name] = "@#{parsed[:mentioned_member_name]}"
 end
