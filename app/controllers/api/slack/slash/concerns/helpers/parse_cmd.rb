@@ -17,8 +17,6 @@ def parse_slash_cmd(params, _view, previous_action_parse_hash)
   p_hash = new_parse_hash(params, previous_action_parse_hash)
   scan4_command_func(p_hash)
   perform_scans_for_functions(p_hash)
-  # Default to add cmd if no func specified or implied.
-  p_hash[:func] = :add if p_hash[:func].nil?
   add_list_scope(p_hash)
   add_channel_scope(p_hash)
   p_hash
@@ -102,6 +100,8 @@ def scan4_command_func(p_hash)
   p_hash[:func] = CMD_FUNCS.include?(maybe_func) ? maybe_func.to_sym : nil
   # discard/consume func word if we have one.
   p_hash[:cmd_splits].shift unless p_hash[:func].nil?
+  # Default to add cmd if no func specified or implied.
+  p_hash[:func] = :add if p_hash[:func].nil?
 end
 
 # Case: command function has been processed, leaving:

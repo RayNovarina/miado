@@ -223,8 +223,6 @@ def list_from_list_of_ids(array_of_ids)
 end
 
 def ids_from_parsed(parsed)
-  require 'pry'
-  binding.pry
   records = list_from_parsed(parsed)
   return [] unless parsed[:err_msg].empty?
   return [] if records.empty?
@@ -232,7 +230,5 @@ def ids_from_parsed(parsed)
   records.each do |item|
     ids << item.id
   end
-  require 'pry'
-  binding.pry
   ids
 end

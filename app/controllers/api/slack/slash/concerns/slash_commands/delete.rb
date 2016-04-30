@@ -82,7 +82,7 @@ def delete_all_msg(parsed)
   # parsed[:list_scope] == :one_member
   if parsed[:channel_scope] == :one_channel
     return 'Deleted ALL of your ASSIGNED tasks in this channel.' if parsed[:list_owner] == :mine
-    return "Deleted ALL of @#{parsed[:list_owner_name]}\'s ASSIGNED tasks in this channel."
+    return "Deleted ALL of #{parsed[:list_owner_name]}\'s ASSIGNED tasks in this channel."
   end
   # parsed[:channel_scope] == :all_channels
   return 'Deleted ALL of your ASSIGNED tasks in ALL channels.' if parsed[:list_owner] == :mine
@@ -130,12 +130,16 @@ end
 def delete_cmd_context_matches(parsed)
   # Case: 'list @dawn' or 'list'
   #       AND THEN 'delete 1'
+  #       OR THEN 'delete team'
   if parsed[:previous_action_list_context][:list_scope] == :one_member
     # We are trying to delete from a specific member list.
-    return true
+    return true if parsed[:list_scope] == :one_member
+    # Else we are deleting a team. Must get a new team list.
+    return false
   end
   # Case  'list team @ray' OR 'list team'
   #       AND THEN 'delete 1'
+  #       OR THEN 'delete team'
   unless parsed[:previous_action_list_context][:all_option]
     # We are trying to delete from a team list on current channel.
     return true
@@ -143,6 +147,7 @@ def delete_cmd_context_matches(parsed)
   # Case 'list all' OR 'list all @dawn'
   #       AND THEN 'delete' anything is an err condition, already reported.
   # Can not get here.
+  false
 end
 
 # @me member is implied if no Other member is mentioned. However, 'list team'
