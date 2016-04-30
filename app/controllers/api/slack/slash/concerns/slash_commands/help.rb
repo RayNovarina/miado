@@ -20,6 +20,8 @@ SLASH_CMD_HLP_TEXT =
  '• `/do list`' \
  " Lists your ASSIGNED tasks for THIS channel. Includes DONE tasks.\n" \
  '• `/do list open`' \
+ " Lists your tasks which are not DONE for THIS channel.\n" \
+ '• `/do list due`' \
  " Lists your OPEN tasks with a due date for THIS channel.\n" \
  '• `/do list team`' \
  " Lists all TEAM tasks for THIS channel.\n" \

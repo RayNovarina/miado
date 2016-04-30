@@ -26,6 +26,7 @@ user_name	ray
 # mentioned_member_name = <@name>
 #------------------------------
 def add_command(parsed)
+  adjust_add_cmd_action_context(parsed)
   params = parsed[:url_params]
   list = parsed[:list]
   item = ListItem.new_from_slack_slash_cmd(parsed)
@@ -68,10 +69,7 @@ end
 
 # Returns: [assigned_member_id, assigned_to_clause]
 def add_assigned_member(parsed)
-  return [nil, ''] if parsed[:mentioned_member_id].nil?
-  # Assigned member info will be stored in db and persisted as after action info
-  parsed[:assigned_member_id] = parsed[:mentioned_member_id]
-  parsed[:assigned_member_name] = parsed[:mentioned_member_name]
+  return [nil, ''] if parsed[:assigned_member_id].nil?
   [parsed[:assigned_member_id], parsed[:assigned_member_name],
    "| *Assigned* to @#{parsed[:assigned_member_name]}."
   ]
@@ -83,4 +81,91 @@ def add_due_date(parsed)
   [parsed[:due_date],
    "| *Due* #{parsed[:due_date].strftime('%a, %d %b')}."
   ]
+end
+
+def adjust_add_cmd_action_context(parsed)
+  adjust_add_cmd_assigned_member(parsed)
+  # Figure out the list we are working on and its attributes.
+  adjust_add_cmd_action_list(parsed)
+  adjust_add_cmd_list_owner(parsed)
+end
+
+def adjust_add_cmd_assigned_member(parsed)
+  # Assigned member info will be stored in db and persisted as after action info
+  parsed[:assigned_member_id] = parsed[:mentioned_member_id]
+  parsed[:assigned_member_name] = parsed[:mentioned_member_name]
+end
+
+# The user is looking at either:
+#   1) Items assigned to a member for one channel.
+#      i.e. 'list' or 'list @dawn open'
+#   2) All items for this channel.
+#      i.e. 'list team'
+#   3) All items for all channels.
+#      i.e. 'list all'
+def adjust_add_cmd_action_list(parsed)
+  # Inherit item list from what user is looking at.
+  return parsed[:list] = [] if parsed[:previous_action_list_context].empty?
+  return parsed[:list] = parsed[:previous_action_list_context][:list] if add_cmd_context_matches(parsed)
+  # Note: the add_cmd_context_matches method has already adjusted parsed
+  #       attributes to fetch a correct list.
+  parsed[:list] = ids_from_parsed(parsed)
+end
+
+# The user is looking at either:
+#   1) Items assigned to a member for one channel.
+#      i.e. 'list' or 'list @dawn open'
+#   2) All items for this channel.
+#      i.e. 'list team'
+#   3) All items for all channels.
+#      i.e. 'list all'
+#------------------------------------
+
+# Case: 'list @ray' or 'list': we display list @ray. then 'new task'
+#       it will be unassigned and we should display the team list, not the @ray.
+# Case: 'list team', 'delete 1': list is for team. delete if for team even tho
+#       no member is mentioned, i.e. @me is not implied.
+# Case: context change: 'list @ray' 'new task for @dawn'. List is for @ray,
+#       Afer add, list is for team because assignment to dif team member.
+# Case: 'list team' 'unassigned task'. list is for team. list_owner is 'team',
+#       afer add, list is for team, list_owner is 'team'
+#-----------------------------------
+def add_cmd_context_matches(parsed)
+  # Case: 'list @dawn' or 'list'
+  #       AND THEN 'new task for @dawn'
+  #       OR 'new task'
+  if parsed[:previous_action_list_context][:list_scope] == :one_member
+    # We are trying to add to a specific member list.
+    return true if parsed[:mentioned_member_id] == parsed[:previous_action_list_context][:mentioned_member_id]
+    # Can't add this member to that list. Must add it to end of team list.
+  end
+  # Case  'list team @ray' OR 'list team'
+  #       AND THEN 'new task for @dawn'
+  #       OR 'new task' OR 'new task for @ray'
+  unless parsed[:previous_action_list_context][:all_option]
+    return true if parsed[:previous_action_list_context][:mentioned_member_id].nil?
+    return true if parsed[:mentioned_member_id] == parsed[:previous_action_list_context][:mentioned_member_id]
+    # Can't add this member to that Team list. Must get a new team list for all
+    # members or for mentioned member.
+  end
+  # Case 'list all' OR 'list all @dawn'
+  #       AND THEN 'new task for @dawn'
+  #       OR 'new task' OR 'new task @ray'
+  # Can only add a task to the current Team channel, not all channels.
+
+  # List context Doesn't match. Must get a new team list.
+  parsed[:list_scope] = :team
+  parsed[:channel_scope] = :one_channel
+  return false
+end
+
+# @me member is implied if no Other member is mentioned.
+def adjust_add_cmd_list_owner(parsed)
+  return parsed[:list_owner] = :team, parsed[:list_owner_name] = 'team' if parsed[:list_scope] == :team
+  parsed[:list_owner] = :member
+  if parsed[:mentioned_member_id].nil?
+    parsed[:mentioned_member_name] = parsed[:url_params][:user_name]
+    parsed[:mentioned_member_id] = parsed[:url_params][:user_id]
+  end
+  parsed[:list_owner_name] = "@#{parsed[:mentioned_member_name]}"
 end

@@ -37,7 +37,7 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
     return slash_response(text, attachments, parsed) unless parsed[:err_msg].empty?
     # Display an updated AFTER ACTION list if useful, i.e. task has been added
     # or deleted.
-    return prepend_to_list_command(parsed, text) if parsed[:display_after_action_list]
+    text, attachments = prepend_text_to_list_command(parsed, text) if parsed[:display_after_action_list]
     slash_response(text, attachments, parsed)
     # return handoff_slash_command_to_bot(parsed, list) if parsed[:handoff]
   end

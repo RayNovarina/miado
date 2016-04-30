@@ -14,7 +14,12 @@ def make_parse_hash
     command: nil,
     debug: false,
     cmd_splits: [],
-    next_cmd_split_to_parse: 0,
+    team_option: false,
+    all_option: false,
+    more_option: false,
+    open_option: false,
+    due_option: false,
+    done_option: false,
     err_msg: '',
     previous_action_list_context: {},
     # For current action
@@ -35,8 +40,6 @@ def make_parse_hash
     requires_task_num: false,
     task_num: nil,
     func: nil,
-    requires_sub_func: false,
-    sub_func: nil,
     trace_syntax: '',
     url_params: {}
   }

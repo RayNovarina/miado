@@ -17,10 +17,10 @@ def parse_slash_cmd(params, _view, previous_action_parse_hash)
   p_hash = new_parse_hash(params, previous_action_parse_hash)
   scan4_command_func(p_hash)
   perform_scans_for_functions(p_hash)
+  # Default to add cmd if no func specified or implied.
+  p_hash[:func] = :add if p_hash[:func].nil?
   add_list_scope(p_hash)
   add_channel_scope(p_hash)
-  add_list_owner(p_hash)
-  build_action_list_context(p_hash)
   p_hash
 end
 
@@ -32,7 +32,7 @@ def perform_scans_for_functions(p_hash)
   when :append
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
-  when :assign, :unassign
+  when :assign
     p_hash[:requires_task_num] = true
     p_hash[:requires_member] = true
     scan4_task_num(p_hash)
@@ -40,7 +40,7 @@ def perform_scans_for_functions(p_hash)
   when :delete
     scan4_task_num(p_hash)
     scan4_mentioned_member(p_hash)
-    scan4_sub_func(p_hash)
+    scan4_options(p_hash)
   when :done
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
@@ -51,10 +51,14 @@ def perform_scans_for_functions(p_hash)
     scan4_due_date(p_hash)
     scan4_mentioned_member(p_hash)
   when :help
-    scan4_sub_func(p_hash)
+    scan4_options(p_hash)
   when :list
-    scan4_sub_func(p_hash)
     scan4_mentioned_member(p_hash)
+    scan4_options(p_hash)
+  when :unassign
+    scan4_task_num(p_hash)
+    scan4_mentioned_member(p_hash)
+    scan4_options(p_hash)
   end
 end
 
@@ -71,8 +75,8 @@ def add_list_scope(p_hash)
     return p_hash[:list_scope] = :one_member if p_hash[:previous_action_list_context].empty?
     return p_hash[:list_scope] = p_hash[:previous_action_list_context][:list_scope]
   end
-  p_hash[:list_scope] = :one_member unless p_hash[:sub_func] == :team
-  p_hash[:list_scope] = :team if p_hash[:sub_func] == :team
+  p_hash[:list_scope] = :one_member unless p_hash[:team_option]
+  p_hash[:list_scope] = :team if p_hash[:team_option]
 end
 
 CMD_CHANNEL_SCOPES = %w(one_channel all_channels).freeze
@@ -83,87 +87,63 @@ def add_channel_scope(p_hash)
     return p_hash[:channel_scope] = :one_channel if p_hash[:previous_action_list_context].empty?
     return p_hash[:channel_scope] = p_hash[:previous_action_list_context][:channel_scope]
   end
-  p_hash[:channel_scope] = :one_channel unless p_hash[:sub_func] == :all
-  p_hash[:channel_scope] = :all_channels if p_hash[:sub_func] == :all
+  p_hash[:channel_scope] = :one_channel unless p_hash[:all_option]
+  p_hash[:channel_scope] = :all_channels if p_hash[:all_option]
 end
 
-def add_list_owner(p_hash)
-  return p_hash[:list_owner] = :team, p_hash[:list_owner_name] = 'team' if p_hash[:list_scope] == :team
-  p_hash[:list_owner] = :member
-  unless p_hash[:previous_action_list_context].empty?
-    # Some funcs can only inherit list_owner from the list the user is looking
-    # at. Note: we just inherited the list_scope.
-    if CMD_FUNCS_INHERITING_LIST_SCOPE.include?(p_hash[:func])
-      p_hash[:mentioned_member_name] = p_hash[:previous_action_list_context][:mentioned_member_name]
-      p_hash[:mentioned_member_id] = p_hash[:previous_action_list_context][:mentioned_member_id]
-    end
-  end
-  # list command is special case: @me member is implied if 'list' and no Other
-  # member is mentioned. However, 'list team' implies no member is mentioned.
-  p_hash[:mentioned_member_name] = p_hash[:url_params][:user_name] if p_hash[:mentioned_member_id].nil?
-  p_hash[:mentioned_member_id] = p_hash[:url_params][:user_id] if p_hash[:mentioned_member_id].nil?
-  p_hash[:list_owner_name] = "@#{p_hash[:mentioned_member_name]}"
-end
-
-CMD_FUNCS_REQUIRING_ACTION_LIST = [:add, :assign, :unassign, :delete, :done].freeze
-def build_action_list_context(p_hash)
-  return unless CMD_FUNCS_REQUIRING_ACTION_LIST.include?(p_hash[:func])
-  if p_hash[:previous_action_list_context].empty?
-    p_hash[:list] = []
-  elsif context_matches(p_hash, p_hash[:previous_action_list_context])
-    p_hash[:list] =
-      p_hash[:previous_action_list_context][:list]
-  else
-    p_hash[:list] =
-      ids_from_context(p_hash, p_hash[:previous_action_list_context])
-  end
-end
-
-def context_matches(context1, context2)
-  return false if context1.empty? || context2.empty?
-  true # if context1[:list_scope] == context2[:list_scope] &&
-  #               context1[:channel_scope] == context2[:channel_scope] &&
-  #               context1[:list_scope] == context2[:list_scope] &&
-  #               context1[:list_scope] == context2[:list_scope] &&
-  #               context1[:list_scope] == context2[:list_scope] &&
-  #               context1[:list_scope] == context2[:list_scope]
-end
-
+# Note: what looks like a command may actually be an added task, i.e.
+#       'delete all open tasks for @susan is a new task'
 # Case: command is as entered from command line.
 #       'a new task', 'list team'
-CMD_FUNCS = %w(add append assign delete done due help list redo unasign).freeze
+CMD_FUNCS = %w(append assign delete done due help list redo unasign).freeze
 def scan4_command_func(p_hash)
-  return p_hash[:func] = :help if p_hash[:next_cmd_split_to_parse] >= p_hash[:cmd_splits].length
-  maybe_func = p_hash[:cmd_splits][p_hash[:next_cmd_split_to_parse]]
+  return p_hash[:func] = :help if p_hash[:cmd_splits].length == 0
+  maybe_func = p_hash[:cmd_splits][0]
   p_hash[:func] = CMD_FUNCS.include?(maybe_func) ? maybe_func.to_sym : nil
   # discard/consume func word if we have one.
-  p_hash[:next_cmd_split_to_parse] += 1 unless p_hash[:func].nil?
-  p_hash[:func] = :add if p_hash[:func].nil?
+  p_hash[:cmd_splits].shift unless p_hash[:func].nil?
 end
 
-# Case: command function and scope have been processed, leaving:
-#       'open' was 'list open', '' was 'list ', '4' was 'delete team 4'
-CMD_SUB_FUNCS = %w(open due done all team more).freeze
-def scan4_sub_func(p_hash)
+# Case: command function has been processed, leaving:
+#       'open' was 'list open', '' was 'list ', '4' was 'delete team 4',
+#       'open team' was 'list open team', 'team all' was 'list team all',
+#       'all open tasks for @susan is a new task' was 'delete all open tasks for @susan is a new task'
+CMD_OPTIONS = %w(open due done all team more).freeze
+def scan4_options(p_hash)
   return unless p_hash[:err_msg].empty?
-  return if p_hash[:next_cmd_split_to_parse] >= p_hash[:cmd_splits].length
-  maybe_sub_func = p_hash[:cmd_splits][p_hash[:next_cmd_split_to_parse]]
-  p_hash[:sub_func] = CMD_SUB_FUNCS.include?(maybe_sub_func) ? maybe_sub_func.to_sym : nil
-  return (parsed[:err_msg] =
-           'Error: sub command required.') if p_hash[:sub_func].nil? &&
-                                              p_hash[:requires_sub_func]
-  p_hash[:sub_func] = nil if p_hash[:sub_func] == :more && !p_hash[:func] == :help
-  # discard/consume sub_func word if we have one.
-  p_hash[:next_cmd_split_to_parse] += 1 unless p_hash[:sub_func].nil?
-  rebuild_remaining_command_line(p_hash)
+  # Have to be adding task if command is longer than options allow.
+  return p_hash[:func] = :add if p_hash[:cmd_splits].length > CMD_OPTIONS.length - 1
+  p_hash[:team_option] = p_hash[:cmd_splits].include?('team')
+  p_hash[:all_option] = p_hash[:cmd_splits].include?('all')
+  p_hash[:open_option] = p_hash[:cmd_splits].include?('open')
+  p_hash[:due_option] = p_hash[:cmd_splits].include?('due')
+  p_hash[:done_option] = p_hash[:cmd_splits].include?('done')
+  p_hash[:more_option] = p_hash[:cmd_splits].include?('more')
+  adjust_cmd_options_for_add_cmd(p_hash)
+end
+
+# Case: command function has been processed, leaving:
+#       'all open tasks for @susan is a new task' was 'delete all open tasks for @susan is a new task'
+def adjust_cmd_options_for_add_cmd(p_hash)
+  # Have to be adding task if command is longer than options specified.
+  num_options = 0
+  num_options += 1 if p_hash[:team_option]
+  num_options += 1 if p_hash[:all_option]
+  num_options += 1 if p_hash[:open_option]
+  num_options += 1 if p_hash[:due_option]
+  num_options += 1 if p_hash[:done_option]
+  num_options += 1 if p_hash[:more_option]
+  num_options += 1 unless p_hash[:task_num].nil?
+  num_options += 1 unless p_hash[:mentioned_member_id].nil?
+  p_hash[:func] = :add if p_hash[:cmd_splits].length > num_options
 end
 
 # Trim off the leading command func, scope and sub_func. Remainder is what
 # most of our following parse logic cares about.
-def rebuild_remaining_command_line(p_hash)
-  p_hash[:command] =
-    p_hash[:cmd_splits][p_hash[:next_cmd_split_to_parse]..-1].join(' ')
-end
+# def rebuild_remaining_command_line(p_hash)
+#  p_hash[:command] =
+#    p_hash[:cmd_splits][p_hash[:next_cmd_split_to_parse]..-1].join(' ')
+# end
 
 # Case: 'delete 4', 'delete team', 'assign 3 @tony'
 def scan4_task_num(p_hash)

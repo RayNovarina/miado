@@ -25,21 +25,34 @@
 # assigned_member_id = list.id of member assigned a task
 #------------------------------
 def list_command(parsed)
-  records = list_from_parsed(parsed) unless parsed[:display_after_action_list]
-  records = list_from_list_of_ids(parsed[:after_action_list_context][:list]) if parsed[:display_after_action_list]
-  parsed[:debug] = true if records.nil?
-  records = [] if records.nil?
-  context = parsed unless parsed[:display_after_action_list]
-  context = parsed[:after_action_list_context] if parsed[:display_after_action_list]
-  format_display_list(parsed, context, records)
+  adjust_list_cmd_action_context(parsed)
+  format_display_list(parsed, parsed, list_from_parsed(parsed))
+end
+
+def adjust_list_cmd_action_context(parsed)
+  adjust_list_cmd_list_owner(parsed)
+end
+
+# @me member is implied if no Other member is mentioned. However, 'list team'
+# implies no member is mentioned.
+def adjust_list_cmd_list_owner(parsed)
+  return parsed[:list_owner] = :team, parsed[:list_owner_name] = 'team' if parsed[:list_scope] == :team
+  parsed[:list_owner] = :member
+  if parsed[:mentioned_member_id].nil?
+    parsed[:mentioned_member_name] = parsed[:url_params][:user_name]
+    parsed[:mentioned_member_id] = parsed[:url_params][:user_id]
+  end
+  parsed[:list_owner_name] = "@#{parsed[:mentioned_member_name]}"
 end
 
 # Returns: slash_response() return values.
-def prepend_to_list_command(parsed, prepend_text)
-  list_text, list_attachments = list_command(parsed)
+def prepend_text_to_list_command(parsed, prepend_text)
+  list_text, list_attachments =
+    format_display_list(parsed, parsed[:after_action_list_context],
+                        list_from_list_of_ids(parsed[:after_action_list_context][:list]))
   combined_text =
     prepend_text.concat("   Updated list as follows: \n").concat(list_text)
-  slash_response(combined_text, list_attachments, parsed)
+  [combined_text, list_attachments]
 end
 
 # Returns: [text, attachments]
@@ -67,11 +80,8 @@ def one_channel_display(parsed, context, list_of_records)
 end
 
 def format_owner_title(context)
-  type = context[:list_owner_name] unless context[:list_scope] == :team
-  type = 'team' if context[:list_scope] == :team
-  return type if context[:channel_scope] == :one_channel
-  type.concat(' all') # context[:channel_scope] == :all_channels
-  type
+  return context[:list_owner_name] if context[:channel_scope] == :one_channel
+  context[:list_owner_name].concat(' - all')
 end
 
 # Returns: updated attachments array.

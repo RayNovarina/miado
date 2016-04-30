@@ -2,7 +2,7 @@
 #-----------------------------------
 # LIST_SCOPES  = %w(one_member team)
 # CHANNEL_SCOPES = %w(one_channel all_channels)
-# SUB_FUNCS  = %w(open due more)
+# options  = %w(open due done)
 # assigned_member_id = id of @name assigned a task.
 def list_from_parsed(parsed)
   return [] unless parsed[:err_msg].empty?
@@ -51,9 +51,9 @@ end
 def list_of_assigned_tasks_for_one_member_in_one_channel(parsed, params)
   parsed[:list_query_trace_info] = 'list_of_assigned_tasks_for_one_member_in_one_channel' if parsed[:debug]
   # For specified member in this channel.
-  # parsed[:sub_func] == :due or :open
+  # parsed[:due_option] or :open
 
-  if parsed[:sub_func] == :due
+  if parsed[:due_option]
     # due: All list items for this Team Channel assigned to specified member
     #      and with a due date.
     ListItem.where(channel_id: params[:channel_id],
@@ -61,7 +61,7 @@ def list_of_assigned_tasks_for_one_member_in_one_channel(parsed, params)
             .where.not(assigned_due_date: nil)
             .reorder('channel_name ASC, created_at ASC')
 
-  elsif parsed[:sub_func] == :open
+  elsif parsed[:open_option]
     # open: All list items for this Team Channel assigned to specified
     #       member and which are not done.
     ListItem.where(channel_id: params[:channel_id],
@@ -82,9 +82,9 @@ def list_of_assigned_tasks_for_one_member_in_all_channels(parsed, params)
   # For member in all channels.
   # all: All list items for ALL Channels assigned to specified Slack member,
   #     clumped by channel via sorted by channel name and creation date.
-  # parsed[:sub_func] == :due or :open
+  # parsed[:due_option] or :open
 
-  if parsed[:sub_func] == :due
+  if parsed[:due_option]
     # due: All list items for all channels assigned to specified Slack
     #      member and with a due date OR is open.
     ListItem.where(team_id: params[:team_id],
@@ -92,7 +92,7 @@ def list_of_assigned_tasks_for_one_member_in_all_channels(parsed, params)
             .where.not(assigned_due_date: nil)
             .reorder('channel_name ASC, created_at ASC')
 
-  elsif parsed[:sub_func] == :open
+  elsif parsed[:open_option]
     # open: All list items for this Team Channel assigned to specified
     #       member and which are not done.
     ListItem.where(team_id: params[:team_id],
@@ -113,15 +113,15 @@ def list_of_all_tasks_for_one_team_member_in_one_channel(parsed, params)
   # For all team members in this channel.
   # team: All list items for this Team Channel.
 
-  # parsed[:sub_func] == :due or :open
-  if parsed[:sub_func] == :due
+  # parsed[:due_option] or :open
+  if parsed[:due_option]
     # due: All list items for this Team Channel
     #      and with a due date OR is open.
     ListItem.where(channel_id: params[:channel_id],
                    assigned_member_id: parsed[:mentioned_member_id])
             .where.not(assigned_due_date: nil)
             .reorder('channel_name ASC, created_at ASC')
-  elsif parsed[:sub_func] == :open
+  elsif parsed[:open_option]
     # open: All list items for this Team Channel assigned to specified
     # member and which are not done.
     ListItem.where(channel_id: params[:channel_id],
@@ -140,14 +140,14 @@ def list_of_all_tasks_for_all_team_members_in_one_channel(parsed, params)
   # For all team members in this channel.
   # team: All list items for this Team Channel.
 
-  # parsed[:sub_func] == :due or :open
-  if parsed[:sub_func] == :due
+  # parsed[:due_option] or :open
+  if parsed[:due_option]
     # due: All list items for this Team Channel
     #      and with a due date OR is open.
     ListItem.where(channel_id: params[:channel_id])
             .where.not(assigned_due_date: nil)
             .reorder('channel_name ASC, created_at ASC')
-  elsif parsed[:sub_func] == :open
+  elsif parsed[:open_option]
     # open: All list items for this Team Channel assigned to specified
     # member and which are not done.
     ListItem.where(channel_id: params[:channel_id],
@@ -165,8 +165,8 @@ def list_of_all_tasks_for_one_team_member_in_all_channels(parsed, params)
   # all: All list items for ALL Channels assigned to any team member,
   #     clumped by channel via sorted by channel name and creation date.
 
-  # parsed[:sub_func] == :due or :open
-  if parsed[:sub_func] == :due
+  # parsed[:due_option] or :open
+  if parsed[:due_option]
     # due: All list items for all channels assigned to any team
     #      member and with a due date OR is open.
     ListItem.where(team_id: params[:team_id],
@@ -174,7 +174,7 @@ def list_of_all_tasks_for_one_team_member_in_all_channels(parsed, params)
             .where.not(assigned_member_id: nil)
             .where.not(assigned_due_date: nil)
             .reorder('channel_name ASC, created_at ASC')
-  elsif parsed[:sub_func] == :open
+  elsif parsed[:open_option]
     # open: All list items for this Team Channel assigned to any
     #       member and which are not done.
     ListItem.where(team_id: params[:team_id],
@@ -196,15 +196,15 @@ def list_of_all_tasks_for_all_team_members_in_all_channels(parsed, params)
   # all: All list items for ALL Channels assigned to any team member,
   #     clumped by channel via sorted by channel name and creation date.
 
-  # parsed[:sub_func] == :due or :open
-  if parsed[:sub_func] == :due
+  # parsed[:due_option] or :open
+  if parsed[:due_option]
     # due: All list items for all channels assigned to any team
     #      member and with a due date OR is open.
     ListItem.where(team_id: params[:team_id])
             .where.not(assigned_member_id: nil)
             .where.not(assigned_due_date: nil)
             .reorder('channel_name ASC, created_at ASC')
-  elsif parsed[:sub_func] == :open
+  elsif parsed[:open_option]
     # open: All list items for this Team Channel assigned to any
     #       member and which are not done.
     ListItem.where(team_id: params[:team_id],
@@ -222,12 +222,10 @@ def list_from_list_of_ids(array_of_ids)
   ListItem.where(id: array_of_ids)
 end
 
-def ids_from_context(parsed, context)
+def ids_from_parsed(parsed)
   require 'pry'
   binding.pry
-  return [] if context.nil? || context.empty?
-  new_parse_hash = p_hash_from_context(parsed, context)
-  records = list_from_parsed(new_parse_hash)
+  records = list_from_parsed(parsed)
   return [] unless parsed[:err_msg].empty?
   return [] if records.empty?
   ids = []
@@ -237,8 +235,4 @@ def ids_from_context(parsed, context)
   require 'pry'
   binding.pry
   ids
-end
-
-def p_hash_from_context(parsed, context)
-  {}
 end
