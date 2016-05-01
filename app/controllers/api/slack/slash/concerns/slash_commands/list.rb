@@ -49,7 +49,7 @@ end
 def prepend_text_to_list_command(parsed, prepend_text)
   list_text, list_attachments =
     format_display_list(parsed, parsed[:after_action_list_context],
-                        list_from_list_of_ids(parsed[:after_action_list_context][:list]))
+                        list_from_list_of_ids(parsed, parsed[:after_action_list_context][:list]))
   combined_text =
     prepend_text.concat("   Updated list as follows: \n").concat(list_text)
   [combined_text, list_attachments]

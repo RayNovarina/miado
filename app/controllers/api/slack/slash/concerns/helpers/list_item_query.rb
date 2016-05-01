@@ -218,8 +218,9 @@ def list_of_all_tasks_for_all_team_members_in_all_channels(parsed, params)
   end
 end
 
-def list_from_list_of_ids(array_of_ids)
-  ListItem.where(id: array_of_ids)
+def list_from_list_of_ids(parsed, array_of_ids)
+  parsed[:list_query_trace_info] = "list_from_list_of_ids(input ids: #{array_of_ids.to_s})" if parsed[:debug]
+  ListItem.where(id: array_of_ids).reorder('channel_name ASC, created_at ASC')
 end
 
 def ids_from_parsed(parsed)
@@ -230,5 +231,6 @@ def ids_from_parsed(parsed)
   records.each do |item|
     ids << item.id
   end
+  parsed[:list_query_trace_info] = "ids_from_parsed(returned: #{ids.to_s})" if parsed[:debug]
   ids
 end
