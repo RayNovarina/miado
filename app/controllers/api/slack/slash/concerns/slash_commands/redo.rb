@@ -4,7 +4,7 @@
 #          parsed[:err_msg] if needed.
 #          list = unmodified.
 #-------------------------------------------------
-# /do redo /wed   Sets the task redo date to Wednesday for task 4.
+# /do redo 1 Send out newsletter by /fri. Deletes tasks 1 and replaces it with "Send out newsletter by /fri"
 def redo_command(parsed)
   adjust_redo_cmd_action_context(parsed)
   text = redo_one(parsed)
@@ -17,16 +17,41 @@ def redo_command(parsed)
 end
 
 def redo_one(parsed)
-  # error if invalide task num
   return if task_num_invalid?(parsed)
   item = ListItem.find(parsed[:list][parsed[:task_num] - 1])
-  item.assigned_redo_date = parsed[:redo_date]
-  if item.save
-    return "Task #{parsed[:task_num]} " \
-           "#{item.assigned_member_id.nil? ? '' : "for @#{item.assigned_member_name}"} " \
-           "set to a redo date of #{item.assigned_redo_date.strftime('%a, %d %b')}"
+  # Replace the current item task with command string starting after the
+  # task num.
+  new_task_cmd_string = parsed[:cmd_splits][1..-1].join(' ')
+  replaced_assigned_member = !item.assigned_member_id.nil?
+  replaced_assigned_member_name = replaced_assigned_member ? item.assigned_member_name : ''
+  replaced_due_date = !item.due_date.nil?
+  replaced_due_date_string = replaced_due_date ? item.due_date.strftime('%a, %d %b') : ''
+  replaced_done_status = !item.done
+
+  task_replacement_clause = "'".concat(new_task_cmd_string)
+  assigned_member_replacement_clause = '' unless replaced_assigned_member
+  if replaced_assigned_member
+    assigned_member_replacement_clause =
+      "Replaced ASSIGNed member '@#{replaced_assigned_member_name}' with " \
+      "'#{parsed[:assigned_member_id].nil? ? '' : "@#{parsed[:assigned_member_name]}"}'."
   end
-  parsed[:err_msg] = 'Error: There was an error setting this Task\'s redo date.'
+  due_date_replacement_clause = '' unless replaced_due_date
+  if replaced_due_date
+    due_date_replacement_clause =
+      "Replaced DUE date of '#{replaced_due_date_string}' with " \
+      "'#{parsed[:due_date].strftime('%a, %d %b')}'"
+  end
+  done_status_replacement_clause = '' unless replaced_done_status
+  done_status_replacement_clause = 'Replaced DONE status.' if replaced_done_status
+
+  if item.save
+    return "Task #{parsed[:task_num]} TO BE rewritten as " \
+           "#{task_replacement_clause}  " \
+           "#{assigned_member_replacement_clause}  " \
+           "#{due_date_replacement_clause}  \n" \
+           "#{done_status_replacement_clause}  "
+  end
+  parsed[:err_msg] = 'Error: There was an error redoing this Task.'
 end
 
 def adjust_redo_cmd_action_context(parsed)
@@ -43,7 +68,7 @@ end
 #   3) All items for all channels.
 #      i.e. 'list all'
 #-------------------------------------------
-# /do redo /wed   Sets the task redo date to Wednesday for task 4.
+# /do redo 1 Send out newsletter by /fri. Deletes tasks 1 and replaces it with "Send out newsletter by /fri"
 #--------------------------------------------------------
 def adjust_redo_cmd_action_list(parsed)
   # We are trying to set a task's redo date for a specific member on a
