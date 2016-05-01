@@ -30,6 +30,8 @@ def perform_scans_for_functions(p_hash)
   when :append
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
+    scan4_mentioned_member(p_hash)
+    scan4_due_date(p_hash)
   when :assign
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
@@ -52,6 +54,11 @@ def perform_scans_for_functions(p_hash)
   when :list
     scan4_mentioned_member(p_hash)
     scan4_options(p_hash)
+  when :redo
+    p_hash[:requires_task_num] = true
+    scan4_task_num(p_hash)
+    scan4_mentioned_member(p_hash)
+    scan4_due_date(p_hash)
   when :unassign
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
@@ -206,10 +213,10 @@ def scan4_due_date(p_hash)
   end_of_date_pos = p_hash[:command].length - 1 if blank_pos.nil?
   end_of_date_pos = blank_pos - 1 unless blank_pos.nil?
 
-  due_date_string =
+  p_hash[:due_date_string] =
     p_hash[:command].slice(slash_pos + 1, end_of_date_pos - slash_pos)
 
-  p_hash[:due_date] = date_from_due_date(due_date_string)
+  p_hash[:due_date] = date_from_due_date(p_hash[:due_date_string])
   adjust_and_verify_due_date(p_hash)
   return if p_hash[:due_date].nil?
   p_hash[:due_date_begin_pos] = slash_pos

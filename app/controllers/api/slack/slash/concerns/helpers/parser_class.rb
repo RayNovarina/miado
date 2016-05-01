@@ -42,6 +42,7 @@ def make_parse_hash
     due_date: nil,
     due_date_begin_pos: nil,
     due_date_end_pos: nil,
+    due_date_string: nil,
     requires_task_num: false,
     task_num: nil,
     func: nil,
