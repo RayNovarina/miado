@@ -92,19 +92,25 @@ def list_add_item_to_display_list(attachments, item, index)
   attachments << {
     text: "#{index + 1}) #{item.description}" \
           "#{list_cmd_assigned_to_clause(item)}" \
-          "#{list_cmd_due_date_clause(item)}",
+          "#{list_cmd_due_date_clause(item)}" \
+          "#{list_cmd_task_completed_clause(item)}",
     mrkdwn_in: ['text']
   }
 end
 
 def list_cmd_assigned_to_clause(item)
   return '' if item.assigned_member_id.nil?
-  "| *Assigned* to @#{item.assigned_member_name}."
+  " | *Assigned* to @#{item.assigned_member_name}."
 end
 
 def list_cmd_due_date_clause(item)
   return '' if item.assigned_due_date.nil?
-  "| *Due* #{item.assigned_due_date.strftime('%a, %d %b')}."
+  " | *Due* #{item.assigned_due_date.strftime('%a, %d %b')}."
+end
+
+def list_cmd_task_completed_clause(item)
+  return '' unless item.done
+  ' | *Completed* '
 end
 
 # Returns: [text, attachments, list_ids]
