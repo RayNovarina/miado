@@ -116,20 +116,19 @@ end
 #       'open' was 'list open', '' was 'list ', '4' was 'delete team 4',
 #       'open team' was 'list open team', 'team all' was 'list team all',
 #       'all open tasks for @susan is a new task' was 'delete all open tasks for @susan is a new task'
-CMD_OPTIONS = %w(open due done all team more).freeze
+CMD_OPTIONS = %w(open due done all team).freeze
 def scan4_options(p_hash)
   return unless p_hash[:err_msg].empty?
   # Have to be adding task if command is longer than options allow.
   return p_hash[:func] = :add if p_hash[:cmd_splits].length > CMD_OPTIONS.length - 1
-  p_hash[:team_option] = p_hash[:cmd_splits].include?('team')
-  p_hash[:all_option] = p_hash[:cmd_splits].include?('all')
-  p_hash[:open_option] = p_hash[:cmd_splits].include?('open')
-  p_hash[:due_option] = p_hash[:cmd_splits].include?('due')
-  p_hash[:done_option] = p_hash[:cmd_splits].include?('done')
-  p_hash[:more_option] = p_hash[:cmd_splits].include?('more')
+  CMD_OPTIONS.each do |option|
+    next unless p_hash[:cmd_splits].include?(option)
+    p_hash[option.concat('_option').to_sym] = true
+  end
   adjust_cmd_options_for_add_cmd(p_hash)
 end
 
+# Correct for case of add task using most of the same syntax as another cmd.
 # Case: command function has been processed, leaving:
 #       'all open tasks for @susan is a new task' was 'delete all open tasks for @susan is a new task'
 def adjust_cmd_options_for_add_cmd(p_hash)
@@ -140,7 +139,6 @@ def adjust_cmd_options_for_add_cmd(p_hash)
   num_options += 1 if p_hash[:open_option]
   num_options += 1 if p_hash[:due_option]
   num_options += 1 if p_hash[:done_option]
-  num_options += 1 if p_hash[:more_option]
   num_options += 1 unless p_hash[:task_num].nil?
   num_options += 1 unless p_hash[:mentioned_member_id].nil?
   p_hash[:func] = :add if p_hash[:cmd_splits].length > num_options

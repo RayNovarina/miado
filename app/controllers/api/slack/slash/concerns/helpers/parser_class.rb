@@ -16,7 +16,6 @@ def make_parse_hash
     cmd_splits: [],
     team_option: false,
     all_option: false,
-    more_option: false,
     open_option: false,
     due_option: false,
     done_option: false,

@@ -5,6 +5,10 @@
 #          list = unmodified.
 #-------------------------------------------------
 # /do unassign 3 @tony Unassigns "@tony" from task 3 for this channel.
+# When I unassign a team task, the result list does not include the unassigned
+# task.  But a "/do list team" done immediately after displays the unassigned
+# task.
+
 def unassign_command(parsed)
   adjust_unassign_cmd_action_context(parsed)
   text = unassign_one(parsed)
