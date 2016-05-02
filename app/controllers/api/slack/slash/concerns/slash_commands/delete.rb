@@ -28,6 +28,8 @@ user_name	ray
 def delete_command(parsed)
   adjust_delete_cmd_action_context(parsed)
   text = delete_item(parsed)
+  # Special case: just doing a delete for the redo command.
+  return [text, nil] if parsed[:on_behalf_of_redo_cmd]
   if parsed[:err_msg].empty?
     # Persist the channel.list_ids[] for the next transaction.
     save_after_action_list_context(parsed, parsed, parsed[:list])
@@ -99,6 +101,8 @@ def destroy_all_by_ids(list, parsed)
 end
 
 def adjust_delete_cmd_action_context(parsed)
+  # Special case: doing a delete for redo command. Context already adjusted.
+  return if parsed[:on_behalf_of_redo_cmd]
   # Figure out the list we are working on and its attributes.
   adjust_delete_cmd_action_list(parsed)
   adjust_delete_cmd_list_owner(parsed)
