@@ -1,3 +1,4 @@
+require 'date'
 require_relative './parser_class'
 =begin
 Form Params
@@ -216,8 +217,8 @@ def scan4_due_date(p_hash)
   p_hash[:due_date_string] =
     p_hash[:command].slice(slash_pos + 1, end_of_date_pos - slash_pos)
 
-  p_hash[:due_date] = date_from_due_date(p_hash[:due_date_string])
-  adjust_and_verify_due_date(p_hash)
+  p_hash[:due_date], is_day_of_week = date_from_due_date(p_hash[:due_date_string])
+  adjust_due_date_into_future(p_hash, is_day_of_week)
   return if p_hash[:due_date].nil?
   p_hash[:due_date_begin_pos] = slash_pos
   p_hash[:due_date_end_pos] = end_of_date_pos
@@ -231,12 +232,9 @@ def remove_due_date_from_command(p_hash)
   p_hash[:command] = begin_phrase.concat(end_phrase)
 end
 
-def adjust_and_verify_due_date(p_hash)
-  # ??Assume standalone day or month refers to a future date.
-  p_hash[:err_msg] =
-    'Error: Due date has already passed.' if p_hash[:due_date] < DateTime.now
-end
-
+# Returns: [nil, false] if invalide date.
+#          [datetime object, true/false if due date input string is of format]
+#         'sun' thru 'sat'
 def date_from_due_date(due_date_string)
   numeric_partition = due_date_string.partition(/\d/)
   # Case: no numeric portion. /fri or /jun or /half
@@ -244,9 +242,10 @@ def date_from_due_date(due_date_string)
     begin
       due_date = due_date_string.to_datetime
     rescue ArgumentError
-      return nil
+      return [nil, false]
     end
-    return due_date
+    return due_date,
+           Date::ABBR_DAYNAMES.map {|abbr| abbr.downcase}.include?(numeric_partition[0].downcase)
   end
   # Case: just day of month specified. /12
   if numeric_partition[0].empty?
@@ -256,9 +255,9 @@ def date_from_due_date(due_date_string)
                          .to_datetime
     rescue ArgumentError
       p_hash[:err_msg] = 'Error: invalid day of month.'
-      return nil
+      return [nil, false]
     end
-    return due_date
+    return [due_date, false]
   end
   # Case: normal. /jun15
   begin
@@ -269,7 +268,24 @@ def date_from_due_date(due_date_string)
                .to_datetime
   rescue ArgumentError
     p_hash[:err_msg] = 'Error: invalid day of month.'
-    return nil
+    return [nil, false]
   end
-  due_date
+  [due_date, false]
+end
+
+# Assume standalone day or month refers to a future date.
+# Example1) if today is Wednesday, then /mon refers to Monday of next week,
+# not the Monday of two days ago.
+# Example2) # i.e. if today is March 15th. Then the date /feb2 refers to
+# next year.
+# Ruby defaults to "this week" and "this year".
+# p_hash[:err_msg] =
+# 'Error: Due date has already passed.' if p_hash[:due_date] < DateTime.now
+def adjust_due_date_into_future(p_hash, is_day_of_week)
+  return if p_hash[:due_date] > DateTime.now
+  return if p_hash[:due_date].today?
+  # Case: just day of week specified.
+  return p_hash[:due_date] = (p_hash[:due_date].to_date + 7).to_datetime if is_day_of_week
+  # Case: Month/day specified:
+  p_hash[:due_date] = p_hash[:due_date].to_date.next_year.to_datetime
 end

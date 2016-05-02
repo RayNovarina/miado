@@ -105,7 +105,7 @@ end
 
 def list_cmd_due_date_clause(item)
   return '' if item.assigned_due_date.nil?
-  " | *Due* #{item.assigned_due_date.strftime('%a, %d %b')}."
+  " | *Due* #{item.assigned_due_date.strftime('%a, %d %b %Y')}."
 end
 
 def list_cmd_task_completed_clause(item)
