@@ -27,7 +27,7 @@ SLASH_CMD_HLP_TEXT =
  " Lists all TEAM tasks for THIS channel.\n" \
  '• `/do list all`' \
  " Lists your ASSIGNED tasks for ALL channels.\n" \
- ':bulb: Click on the "miaDo" member to see all of your up to date lists.' \
+ # ':bulb: Click on the "miaDo" member to see all of your up to date lists.' \
  "\n".freeze
 
 # Returns: [text, attachments]
