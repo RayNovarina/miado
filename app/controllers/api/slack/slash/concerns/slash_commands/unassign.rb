@@ -40,7 +40,8 @@ end
 # If we are looking at a member's assigned items only list, drop the
 # unassigned item.
 def adjust_unassign_after_action_list(parsed)
-  parsed[:list].delete_at(parsed[:task_num] - 1) if parsed[:list_scope] == :one_member
+  return if parsed[:previous_action_list_context].empty?
+  parsed[:list].delete_at(parsed[:task_num] - 1) if parsed[:previous_action_list_context] == :one_member
 end
 
 def adjust_unassign_cmd_action_context(parsed)
