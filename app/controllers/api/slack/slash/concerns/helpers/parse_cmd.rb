@@ -121,9 +121,9 @@ def scan4_options(p_hash)
   return unless p_hash[:err_msg].empty?
   # Have to be adding task if command is longer than options allow.
   return p_hash[:func] = :add if p_hash[:cmd_splits].length > CMD_OPTIONS.length - 1
-  CMD_OPTIONS.each do |option|
+  CMD_OPTIONS.each_with_index do |option, index|
     next unless p_hash[:cmd_splits].include?(option)
-    p_hash[option.concat('_option').to_sym] = true
+    p_hash[''.concat(option).concat('_option').to_sym] = true
   end
   adjust_cmd_options_for_add_cmd(p_hash)
 end
@@ -142,6 +142,8 @@ def adjust_cmd_options_for_add_cmd(p_hash)
   num_options += 1 unless p_hash[:task_num].nil?
   num_options += 1 unless p_hash[:mentioned_member_id].nil?
   p_hash[:func] = :add if p_hash[:cmd_splits].length > num_options
+  if p_hash[:func] == :add
+  end
 end
 
 # Trim off the leading command func, scope and sub_func. Remainder is what
@@ -280,6 +282,7 @@ end
 # p_hash[:err_msg] =
 # 'Error: Due date has already passed.' if p_hash[:due_date] < DateTime.now
 def adjust_due_date_into_future(p_hash, is_day_of_week)
+  return if p_hash[:due_date].nil?
   return if p_hash[:due_date] > DateTime.now
   return if p_hash[:due_date].today?
   # Case: just day of week specified.
