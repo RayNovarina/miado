@@ -115,6 +115,8 @@ def adjust_add_cmd_action_list(parsed)
   # Inherit item list from what user is looking at.
   return parsed[:list] = [] if parsed[:previous_action_list_context].empty?
   return parsed[:list] = parsed[:previous_action_list_context][:list] if add_cmd_context_matches(parsed)
+  require 'pry'
+  binding.pry
   # Note: the add_cmd_context_matches method has already adjusted parsed
   #       attributes to fetch a correct list.
   parsed[:list] = ids_from_parsed(parsed)
@@ -127,6 +129,7 @@ end
 #      i.e. 'list team'
 #   3) All items for all channels.
 #      i.e. 'list all'
+#   4) Empty list after 'delete team'
 #------------------------------------
 
 # Case: 'list @ray' or 'list': we display list @ray. then 'new task'
@@ -142,19 +145,25 @@ def add_cmd_context_matches(parsed)
   # Case: 'list @dawn' or 'list'
   #       AND THEN 'new task for @dawn'
   #       OR 'new task'
+  #       OR 'delete team'
   if parsed[:previous_action_list_context][:list_scope] == :one_member
     # We are trying to add to a specific member list.
     return true if parsed[:mentioned_member_id] == parsed[:previous_action_list_context][:mentioned_member_id]
     # Can't add this member to that list. Must add it to end of team list.
-  end
-  # Case  'list team @ray' OR 'list team'
-  #       AND THEN 'new task for @dawn'
-  #       OR 'new task' OR 'new task for @ray'
-  unless parsed[:previous_action_list_context][:all_option]
-    return true if parsed[:previous_action_list_context][:mentioned_member_id].nil?
-    return true if parsed[:mentioned_member_id] == parsed[:previous_action_list_context][:mentioned_member_id]
-    # Can't add this member to that Team list. Must get a new team list for all
-    # members or for mentioned member.
+  else
+    # Case  'list team @ray' OR 'list team'
+    #       AND THEN 'new task for @dawn'
+    #       OR 'new task' OR 'new task for @ray'
+    #       OR 'delete team'
+    # Case  'list team'
+    #       AND THEN 'new task for @dawn'
+    #       AND THEN 'new task for @ray'
+    unless parsed[:previous_action_list_context][:all_option]
+      return true if parsed[:previous_action_list_context][:mentioned_member_id].nil?
+      return true if parsed[:mentioned_member_id] == parsed[:previous_action_list_context][:mentioned_member_id]
+      # Can't add this member to that Team list. Must get a new team list for all
+      # members or for mentioned member.
+    end
   end
   # Case 'list all' OR 'list all @dawn'
   #       AND THEN 'new task for @dawn'
@@ -164,10 +173,28 @@ def add_cmd_context_matches(parsed)
   # List context Doesn't match. Must get a new team list.
   parsed[:list_scope] = :team
   parsed[:channel_scope] = :one_channel
-  return false
+  false
 end
 
-# @me member is implied if no Other member is mentioned.
+#-------------
+# Case  'list team' input: parsed[:list_scope] == :team
+#       AND THEN 'new task'
+#       OR 'new task for @ray'
+# Case  'list team @ray'
+#       AND THEN 'new task' OR 'new task for @ray'
+# Case  'list team' input: parsed[:list_scope] == :team
+#       AND THEN 'new task for @dawn'
+#       AND THEN 'new task for @ray'
+#-------------- :list_scope] == :member
+# Case  'list'
+#       AND THEN 'new task' OR 'new task for @ray'
+# Case  'list @ray'
+#       AND THEN 'new task' OR 'new task for @ray'
+# Case  'list team'
+#       AND THEN 'new task for @dawn'
+#       AND THEN 'new task for @ray'
+# Case: @me member is implied if no Other member is mentioned.
+#-----------------------------------
 def adjust_add_cmd_list_owner(parsed)
   return parsed[:list_owner] = :team, parsed[:list_owner_name] = 'team' if parsed[:list_scope] == :team
   parsed[:list_owner] = :member
