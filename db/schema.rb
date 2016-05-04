@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160420071007) do
+ActiveRecord::Schema.define(version: 20160420175734) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -42,6 +42,7 @@ ActiveRecord::Schema.define(version: 20160420071007) do
     t.string   "channel_id"
     t.string   "assigned_member_id"
     t.datetime "assigned_due_date"
+    t.string   "debug_trace"
   end
 
   add_index "list_items", ["member_id"], name: "index_list_items_on_member_id", using: :btree
