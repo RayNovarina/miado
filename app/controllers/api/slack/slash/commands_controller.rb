@@ -26,10 +26,11 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   def local_response_or_bot_msg
     # Cmd Context: We need to know our team members and the last list displayed.
     @view.channel, previous_action_parse_hash = recover_previous_action_list
+    return { response_type: 'ephemeral', text: '`MiaDo ERROR: team or channel not found. MiaDo command not installed?`' } if @view.channel.nil?
     # Note: previous_action_list_context: {} becomes our
     # BEFORE action list(mine) or list(team) or list(all)
     parsed = parse_slash_cmd(params, @view, previous_action_parse_hash)
-    return parsed[:err_msg] unless parsed[:err_msg].empty?
+    return { response_type: 'ephemeral', text: "`MiaDo ERROR: #{parsed[:err_msg]}`" } unless parsed[:err_msg].empty?
     text, attachments = process_cmd(parsed)
     # after_action_list_context: {} is AFTER action list(mine) or
     # list(team) or list(all)
@@ -45,6 +46,7 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   def recover_previous_action_list
     @view.channel ||= Channel.find_or_create_from_slack_id(
       @view, params[:channel_id], params[:team_id])
+    return [nil, nil] if @view.channel.nil?
     [@view.channel, @view.channel.after_action_parse_hash]
   end
 

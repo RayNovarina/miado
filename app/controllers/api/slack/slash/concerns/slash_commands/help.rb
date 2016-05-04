@@ -1,7 +1,7 @@
 SLASH_CMD_HLP_TEXT =
 '• `/do rev 1 spec @susan /jun15`' \
- ' Adds "rev 1 spec" to this channel, assigns it to Susan and sets' \
- " a due date of June 15.\n" \
+ ' Adds "rev 1 spec" task to this channel, assigns it to Susan,' \
+ " due date is June 15.\n" \
  '• `/do append 3 Contact Jim.`' \
  " Adds \"Contact Jim.\" to the end of task 3.\n" \
  '• `/do assign 3 @tony`' \
@@ -14,9 +14,9 @@ SLASH_CMD_HLP_TEXT =
  " Deletes task number 4 from the list.\n" \
  '• `/do due 4 /wed`' \
  " Sets the task due date to Wednesday for task 4.\n" \
- '• `/do redo 1 Send out newsletter by /fri.`' \
- ' Deletes tasks 1 and replaces it with ' \
- "\"Send out newsletter by /fri\"\n" \
+ '• `/do redo 1 Send out newsletter /fri.`' \
+ ' Deletes tasks 1, adds new task ' \
+ "\"Send out newsletter /fri\"\n" \
  '• `/do list`' \
  " Lists your ASSIGNED tasks for THIS channel. Includes DONE tasks.\n" \
  '• `/do list open`' \
@@ -27,9 +27,7 @@ SLASH_CMD_HLP_TEXT =
  " Lists all TEAM tasks for THIS channel.\n" \
  '• `/do list all`' \
  " Lists your ASSIGNED tasks for ALL channels.\n" \
- '• `/do help more`' \
- " Display /do keyboard shortcuts, misc. commands.\n" \
- ':bulb: Click on the "miaDo" member to see all of your up to date lists.' \
+ # ':bulb: Click on the "miaDo" member to see all of your up to date lists.' \
  "\n".freeze
 
 # Returns: [text, attachments]

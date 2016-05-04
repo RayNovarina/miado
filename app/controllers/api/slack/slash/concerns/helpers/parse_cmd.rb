@@ -1,3 +1,4 @@
+require 'date'
 require_relative './parser_class'
 =begin
 Form Params
@@ -30,10 +31,12 @@ def perform_scans_for_functions(p_hash)
   when :append
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
+    scan4_mentioned_member(p_hash)
+    scan4_due_date(p_hash)
   when :assign
     p_hash[:requires_task_num] = true
-    p_hash[:requires_member] = true
     scan4_task_num(p_hash)
+    p_hash[:requires_mentioned_member] = true
     scan4_mentioned_member(p_hash)
   when :delete
     scan4_task_num(p_hash)
@@ -42,21 +45,26 @@ def perform_scans_for_functions(p_hash)
   when :done
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
-    scan4_mentioned_member(p_hash)
   when :due
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
+    p_hash[:requires_due_date] = true
     scan4_due_date(p_hash)
-    scan4_mentioned_member(p_hash)
   when :help
     scan4_options(p_hash)
   when :list
     scan4_mentioned_member(p_hash)
     scan4_options(p_hash)
-  when :unassign
+  when :redo
+    p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
     scan4_mentioned_member(p_hash)
-    scan4_options(p_hash)
+    scan4_due_date(p_hash)
+  when :unassign
+    p_hash[:requires_task_num] = true
+    scan4_task_num(p_hash)
+    p_hash[:requires_mentioned_member] = true
+    scan4_mentioned_member(p_hash)
   end
 end
 
@@ -93,7 +101,7 @@ end
 #       'delete all open tasks for @susan is a new task'
 # Case: command is as entered from command line.
 #       'a new task', 'list team'
-CMD_FUNCS = %w(append assign delete done due help list redo unasign).freeze
+CMD_FUNCS = %w(append assign delete done due help list redo unassign).freeze
 def scan4_command_func(p_hash)
   return p_hash[:func] = :help if p_hash[:cmd_splits].length == 0
   maybe_func = p_hash[:cmd_splits][0]
@@ -108,20 +116,19 @@ end
 #       'open' was 'list open', '' was 'list ', '4' was 'delete team 4',
 #       'open team' was 'list open team', 'team all' was 'list team all',
 #       'all open tasks for @susan is a new task' was 'delete all open tasks for @susan is a new task'
-CMD_OPTIONS = %w(open due done all team more).freeze
+CMD_OPTIONS = %w(open due done all team).freeze
 def scan4_options(p_hash)
   return unless p_hash[:err_msg].empty?
   # Have to be adding task if command is longer than options allow.
   return p_hash[:func] = :add if p_hash[:cmd_splits].length > CMD_OPTIONS.length - 1
-  p_hash[:team_option] = p_hash[:cmd_splits].include?('team')
-  p_hash[:all_option] = p_hash[:cmd_splits].include?('all')
-  p_hash[:open_option] = p_hash[:cmd_splits].include?('open')
-  p_hash[:due_option] = p_hash[:cmd_splits].include?('due')
-  p_hash[:done_option] = p_hash[:cmd_splits].include?('done')
-  p_hash[:more_option] = p_hash[:cmd_splits].include?('more')
+  CMD_OPTIONS.each do |option|
+    next unless p_hash[:cmd_splits].include?(option)
+    p_hash[option.concat('_option').to_sym] = true
+  end
   adjust_cmd_options_for_add_cmd(p_hash)
 end
 
+# Correct for case of add task using most of the same syntax as another cmd.
 # Case: command function has been processed, leaving:
 #       'all open tasks for @susan is a new task' was 'delete all open tasks for @susan is a new task'
 def adjust_cmd_options_for_add_cmd(p_hash)
@@ -132,7 +139,6 @@ def adjust_cmd_options_for_add_cmd(p_hash)
   num_options += 1 if p_hash[:open_option]
   num_options += 1 if p_hash[:due_option]
   num_options += 1 if p_hash[:done_option]
-  num_options += 1 if p_hash[:more_option]
   num_options += 1 unless p_hash[:task_num].nil?
   num_options += 1 unless p_hash[:mentioned_member_id].nil?
   p_hash[:func] = :add if p_hash[:cmd_splits].length > num_options
@@ -160,6 +166,7 @@ end
 def scan4_mentioned_member(p_hash)
   return unless p_hash[:err_msg].empty?
   at_pos = p_hash[:command].index('@')
+  return p_hash[:err_msg] = 'Error: team member must be mentioned.' if at_pos.nil? && p_hash[:requires_mentioned_member]
   return if at_pos.nil?
   blank_pos = p_hash[:command].index(' ', at_pos)
 
@@ -170,6 +177,17 @@ def scan4_mentioned_member(p_hash)
 
   p_hash[:mentioned_member_id], p_hash[:mentioned_member_name] =
     slack_member_from_name(p_hash, name)
+  return if p_hash[:mentioned_member_id].nil?
+  p_hash[:mentioned_member_name_begin_pos] = at_pos
+  p_hash[:mentioned_member_name_end_pos] = end_of_name_pos
+  remove_mentioned_member_from_command(p_hash)
+end
+
+def remove_mentioned_member_from_command(p_hash)
+  return if p_hash[:mentioned_member_name].nil?
+  begin_phrase = p_hash[:command].slice(0, p_hash[:mentioned_member_name_begin_pos]).rstrip
+  end_phrase = p_hash[:command].slice(p_hash[:mentioned_member_name_end_pos] + 1, p_hash[:command].length - p_hash[:mentioned_member_name_end_pos] - 1)
+  p_hash[:command] = begin_phrase.concat(end_phrase)
 end
 
 def slack_member_from_name(p_hash, name)
@@ -187,26 +205,34 @@ end
 def scan4_due_date(p_hash)
   return unless p_hash[:err_msg].empty?
   slash_pos = p_hash[:command].index('/')
+  return p_hash[:err_msg] = 'Error: due date is required.' if slash_pos.nil? && p_hash[:requires_due_date]
   return if slash_pos.nil?
   blank_pos = p_hash[:command].index(' ', slash_pos)
 
   end_of_date_pos = p_hash[:command].length - 1 if blank_pos.nil?
   end_of_date_pos = blank_pos - 1 unless blank_pos.nil?
 
-  due_date_string =
+  p_hash[:due_date_string] =
     p_hash[:command].slice(slash_pos + 1, end_of_date_pos - slash_pos)
 
-  p_hash[:due_date] = date_from_due_date(due_date_string)
+  p_hash[:due_date], is_day_of_week = date_from_due_date(p_hash[:due_date_string])
+  adjust_due_date_into_future(p_hash, is_day_of_week)
   return if p_hash[:due_date].nil?
-  adjust_and_verify_due_date(p_hash)
+  p_hash[:due_date_begin_pos] = slash_pos
+  p_hash[:due_date_end_pos] = end_of_date_pos
+  remove_due_date_from_command(p_hash)
 end
 
-def adjust_and_verify_due_date(p_hash)
-  # ??Assume standalone day or month refers to a future date.
-  p_hash[:err_msg] =
-    'Error: Due date has already passed.' if p_hash[:due_date] < DateTime.now
+def remove_due_date_from_command(p_hash)
+  return if p_hash[:due_date].nil?
+  begin_phrase = p_hash[:command].slice(0, p_hash[:due_date_begin_pos] - 1)
+  end_phrase = p_hash[:command].slice(p_hash[:due_date_end_pos], p_hash[:command].length - (p_hash[:due_date_end_pos] + 1))
+  p_hash[:command] = begin_phrase.concat(end_phrase)
 end
 
+# Returns: [nil, false] if invalide date.
+#          [datetime object, true/false if due date input string is of format]
+#         'sun' thru 'sat'
 def date_from_due_date(due_date_string)
   numeric_partition = due_date_string.partition(/\d/)
   # Case: no numeric portion. /fri or /jun or /half
@@ -214,9 +240,10 @@ def date_from_due_date(due_date_string)
     begin
       due_date = due_date_string.to_datetime
     rescue ArgumentError
-      return nil
+      return [nil, false]
     end
-    return due_date
+    return due_date,
+           Date::ABBR_DAYNAMES.map {|abbr| abbr.downcase}.include?(numeric_partition[0].downcase)
   end
   # Case: just day of month specified. /12
   if numeric_partition[0].empty?
@@ -226,9 +253,9 @@ def date_from_due_date(due_date_string)
                          .to_datetime
     rescue ArgumentError
       p_hash[:err_msg] = 'Error: invalid day of month.'
-      return nil
+      return [nil, false]
     end
-    return due_date
+    return [due_date, false]
   end
   # Case: normal. /jun15
   begin
@@ -239,7 +266,24 @@ def date_from_due_date(due_date_string)
                .to_datetime
   rescue ArgumentError
     p_hash[:err_msg] = 'Error: invalid day of month.'
-    return nil
+    return [nil, false]
   end
-  due_date
+  [due_date, false]
+end
+
+# Assume standalone day or month refers to a future date.
+# Example1) if today is Wednesday, then /mon refers to Monday of next week,
+# not the Monday of two days ago.
+# Example2) # i.e. if today is March 15th. Then the date /feb2 refers to
+# next year.
+# Ruby defaults to "this week" and "this year".
+# p_hash[:err_msg] =
+# 'Error: Due date has already passed.' if p_hash[:due_date] < DateTime.now
+def adjust_due_date_into_future(p_hash, is_day_of_week)
+  return if p_hash[:due_date] > DateTime.now
+  return if p_hash[:due_date].today?
+  # Case: just day of week specified.
+  return p_hash[:due_date] = (p_hash[:due_date].to_date + 7).to_datetime if is_day_of_week
+  # Case: Month/day specified:
+  p_hash[:due_date] = p_hash[:due_date].to_date.next_year.to_datetime
 end

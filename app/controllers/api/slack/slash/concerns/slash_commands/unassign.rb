@@ -1,47 +1,83 @@
-=begin
-Form Params
-channel_id	C0VNKV7BK
-channel_name	general
-command	/do
-response_url	https://hooks.slack.com/commands/T0VN565N0/36163731489/YAHWUMXlBdviTE1rBILELuFK
-team_domain	shadowhtracteam
-team_id	T0VN565N0
-text	assign 3 @tony
-token	3ZQVG7rk4p7EZZluk1gTH3aN
-user_id	U0VLZ5P51
-user_name	ray
-=end
-
 # Inputs: parsed = parsed command line info that has been verified.
 #         list = [ListItem.id] for the list that the user is referencing.
 # Returns: [text, attachments]
 #          parsed[:err_msg] if needed.
 #          list = unmodified.
 #-------------------------------------------------
-# scope = %w(mine channel member team)
-# /do assign 3 @tony Assigns "@tony" to task 3 for this channel.
-# full syntax: /do assign channel 3 @tony
-#              /do assign team 3 @tony
+# /do unassign 3 @tony Unassigns "@tony" from task 3 for this channel.
+# When I unassign a team task, the result list does not include the unassigned
+# task.  But a "/do list team" done immediately after displays the unassigned
+# task.
+
 def unassign_command(parsed)
-  response = unassign_one(parsed)
-  if parsed[:err_msg].nil?
-    # Display modified list after unassigning an item.
-    # This will also rebuild and save the channel.list_ids[]
-    parsed[:display_after_action_list] = true
-    parsed[:scope_for_list_after_action] = parsed[:list_scope]
-    parsed[:list_for_after_action] = list
-    return [response, nil]
-  end
-  [parsed[:err_msg], nil]
+  adjust_unassign_cmd_action_context(parsed)
+  text = unassign_one(parsed)
+  return [parsed[:err_msg], nil] unless parsed[:err_msg].empty?
+  # Persist the channel.list_ids[], options for the next transaction.
+  save_after_action_list_context(parsed, parsed, parsed[:list])
+  # Display modified list after unassigning an item.
+  parsed[:display_after_action_list] = true
+  [text, nil]
 end
 
 def unassign_one(parsed)
-  # ASSUMES list[task_num] is verified as belonging to the @name in cmd line.
+  return if task_num_invalid?(parsed)
   item = ListItem.find(parsed[:list][parsed[:task_num] - 1])
+  return parsed[:err_msg] = "Error: Task #{parsed[:task_num]} is not " \
+    'assigned to anyone.' if item.assigned_member_id.nil?
+  return parsed[:err_msg] = "Error: Task #{parsed[:task_num]} is not " \
+    "assigned to #{parsed[:assigned_member_name]}" unless item.assigned_member_id == parsed[:assigned_member_id]
   item.assigned_member_id = nil
+  item.assigned_member_name = nil
   if item.save
-    return "Unassigned task #{parsed_cmd[:task_num]} to " \
-           "@#{parsed_cmd[:assigned_member_name]}."
+    adjust_unassign_after_action_list(parsed)
+    return "Unassigned task #{parsed[:task_num]} from " \
+           "@#{parsed[:assigned_member_name]}."
   end
   parsed[:err_msg] = 'Error: There was an error unassigning this Task.'
+end
+
+# If we are looking at a member's assigned items only list, drop the
+# unassigned item.
+def adjust_unassign_after_action_list(parsed)
+  return if parsed[:previous_action_list_context].empty?
+  parsed[:list].delete_at(parsed[:task_num] - 1) if parsed[:previous_action_list_context] == :one_member
+end
+
+def adjust_unassign_cmd_action_context(parsed)
+  adjust_unassign_cmd_assigned_member(parsed)
+  # Figure out the list we are working on and its attributes.
+  adjust_unassign_cmd_action_list(parsed)
+  adjust_unassign_cmd_list_owner(parsed)
+end
+
+def adjust_unassign_cmd_assigned_member(parsed)
+  # Unassigned member info will be stored in db and persisted as after action info
+  parsed[:assigned_member_id] = parsed[:mentioned_member_id]
+  parsed[:assigned_member_name] = parsed[:mentioned_member_name]
+end
+
+# The user is looking at either:
+#   1) Items assigned to a member for one channel.
+#      i.e. 'list' or 'list @dawn open'
+#   2) All items for this channel.
+#      i.e. 'list team'
+#   3) All items for all channels.
+#      i.e. 'list all'
+#-------------------------------------------
+# /do unassign 3 @tony Unassigns "@tony" from task 3 in this channel.
+#--------------------------------------------------------
+def adjust_unassign_cmd_action_list(parsed)
+  # We are trying to unassign a task to a specific member on a member or team
+  # list. This is the only option to get here. We will err out otherwise.
+  return parsed[:list] = [] if parsed[:previous_action_list_context].empty?
+  # Inherit item list from what user is looking at.
+  parsed[:list] = parsed[:previous_action_list_context][:list]
+end
+
+# Inherit list_owner from what user is looking at.
+def adjust_unassign_cmd_list_owner(parsed)
+  return parsed[:list_owner] = :team, parsed[:list_owner_name] = '??team' if parsed[:previous_action_list_context].empty?
+  parsed[:list_owner] = parsed[:previous_action_list_context][:list_owner]
+  parsed[:list_owner_name] = parsed[:previous_action_list_context][:list_owner_name]
 end

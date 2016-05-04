@@ -49,7 +49,7 @@ end
 def prepend_text_to_list_command(parsed, prepend_text)
   list_text, list_attachments =
     format_display_list(parsed, parsed[:after_action_list_context],
-                        list_from_list_of_ids(parsed[:after_action_list_context][:list]))
+                        list_from_list_of_ids(parsed, parsed[:after_action_list_context][:list]))
   combined_text =
     prepend_text.concat("   Updated list as follows: \n").concat(list_text)
   [combined_text, list_attachments]
@@ -90,9 +90,27 @@ def list_add_item_to_display_list(attachments, item, index)
   #  mrkdwn_in: ['text']
   # }
   attachments << {
-    text: "#{index + 1}) #{item.description}",
+    text: "#{index + 1}) #{item.description}" \
+          "#{list_cmd_assigned_to_clause(item)}" \
+          "#{list_cmd_due_date_clause(item)}" \
+          "#{list_cmd_task_completed_clause(item)}",
     mrkdwn_in: ['text']
   }
+end
+
+def list_cmd_assigned_to_clause(item)
+  return '' if item.assigned_member_id.nil?
+  " | *Assigned* to @#{item.assigned_member_name}."
+end
+
+def list_cmd_due_date_clause(item)
+  return '' if item.assigned_due_date.nil?
+  " | *Due* #{item.assigned_due_date.strftime('%a, %d %b %Y')}."
+end
+
+def list_cmd_task_completed_clause(item)
+  return '' unless item.done
+  ' | *Completed* '
 end
 
 # Returns: [text, attachments, list_ids]

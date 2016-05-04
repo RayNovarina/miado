@@ -34,6 +34,7 @@ module ChannelExtensions
     def create_all_from_slack(view, slack_team_id)
       @view ||= view
       @view.team ||= Team.find_or_create_from(:slack_id, slack_team_id)
+      return [] if @view.team.nil?
       slack_channels = slack_channels_from_rtm_data(@view)
       slack_channels.each do |slack_channel|
         next if slack_channel[:is_archived]
@@ -43,6 +44,7 @@ module ChannelExtensions
           team: @view.team
         )
       end
+      Channel.all
     end
 
     def all_or_create_all_from_slack(view)
