@@ -18,11 +18,12 @@ module TeamExtensions
 
     # If source = :omniauth_callback, then data = response environment
     def find_or_create_from(source, data)
-      @provider = data
-      return find_or_create_from_omniauth_provider if source == :omniauth_provider
+      return find_or_create_from_omniauth_provider(data) if source == :omniauth_provider
+      return find_or_create_from_slack_id(data) if source == :slack_id
     end
 
-    def find_or_create_from_omniauth_provider
+    def find_or_create_from_omniauth_provider(provider)
+      @provider = provider
       find_by_provider.first || create_from_provider
     end
 
@@ -34,6 +35,12 @@ module TeamExtensions
       make_auth_info
       # create_from_provider_auth_info
       create_from_slack_web_api
+    end
+
+    def find_or_create_from_slack_id(slack_team_id)
+      team = Team.where(slack_team_id: slack_team_id).first
+      return team unless team.nil?
+      nil # create_from_slack_id(slack_team_id)
     end
 
     private

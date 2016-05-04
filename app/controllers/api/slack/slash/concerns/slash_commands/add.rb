@@ -1,10 +1,3 @@
-def add_command(debug)
-  params = @view.url_params
-  text = process_add_cmd(params, debug)
-  text.concat("\n`Original command: `  ").concat(params[:text]) if debug
-  slash_response(text, nil, debug)
-end
-
 =begin
 Form Params
 channel_id	C0VNKV7BK
@@ -13,57 +6,166 @@ command	/do
 response_url	https://hooks.slack.com/commands/T0VN565N0/36163731489/YAHWUMXlBdviTE1rBILELuFK
 team_domain	shadowhtracteam
 team_id	T0VN565N0
-text	add
+text	call GoDaddy @susan /fri
 token	3ZQVG7rk4p7EZZluk1gTH3aN
 user_id	U0VLZ5P51
 user_name	ray
 =end
 
-def process_add_cmd(params, debug)
-  parsed_cmd = parse_slash_cmd(:add, params)
-  item = ListItem.create!(
-    channel_name: params[:channel_name],
-    command_text:  parsed_cmd[:command],
-    team_domain: params[:team_domain],
-    team_id: params[:team_id],
-    slack_user_id: params[:user_id],
-    slack_user_name: params[:user_name],
-    slack_deferred_response_url: params[:response_url]
-  )
-
+# Inputs: parsed = parsed command line info that has been verified.
+#         before_action list: [ListItem.id] for the list that the user
+#                             is referencing.
+# Returns: [text, attachments]
+#          parsed[:err_msg] if needed.
+#          action list = updated with new item.
+#-----------------------------------
+# LIST_SCOPES  = %w(one_member team)
+# CHANNEL_SCOPES = %w(one_channel all_channels)
+# SUB_FUNCS  = %w(open due more)
+# list_owner = :team, :mine, <@name>
+# mentioned_member_name = <@name>
+#------------------------------
+def add_command(parsed)
+  adjust_add_cmd_action_context(parsed)
+  params = parsed[:url_params]
+  list = parsed[:list]
+  item = ListItem.new_from_slack_slash_cmd(parsed)
+  item.done = false
   item.channel_id, task_num_clause =
-    add_assigned_channel(params)
-  item.assigned_member_id, assigned_to_clause =
-    add_assigned_member(parsed_cmd)
+    add_channel(params, list)
+  item.assigned_member_id, item.assigned_member_name, assigned_to_clause =
+    add_assigned_member(parsed)
   item.assigned_due_date, due_date_clause =
-    add_due_date(parsed_cmd)
+    add_due_date(parsed)
   item.description =
-    "#{parsed_cmd[:command]}#{assigned_to_clause}#{due_date_clause}"
+    "#{parsed[:command]}#{assigned_to_clause}#{due_date_clause}"
 
   response =
-      "#{task_num_clause}#{assigned_to_clause}#{due_date_clause}" \
-      'Type `/do list` for a current list.'
-  item.debug_trace = response if debug
-  item.save!
-  response
+    "#{task_num_clause}#{assigned_to_clause}#{due_date_clause}" \
+  # " Type `#{params[:command]} list` for YOUR current list." \
+  # " or `#{params[:command]} list team` for current TEAM list."
+  item.debug_trace =
+    "From add command - Response:#{response}  " \
+    "trace_syntax:#{parsed[:trace_syntax]}"
+
+  if item.save
+    # We have a new list that is in context.
+    list << item.id
+    # Persist the channel.list_ids[] for the next transaction.
+    save_after_action_list_context(parsed, parsed, list)
+    # Display modified list after adding an item.
+    parsed[:display_after_action_list] = true
+    return [response, nil]
+  end
+  [parsed[:err_msg] = 'Error creating task. Please try again.', nil]
 end
 
-def add_assigned_channel(params)
+# Returns: [channel_id, task_num_clause]
+def add_channel(params, list)
   [params[:channel_id],
-   "Task #{ListItem.where(channel_id: params[:channel_id]).count + 1} added. "
+   "Task #{list.length + 1} added. "
   ]
 end
 
-def add_assigned_member(parsed_cmd)
-  return [nil, ''] if parsed_cmd[:assigned_member_id].nil?
-  [parsed_cmd[:assigned_member_id],
-   "| *Assigned* to #{parsed_cmd[:assigned_members_name]}."
+# Returns: [assigned_member_id, assigned_to_clause]
+def add_assigned_member(parsed)
+  return [nil, ''] if parsed[:assigned_member_id].nil?
+  [parsed[:assigned_member_id], parsed[:assigned_member_name],
+   "| *Assigned* to @#{parsed[:assigned_member_name]}."
   ]
 end
 
-def add_due_date(parsed_cmd)
-  return [nil, ''] if parsed_cmd[:due_date].nil?
-  [parsed_cmd[:due_date],
-   "| *Due* #{parsed_cmd[:due_date.strftime('%a, %d %b')]}."
+# Returns: [assigned_due_date, due_date_clause]
+def add_due_date(parsed)
+  return [nil, ''] if parsed[:due_date].nil?
+  [parsed[:due_date],
+   "| *Due* #{parsed[:due_date].strftime('%a, %d %b')}."
   ]
+end
+
+def adjust_add_cmd_action_context(parsed)
+  adjust_add_cmd_assigned_member(parsed)
+  # Figure out the list we are working on and its attributes.
+  adjust_add_cmd_action_list(parsed)
+  adjust_add_cmd_list_owner(parsed)
+end
+
+def adjust_add_cmd_assigned_member(parsed)
+  # Assigned member info will be stored in db and persisted as after action info
+  parsed[:assigned_member_id] = parsed[:mentioned_member_id]
+  parsed[:assigned_member_name] = parsed[:mentioned_member_name]
+end
+
+# The user is looking at either:
+#   1) Items assigned to a member for one channel.
+#      i.e. 'list' or 'list @dawn open'
+#   2) All items for this channel.
+#      i.e. 'list team'
+#   3) All items for all channels.
+#      i.e. 'list all'
+def adjust_add_cmd_action_list(parsed)
+  # Inherit item list from what user is looking at.
+  return parsed[:list] = [] if parsed[:previous_action_list_context].empty?
+  return parsed[:list] = parsed[:previous_action_list_context][:list] if add_cmd_context_matches(parsed)
+  # Note: the add_cmd_context_matches method has already adjusted parsed
+  #       attributes to fetch a correct list.
+  parsed[:list] = ids_from_parsed(parsed)
+end
+
+# The user is looking at either:
+#   1) Items assigned to a member for one channel.
+#      i.e. 'list' or 'list @dawn open'
+#   2) All items for this channel.
+#      i.e. 'list team'
+#   3) All items for all channels.
+#      i.e. 'list all'
+#------------------------------------
+
+# Case: 'list @ray' or 'list': we display list @ray. then 'new task'
+#       it will be unassigned and we should display the team list, not the @ray.
+# Case: 'list team', 'delete 1': list is for team. delete if for team even tho
+#       no member is mentioned, i.e. @me is not implied.
+# Case: context change: 'list @ray' 'new task for @dawn'. List is for @ray,
+#       Afer add, list is for team because assignment to dif team member.
+# Case: 'list team' 'unassigned task'. list is for team. list_owner is 'team',
+#       afer add, list is for team, list_owner is 'team'
+#-----------------------------------
+def add_cmd_context_matches(parsed)
+  # Case: 'list @dawn' or 'list'
+  #       AND THEN 'new task for @dawn'
+  #       OR 'new task'
+  if parsed[:previous_action_list_context][:list_scope] == :one_member
+    # We are trying to add to a specific member list.
+    return true if parsed[:mentioned_member_id] == parsed[:previous_action_list_context][:mentioned_member_id]
+    # Can't add this member to that list. Must add it to end of team list.
+  end
+  # Case  'list team @ray' OR 'list team'
+  #       AND THEN 'new task for @dawn'
+  #       OR 'new task' OR 'new task for @ray'
+  unless parsed[:previous_action_list_context][:all_option]
+    return true if parsed[:previous_action_list_context][:mentioned_member_id].nil?
+    return true if parsed[:mentioned_member_id] == parsed[:previous_action_list_context][:mentioned_member_id]
+    # Can't add this member to that Team list. Must get a new team list for all
+    # members or for mentioned member.
+  end
+  # Case 'list all' OR 'list all @dawn'
+  #       AND THEN 'new task for @dawn'
+  #       OR 'new task' OR 'new task @ray'
+  # Can only add a task to the current Team channel, not all channels.
+
+  # List context Doesn't match. Must get a new team list.
+  parsed[:list_scope] = :team
+  parsed[:channel_scope] = :one_channel
+  return false
+end
+
+# @me member is implied if no Other member is mentioned.
+def adjust_add_cmd_list_owner(parsed)
+  return parsed[:list_owner] = :team, parsed[:list_owner_name] = 'team' if parsed[:list_scope] == :team
+  parsed[:list_owner] = :member
+  if parsed[:mentioned_member_id].nil?
+    parsed[:mentioned_member_name] = parsed[:url_params][:user_name]
+    parsed[:mentioned_member_id] = parsed[:url_params][:user_id]
+  end
+  parsed[:list_owner_name] = "@#{parsed[:mentioned_member_name]}"
 end

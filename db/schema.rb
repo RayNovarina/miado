@@ -11,17 +11,19 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160420175734) do
+ActiveRecord::Schema.define(version: 20160426164901) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+  enable_extension "hstore"
 
   create_table "channels", force: :cascade do |t|
     t.string   "slack_id"
     t.string   "name"
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
+    t.datetime "created_at",              null: false
+    t.datetime "updated_at",              null: false
     t.integer  "team_id"
+    t.hstore   "after_action_parse_hash"
   end
 
   add_index "channels", ["team_id"], name: "index_channels_on_team_id", using: :btree
@@ -43,6 +45,8 @@ ActiveRecord::Schema.define(version: 20160420175734) do
     t.string   "assigned_member_id"
     t.datetime "assigned_due_date"
     t.string   "debug_trace"
+    t.string   "assigned_member_name"
+    t.boolean  "done"
   end
 
   add_index "list_items", ["member_id"], name: "index_list_items_on_member_id", using: :btree
