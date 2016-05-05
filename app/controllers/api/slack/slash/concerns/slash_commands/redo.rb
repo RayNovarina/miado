@@ -6,7 +6,8 @@
 #-------------------------------------------------
 # /do redo 1 Send out newsletter by /fri. Deletes tasks 1 and replaces it with "Send out newsletter by /fri"
 def redo_command(parsed)
-  adjust_redo_cmd_action_context(parsed)
+  # We are trying to delete and re-add a task on a list the user is looking at.
+  adjust_inherited_cmd_action_context(parsed)
   text = redo_one(parsed)
   return [parsed[:err_msg], nil] unless parsed[:err_msg].empty?
   # Persist the channel.list_ids[], options for the next transaction.
@@ -67,41 +68,4 @@ def redo_response_if_all_goes_well(parsed)
   redo_response =
     "Deleted task #{parsed[:task_num]} and replaced it with '#{new_task_cmd_string}'."
   [redo_response, new_task_cmd_string]
-end
-
-def adjust_redo_cmd_action_context(parsed)
-  # Figure out the list we are working on and its attributes.
-
-  # Delete task from list user is looking at.
-  inherit_list_scope(parsed)
-  inherit_channel_scope(parsed)
-  implied_list_owner(parsed)
-  # adjust_redo_cmd_action_list(parsed)
-  # adjust_redo_cmd_list_owner(parsed)
-end
-
-# The user is looking at either:
-#   1) Items assigned to a member for one channel.
-#      i.e. 'list' or 'list @dawn open'
-#   2) All items for this channel.
-#      i.e. 'list team'
-#   3) All items for all channels.
-#      i.e. 'list all'
-#-------------------------------------------
-# /do redo 1 Send out newsletter by /fri. Deletes tasks 1 and replaces it with "Send out newsletter by /fri"
-#--------------------------------------------------------
-def adjust_redo_cmd_action_list(parsed)
-  # We are trying to set a task's redo date for a specific member on a
-  # member or team list. This is the only option to get here. We will err out
-  # otherwise.
-  return parsed[:list] = [] if parsed[:previous_action_list_context].empty?
-  # Inherit item list from what user is looking at.
-  parsed[:list] = parsed[:previous_action_list_context][:list]
-end
-
-# Inherit list_owner from what user is looking at.
-def adjust_redo_cmd_list_owner(parsed)
-  return parsed[:list_owner] = :team, parsed[:list_owner_name] = '??team' if parsed[:previous_action_list_context].empty?
-  parsed[:list_owner] = parsed[:previous_action_list_context][:list_owner]
-  parsed[:list_owner_name] = parsed[:previous_action_list_context][:list_owner_name]
 end
