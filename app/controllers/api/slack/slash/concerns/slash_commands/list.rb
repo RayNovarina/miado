@@ -109,20 +109,17 @@ def all_channels_display(_parsed, context, list_of_records)
          "#{list_of_records.empty? ? ' (empty)' : ''}"
   list_ids = []
   attachments = []
-  channel_index = 0
   current_channel_id = ''
-  list_of_records.each do |item|
+  list_of_records.each_with_index do |item, index|
     unless current_channel_id == item.channel_id
-      channel_index = 0
       current_channel_id = item.channel_id
       attachments << {
         text: "---- ##{item.channel_name} channel ----------",
         mrkdwn_in: ['text']
       }
     end
-    list_add_item_to_display_list(attachments, item, channel_index)
+    list_add_item_to_display_list(attachments, item, index)
     list_ids << item.id
-    channel_index += 1
   end
   [text, attachments, list_ids]
 end
