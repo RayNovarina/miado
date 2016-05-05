@@ -10,6 +10,7 @@
 # task.
 
 def unassign_command(parsed)
+  # We are trying to unassign a task to a list the user is looking at.
   adjust_inherited_cmd_action_context(parsed)
   text = unassign_one(parsed)
   return [parsed[:err_msg], nil] unless parsed[:err_msg].empty?
