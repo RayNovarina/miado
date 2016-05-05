@@ -4,14 +4,14 @@ SLASH_CMD_HLP_TEXT =
  " due date is June 15.\n" \
  '• `/do append 3 Contact Jim.`' \
  " Adds \"Contact Jim.\" to the end of task 3.\n" \
- '• `/do assign 3 @tony`' \
- " Assigns \"@tony\" to task 3 for this channel.\n" \
+ '• `/do assign 4 @joe`' \
+ " Assigns \"@joe\" to task 4 for this channel.\n" \
  '• `/do unassign 4 @joe`' \
  " Removes \"@joe\" from task 4.\n" \
  '• `/do done 4`' \
  " Marks task 4 as completed.\n" \
- '• `/do delete 4`' \
- " Deletes task number 4 from the list.\n" \
+ '• `/do delete 2`' \
+ " Deletes task number 2 from the list.\n" \
  '• `/do due 4 /wed`' \
  " Sets the task due date to Wednesday for task 4.\n" \
  '• `/do redo 1 Send out newsletter /fri.`' \

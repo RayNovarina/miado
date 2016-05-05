@@ -102,12 +102,6 @@ def adjust_add_cmd_action_context(parsed)
   implied_list_owner(parsed)
 end
 
-def adjust_add_cmd_assigned_member(parsed)
-  # Assigned member info will be stored in db and persisted as after action info
-  parsed[:assigned_member_id] = parsed[:mentioned_member_id]
-  parsed[:assigned_member_name] = parsed[:mentioned_member_name]
-end
-
 # The user is looking at either:
 #   1) Items assigned to a member for one channel.
 #      i.e. 'list' or 'list @dawn open'

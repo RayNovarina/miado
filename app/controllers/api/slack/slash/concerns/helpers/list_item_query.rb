@@ -123,6 +123,11 @@ def list_of_all_assigned_tasks_for_one_team_member_in_one_channel(parsed, params
                    assigned_member_id: parsed[:mentioned_member_id])
             .where.not(assigned_due_date: nil)
             .reorder('channel_name ASC, created_at ASC')
+  elsif parsed[:open_option] && parsed[:done_option]
+    # All tasks.
+    ListItem.where(channel_id: params[:channel_id],
+                   assigned_member_id: parsed[:mentioned_member_id])
+            .reorder('channel_name ASC, created_at ASC')
   elsif parsed[:open_option]
     # open: All which are not done.
     ListItem.where(channel_id: params[:channel_id],
@@ -135,7 +140,7 @@ def list_of_all_assigned_tasks_for_one_team_member_in_one_channel(parsed, params
                    assigned_member_id: parsed[:mentioned_member_id],
                    done: true)
             .reorder('channel_name ASC, created_at ASC')
-  else
+  else # All tasks.
     ListItem.where(channel_id: params[:channel_id],
                    assigned_member_id: parsed[:mentioned_member_id])
             .reorder('channel_name ASC, created_at ASC')
@@ -152,6 +157,10 @@ def list_of_all_tasks_for_all_team_members_in_one_channel(parsed, params)
     ListItem.where(channel_id: params[:channel_id])
             .where.not(assigned_due_date: nil)
             .reorder('channel_name ASC, created_at ASC')
+  elsif parsed[:open_option] && parsed[:done_option]
+    # All tasks.
+    ListItem.where(channel_id: params[:channel_id])
+            .reorder('channel_name ASC, created_at ASC')
   elsif parsed[:open_option]
     # open: All which are not done.
     ListItem.where(channel_id: params[:channel_id],
@@ -162,7 +171,7 @@ def list_of_all_tasks_for_all_team_members_in_one_channel(parsed, params)
     ListItem.where(channel_id: params[:channel_id],
                    done: true)
             .reorder('channel_name ASC, created_at ASC')
-  else
+  else # All tasks.
     ListItem.where(channel_id: params[:channel_id])
             .reorder('channel_name ASC, created_at ASC')
   end
@@ -180,6 +189,12 @@ def list_of_all_assigned_tasks_for_one_team_member_in_all_channels(parsed, param
             .where.not(assigned_member_id: nil)
             .where.not(assigned_due_date: nil)
             .reorder('channel_name ASC, created_at ASC')
+  elsif parsed[:open_option] && parsed[:done_option]
+    # All tasks.
+    ListItem.where(team_id: params[:team_id],
+                   assigned_member_id: parsed[:mentioned_member_id])
+            .where.not(assigned_member_id: nil)
+            .reorder('channel_name ASC, created_at ASC')
   elsif parsed[:open_option]
     # open: All which are not done.
     ListItem.where(team_id: params[:team_id],
@@ -194,7 +209,7 @@ def list_of_all_assigned_tasks_for_one_team_member_in_all_channels(parsed, param
                    done: true)
             .where.not(assigned_member_id: nil)
             .reorder('channel_name ASC, created_at ASC')
-  else
+  else # All tasks.
     ListItem.where(team_id: params[:team_id],
                    assigned_member_id: parsed[:mentioned_member_id])
             .where.not(assigned_member_id: nil)
@@ -212,6 +227,10 @@ def list_of_all_tasks_for_all_team_members_in_all_channels(parsed, params)
     ListItem.where(team_id: params[:team_id])
             .where.not(assigned_due_date: nil)
             .reorder('channel_name ASC, created_at ASC')
+  elsif parsed[:open_option] && parsed[:done_option]
+    # open and done: All tasks.
+    ListItem.where(team_id: params[:team_id])
+            .reorder('channel_name ASC, created_at ASC')
   elsif parsed[:open_option]
     # open: All which are not done.
     ListItem.where(team_id: params[:team_id],
@@ -222,7 +241,7 @@ def list_of_all_tasks_for_all_team_members_in_all_channels(parsed, params)
     ListItem.where(team_id: params[:team_id],
                    done: true)
             .reorder('channel_name ASC, created_at ASC')
-  else
+  else # All tasks.
     ListItem.where(team_id: params[:team_id])
             .reorder('channel_name ASC, created_at ASC')
   end

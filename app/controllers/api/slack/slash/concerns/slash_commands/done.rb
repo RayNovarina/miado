@@ -20,8 +20,8 @@ end
 def done_one(parsed)
   return if task_num_invalid?(parsed)
   item = ListItem.find(parsed[:list][parsed[:task_num] - 1])
-  return parsed[:err_msg] = "Error: Task #{parsed[:task_num]} is not " \
-    'assigned to anyone.' if item.assigned_member_id.nil?
+  # return parsed[:err_msg] = "Error: Task #{parsed[:task_num]} is not " \
+  #  'assigned to anyone.' if item.assigned_member_id.nil?
   item.done = true
   if item.save
     return "Task #{parsed[:task_num]} " \
