@@ -71,8 +71,13 @@ end
 
 def adjust_redo_cmd_action_context(parsed)
   # Figure out the list we are working on and its attributes.
-  adjust_redo_cmd_action_list(parsed)
-  adjust_redo_cmd_list_owner(parsed)
+
+  # Delete task from list user is looking at.
+  inherit_list_scope(parsed)
+  inherit_channel_scope(parsed)
+  implied_list_owner(parsed)
+  # adjust_redo_cmd_action_list(parsed)
+  # adjust_redo_cmd_list_owner(parsed)
 end
 
 # The user is looking at either:

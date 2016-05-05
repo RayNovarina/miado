@@ -20,37 +20,13 @@
 #-----------------------------------
 # LIST_SCOPES  = %w(one_member team)
 # CHANNEL_SCOPES = %w(one_channel all_channels)
-# SUB_FUNCS  = %w(open due more done)
+# options  = %w(open due more done)
 # list_owner = :team, :mine, :member
 # assigned_member_id = list.id of member assigned a task
 #------------------------------
 def list_command(parsed)
   adjust_list_cmd_action_context(parsed)
   format_display_list(parsed, parsed, list_from_parsed(parsed))
-end
-
-def adjust_list_cmd_action_context(parsed)
-  adjust_list_scope(parsed)
-  adjust_list_cmd_list_owner(parsed)
-end
-
-def adjust_list_scope(parsed)
-  # Case: 'list team'
-  parsed[:list_scope] = :team if parsed[:team_option] && parsed[:mentioned_member_id].nil?
-  # Case: 'list team @ray' (same as 'list @ray')
-  parsed[:team_option] = false if parsed[:team_option] && !parsed[:mentioned_member_id].nil?
-  # Case: 'list', 'list @ray'
-  # @me member is implied if no Other member is mentioned.
-  parsed[:list_scope] = :one_member unless parsed[:team_option]
-end
-
-def adjust_list_cmd_list_owner(parsed)
-  return parsed[:list_owner] = :team, parsed[:list_owner_name] = 'team' if parsed[:list_scope] == :team
-  parsed[:list_owner] = :member
-  # @me member is implied if no Other member is mentioned.
-  parsed[:mentioned_member_name] = parsed[:url_params][:user_name] if parsed[:mentioned_member_id].nil?
-  parsed[:mentioned_member_id] = parsed[:url_params][:user_id] if parsed[:mentioned_member_id].nil?
-  parsed[:list_owner_name] = "@#{parsed[:mentioned_member_name]}"
 end
 
 # Returns: slash_response() return values.
@@ -149,4 +125,26 @@ def all_channels_display(_parsed, context, list_of_records)
     channel_index += 1
   end
   [text, attachments, list_ids]
+end
+
+def adjust_list_cmd_action_context(parsed)
+  adjust_list_cmd_list_scope(parsed)
+  adjust_list_cmd_channel_scope(parsed)
+  implied_list_owner(parsed)
+end
+
+def adjust_list_cmd_list_scope(parsed)
+  # Case: 'list team'
+  parsed[:list_scope] = :team if parsed[:team_option] && parsed[:mentioned_member_id].nil?
+  # Case: 'list team @ray' (same as 'list @ray')
+  parsed[:team_option] = false if parsed[:team_option] && !parsed[:mentioned_member_id].nil?
+  # Case: 'list', 'list @ray'
+  # @me member is implied if no Other member is mentioned.
+  parsed[:list_scope] = :one_member unless parsed[:team_option]
+end
+
+def adjust_list_cmd_channel_scope(parsed)
+  # funcs: delete, list, unassign, done
+  parsed[:channel_scope] = :one_channel unless parsed[:all_option]
+  parsed[:channel_scope] = :all_channels if parsed[:all_option]
 end
