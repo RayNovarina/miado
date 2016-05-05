@@ -144,18 +144,18 @@ def delete_cmd_context_matches(parsed)
     # We are trying to delete from a specific member list.
     return true if parsed[:list_scope] == :one_member
     # Else we are deleting a team. Must get a new team list.
-    return false
-  end
-  # Case  'list team @ray' OR 'list team'
-  #       AND THEN 'delete 1'
-  #       OR THEN 'delete team'
-  unless parsed[:previous_action_list_context][:all_option]
+  else # displaying team list.
+    # Case  'list team @ray' OR 'list team'
+    #       AND THEN 'delete 1'
+    #       OR THEN 'delete team'
+    #       OR THEN 'delete team all'
     # We are trying to delete from a team list on current channel.
     return true
   end
-  # Case 'list all' OR 'list all @dawn'
-  #       AND THEN 'delete' anything is an err condition, already reported.
-  # Can not get here.
+
+  # List context Doesn't match. Must get a new team list.
+  parsed[:list_scope] = :team
+  parsed[:channel_scope] = :one_channel
   false
 end
 
