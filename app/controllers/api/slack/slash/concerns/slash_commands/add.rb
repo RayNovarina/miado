@@ -90,13 +90,13 @@ def add_description(parsed)
 end
 
 def adjust_add_cmd_action_context(parsed)
-  # Special case: doing a delete for redo command. Context already adjusted.
+  # Special case: doing a add for redo command. Context already adjusted.
   return if parsed[:on_behalf_of_redo_cmd]
 
   # Add task to list user is looking at.
   inherit_list_scope(parsed)
   inherit_channel_scope(parsed)
-  adjust_add_cmd_assigned_member(parsed)
+  assigned_member_is_mentioned_member(parsed)
   # Figure out the list we are working on and its attributes.
   adjust_add_cmd_action_list(parsed)
   implied_list_owner(parsed)
