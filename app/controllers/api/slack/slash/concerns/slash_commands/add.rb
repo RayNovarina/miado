@@ -41,6 +41,7 @@ def add_command(parsed)
 
   response =
     "#{task_num_clause}#{assigned_to_clause}#{due_date_clause}" \
+    " Type `#{params[:command]}<enter>` for a current list."
   # " Type `#{params[:command]} list` for YOUR current list." \
   # " or `#{params[:command]} list team` for current TEAM list."
   item.debug_trace =
