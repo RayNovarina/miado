@@ -214,8 +214,10 @@ def date_from_due_date(due_date_string)
     rescue ArgumentError
       return [nil, false]
     end
-    return due_date,
-           Date::ABBR_DAYNAMES.map {|abbr| abbr.downcase}.include?(numeric_partition[0].downcase)
+    is_day_of_week =
+      Date::ABBR_DAYNAMES.map(&:downcase).include?(numeric_partition[0].downcase) ||
+      Date::DAYNAMES.map(&:downcase).include?(numeric_partition[0].downcase)
+    return due_date, is_day_of_week
   end
   # Case: just day of month specified. /12
   if numeric_partition[0].empty?
