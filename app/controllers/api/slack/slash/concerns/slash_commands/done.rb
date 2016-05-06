@@ -12,8 +12,8 @@ def done_command(parsed)
   return [parsed[:err_msg], nil] unless parsed[:err_msg].empty?
   # Persist the channel.list_ids[], options for the next transaction.
   save_after_action_list_context(parsed, parsed, parsed[:list])
-  # Display modified list after setting an item as done.
-  parsed[:display_after_action_list] = true
+  # Display modified list after adding an item if in debug mode.
+  parsed[:display_after_action_list] = true if parsed[:debug]
   [text, nil]
 end
 
