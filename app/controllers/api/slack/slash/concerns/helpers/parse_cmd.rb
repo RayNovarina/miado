@@ -138,7 +138,7 @@ end
 # s = 'get donuts @susan /fri all kinds'
 def scan4_mentioned_member(p_hash)
   return unless p_hash[:err_msg].empty?
-  at_pos = p_hash[:command].index('@')
+  at_pos = p_hash[:command].index(' @')
   return p_hash[:err_msg] = 'Error: team member must be mentioned.' if at_pos.nil? && p_hash[:requires_mentioned_member]
   return if at_pos.nil?
   blank_pos = p_hash[:command].index(' ', at_pos)
