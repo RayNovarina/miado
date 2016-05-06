@@ -15,6 +15,7 @@
 #              /do assign team 3 @tony
 #-----------------------------------
 def assign_command(parsed)
+  # We are trying to assign a task to a list the user is looking at.
   adjust_inherited_cmd_action_context(parsed)
   text = assign_one(parsed)
   return [parsed[:err_msg], nil] unless parsed[:err_msg].empty?
