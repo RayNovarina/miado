@@ -62,6 +62,8 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
     return list_command(parsed) if parsed[:func] == :list
     return redo_command(parsed) if parsed[:func] == :redo
     return unassign_command(parsed) if parsed[:func] == :unassign
+    # Default if no command given.
+    return after_action_list_command(parsed) if parsed[:func] == :last_action_list
   end
 
   def make_view_helper

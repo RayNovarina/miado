@@ -49,6 +49,7 @@ def perform_scans_for_functions(p_hash)
     scan4_due_date(p_hash)
   when :help
     scan4_options(p_hash)
+  when :last_action_list
   when :list
     scan4_mentioned_member(p_hash)
     scan4_options(p_hash)
@@ -71,7 +72,7 @@ end
 #       'a new task', 'list team'
 CMD_FUNCS = %w(append assign delete done due help list redo unassign).freeze
 def scan4_command_func(p_hash)
-  return p_hash[:func] = :help if p_hash[:cmd_splits].length == 0
+  return p_hash[:func] = :last_action_list if p_hash[:cmd_splits].length == 0
   maybe_func = p_hash[:cmd_splits][0]
   p_hash[:func] = CMD_FUNCS.include?(maybe_func) ? maybe_func.to_sym : nil
   # discard/consume func word if we have one.
