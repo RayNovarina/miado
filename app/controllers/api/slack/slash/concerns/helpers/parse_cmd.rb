@@ -34,7 +34,6 @@ def perform_scans_for_functions(p_hash)
   when :assign
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
-    p_hash[:requires_mentioned_member] = true
     scan4_mentioned_member(p_hash)
   when :delete
     scan4_task_num(p_hash)
@@ -287,13 +286,12 @@ def inherit_channel_scope(p_hash)
   p_hash[:channel_scope] = p_hash[:previous_action_list_context][:channel_scope]
 end
 
+# @me member is implied if no Other member is mentioned.
 def implied_list_owner(p_hash)
   return p_hash[:list_owner] = :team, p_hash[:list_owner_name] = 'team' if p_hash[:list_scope] == :team
   p_hash[:list_owner] = :member
-  # @me member is implied if no Other member is mentioned.
-  p_hash[:mentioned_member_name] = p_hash[:url_params][:user_name] if p_hash[:mentioned_member_id].nil?
-  p_hash[:mentioned_member_id] = p_hash[:url_params][:user_id] if p_hash[:mentioned_member_id].nil?
-  p_hash[:list_owner_name] = "@#{p_hash[:mentioned_member_name]}"
+  p_hash[:list_owner_name] = "@#{p_hash[:url_params][:user_name]}" if p_hash[:mentioned_member_id].nil?
+  p_hash[:list_owner_name] = "@#{p_hash[:mentioned_member_name]}" unless p_hash[:mentioned_member_id].nil?
 end
 
 def assigned_member_is_mentioned_member(p_hash)

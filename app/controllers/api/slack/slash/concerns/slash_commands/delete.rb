@@ -106,9 +106,9 @@ def adjust_delete_cmd_action_context(parsed)
   # Delete task from list user is looking at.
   inherit_list_scope(parsed)
   inherit_channel_scope(parsed)
-  implied_list_owner(parsed)
   # Figure out the list we are working on and its attributes.
   adjust_delete_cmd_action_list(parsed)
+  implied_list_owner(parsed)
 end
 
 # The user is looking at either:

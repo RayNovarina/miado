@@ -125,23 +125,32 @@ def all_channels_display(_parsed, context, list_of_records)
 end
 
 def adjust_list_cmd_action_context(parsed)
+  # list command defaults to OPEN tasks.
+  parsed[:open_option] = true unless parsed[:done_option] == true
   adjust_list_cmd_list_scope(parsed)
   adjust_list_cmd_channel_scope(parsed)
+  implied_mentioned_member(parsed)
   implied_list_owner(parsed)
 end
 
+# @me member is implied if 'list' and no Other member is mentioned.
+def implied_mentioned_member(parsed)
+  return if parsed[:list_scope] == :team
+  parsed[:mentioned_member_name] = parsed[:url_params][:user_name] if parsed[:mentioned_member_id].nil?
+  parsed[:mentioned_member_id] = parsed[:url_params][:user_id] if parsed[:mentioned_member_id].nil?
+end
+
+# Note: 'list' implies a mentioned member of @me. BUT 'list team' does not.
 def adjust_list_cmd_list_scope(parsed)
   # Case: 'list team'
   parsed[:list_scope] = :team if parsed[:team_option] && parsed[:mentioned_member_id].nil?
   # Case: 'list team @ray' (same as 'list @ray')
   parsed[:team_option] = false if parsed[:team_option] && !parsed[:mentioned_member_id].nil?
   # Case: 'list', 'list @ray'
-  # @me member is implied if no Other member is mentioned.
   parsed[:list_scope] = :one_member unless parsed[:team_option]
 end
 
 def adjust_list_cmd_channel_scope(parsed)
-  # funcs: delete, list, unassign, done
   parsed[:channel_scope] = :one_channel unless parsed[:all_option]
   parsed[:channel_scope] = :all_channels if parsed[:all_option]
 end
