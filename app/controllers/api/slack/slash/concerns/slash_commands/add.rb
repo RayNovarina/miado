@@ -55,8 +55,8 @@ def add_command(parsed)
     return [response, nil] if parsed[:on_behalf_of_redo_cmd]
     # Persist the channel.list_ids[] for the next transaction.
     save_after_action_list_context(parsed, parsed, list)
-    # Display modified list after adding an item.
-    parsed[:display_after_action_list] = true
+    # Display modified list after adding an item if in debug mode.
+    parsed[:display_after_action_list] = true if parsed[:debug]
     return [response, nil]
   end
   [parsed[:err_msg] = 'Error creating task. Please try again.', nil]

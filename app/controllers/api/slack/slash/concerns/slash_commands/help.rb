@@ -18,15 +18,17 @@ SLASH_CMD_HLP_TEXT =
  ' Deletes tasks 1, adds new task ' \
  "\"Send out newsletter /fri\"\n" \
  '• `/do list`' \
- " Lists your ASSIGNED tasks for THIS channel. Includes DONE tasks.\n" \
- '• `/do list open`' \
- " Lists your tasks which are not DONE for THIS channel.\n" \
+ " Lists your ASSIGNED and OPEN tasks for THIS channel.\n" \
+ '• `/do list done`' \
+ " Lists your ASSIGNED tasks which are DONE for THIS channel.\n" \
  '• `/do list due`' \
- " Lists your OPEN tasks with a due date for THIS channel.\n" \
- '• `/do list team`' \
- " Lists all TEAM tasks for THIS channel.\n" \
+ " Lists your ASSIGNED and OPEN tasks with a due date for THIS channel.\n" \
  '• `/do list all`' \
- " Lists your ASSIGNED tasks for ALL channels.\n" \
+ " Lists your ASSIGNED and OPEN tasks for ALL channels.\n" \
+ '• `/do list team`' \
+ " Lists all TEAM tasks that are OPEN for THIS channel.\n" \
+ '• `/do list team all`' \
+ " Lists all TEAM tasks that are OPEN for ALL channels.\n" \
  # ':bulb: Click on the "miaDo" member to see all of your up to date lists.' \
  "\n".freeze
 
