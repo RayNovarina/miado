@@ -47,8 +47,13 @@ end
 def adjust_unassign_cmd_action_context(parsed)
   adjust_unassign_cmd_assigned_member(parsed)
   # Figure out the list we are working on and its attributes.
-  adjust_unassign_cmd_action_list(parsed)
-  adjust_unassign_cmd_list_owner(parsed)
+
+  # Delete task from list user is looking at.
+  inherit_list_scope(parsed)
+  inherit_channel_scope(parsed)
+  implied_list_owner(parsed)
+  # adjust_unassign_cmd_action_list(parsed)
+  # adjust_unassign_cmd_list_owner(parsed)
 end
 
 def adjust_unassign_cmd_assigned_member(parsed)

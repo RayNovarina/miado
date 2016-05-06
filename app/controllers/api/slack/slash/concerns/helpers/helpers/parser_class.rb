@@ -26,7 +26,7 @@ def make_parse_hash
     channel_scope: nil,
     list_owner: nil,
     list_owner_name: nil,
-    list: [],
+    list: nil,
     list_query_trace_info: '',
     requires_mentioned_member: false,
     mentioned_member_id: nil,
@@ -73,7 +73,7 @@ end
 
 def save_after_action_list_context(parsed, context, list_ids = nil)
   parsed[:after_action_list_context] = {
-    list: list_ids || context[:list_ids] || [],
+    list: list_ids || context[:list_ids],
     list_scope: context[:list_scope],
     channel_scope: context[:channel_scope],
     list_owner: context[:list_owner],

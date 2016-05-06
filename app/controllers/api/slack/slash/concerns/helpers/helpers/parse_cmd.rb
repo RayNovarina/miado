@@ -18,6 +18,8 @@ def parse_slash_cmd(params, _view, previous_action_parse_hash)
   p_hash = new_parse_hash(params, previous_action_parse_hash)
   scan4_command_func(p_hash)
   perform_scans_for_functions(p_hash)
+  add_list_scope(p_hash)
+  add_channel_scope(p_hash)
   p_hash
 end
 
@@ -115,8 +117,35 @@ def adjust_cmd_options_for_add_cmd(p_hash)
   end
 end
 
+# Case: command function split has been processed, leaving:
+#       '' was 'help' or 'list', '1 @tony' was 'assign 1 @tony',
+#       'team', was 'delete team', 'a new task @ray /jun15' is unchanged,
+#       'channel 5' was 'list channel 5'
+CMD_LIST_SCOPES = %w(one_member team).freeze
+# CMD_FUNCS_INHERITING_LIST_SCOPE = [:add, :append, :assign, :delete, :done, :due,
+#                                   :help, :redo].freeze
+def add_list_scope(p_hash)
+  # Note: Default is to inherit list_scope from the list the user is looking at.
+  #       And then to adjust list_scope in each individual command if needed.
+  return p_hash[:list_scope] = :one_member if p_hash[:previous_action_list_context].empty?
+  p_hash[:list_scope] = p_hash[:previous_action_list_context][:list_scope]
+end
 
-# Trim off the leading command func, scope and options. Remainder is what
+CMD_CHANNEL_SCOPES = %w(one_channel all_channels).freeze
+CMD_FUNCS_INHERITING_CHANNEL_SCOPE = [:add, :append, :assign, :due,
+                                      :help, :redo].freeze
+def add_channel_scope(p_hash)
+  # Some funcs can only inherit channel_scope from the list the user is looking at.
+  if CMD_FUNCS_INHERITING_CHANNEL_SCOPE.include?(p_hash[:func])
+    return p_hash[:channel_scope] = :one_channel if p_hash[:previous_action_list_context].empty?
+    return p_hash[:channel_scope] = p_hash[:previous_action_list_context][:channel_scope]
+  end
+  # Remaining funcs: delete, list, unassign, done
+  p_hash[:channel_scope] = :one_channel unless p_hash[:all_option]
+  p_hash[:channel_scope] = :all_channels if p_hash[:all_option]
+end
+
+# Trim off the leading command func, scope and sub_func. Remainder is what
 # most of our following parse logic cares about.
 # def rebuild_remaining_command_line(p_hash)
 #  p_hash[:command] =
@@ -259,37 +288,4 @@ def adjust_due_date_into_future(p_hash, is_day_of_week)
   return p_hash[:due_date] = (p_hash[:due_date].to_date + 7).to_datetime if is_day_of_week
   # Case: Month/day specified:
   p_hash[:due_date] = p_hash[:due_date].to_date.next_year.to_datetime
-end
-
-# Case: command function split has been processed, leaving:
-#       '' was 'help' or 'list', '1 @tony' was 'assign 1 @tony',
-#       'team', was 'delete team', 'a new task @ray /jun15' is unchanged,
-#       'channel 5' was 'list channel 5'
-CMD_LIST_SCOPES = %w(one_member team).freeze
-# CMD_FUNCS_INHERITING_LIST_SCOPE = [:add, :append, :assign, :delete, :done, :due,
-#                                   :help, :redo].freeze
-def inherit_list_scope(p_hash)
-  # Note: Default is to inherit list_scope from the list the user is looking at.
-  #       And then to adjust list_scope in each individual command if needed.
-  return p_hash[:list_scope] = :one_member if p_hash[:previous_action_list_context].empty?
-  p_hash[:list_scope] = p_hash[:previous_action_list_context][:list_scope]
-end
-
-CMD_CHANNEL_SCOPES = %w(one_channel all_channels).freeze
-# CMD_FUNCS_INHERITING_CHANNEL_SCOPE = [:add, :append, :assign, :due,
-#                                      :help, :redo].freeze
-def inherit_channel_scope(p_hash)
-  # Note: Default is to inherit channel_scope from the list the user is looking at.
-  #       And then to adjust channel_scope in each individual command if needed.
-  return p_hash[:channel_scope] = :one_channel if p_hash[:previous_action_list_context].empty?
-  p_hash[:channel_scope] = p_hash[:previous_action_list_context][:channel_scope]
-end
-
-def implied_list_owner(p_hash)
-  return p_hash[:list_owner] = :team, p_hash[:list_owner_name] = 'team' if p_hash[:list_scope] == :team
-  p_hash[:list_owner] = :member
-  # @me member is implied if no Other member is mentioned.
-  p_hash[:mentioned_member_name] = p_hash[:url_params][:user_name] if p_hash[:mentioned_member_id].nil?
-  p_hash[:mentioned_member_id] = p_hash[:url_params][:user_id] if p_hash[:mentioned_member_id].nil?
-  p_hash[:list_owner_name] = "@#{p_hash[:mentioned_member_name]}"
 end

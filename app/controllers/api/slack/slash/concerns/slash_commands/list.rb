@@ -20,29 +20,13 @@
 #-----------------------------------
 # LIST_SCOPES  = %w(one_member team)
 # CHANNEL_SCOPES = %w(one_channel all_channels)
-# SUB_FUNCS  = %w(open due more done)
+# options  = %w(open due more done)
 # list_owner = :team, :mine, :member
 # assigned_member_id = list.id of member assigned a task
 #------------------------------
 def list_command(parsed)
   adjust_list_cmd_action_context(parsed)
   format_display_list(parsed, parsed, list_from_parsed(parsed))
-end
-
-def adjust_list_cmd_action_context(parsed)
-  adjust_list_cmd_list_owner(parsed)
-end
-
-# @me member is implied if no Other member is mentioned. However, 'list team'
-# implies no member is mentioned.
-def adjust_list_cmd_list_owner(parsed)
-  return parsed[:list_owner] = :team, parsed[:list_owner_name] = 'team' if parsed[:list_scope] == :team
-  parsed[:list_owner] = :member
-  if parsed[:mentioned_member_id].nil?
-    parsed[:mentioned_member_name] = parsed[:url_params][:user_name]
-    parsed[:mentioned_member_id] = parsed[:url_params][:user_id]
-  end
-  parsed[:list_owner_name] = "@#{parsed[:mentioned_member_name]}"
 end
 
 # Returns: slash_response() return values.
@@ -80,8 +64,13 @@ def one_channel_display(parsed, context, list_of_records)
 end
 
 def format_owner_title(context)
-  return context[:list_owner_name] if context[:channel_scope] == :one_channel
-  context[:list_owner_name].concat(' - all')
+  owner_title = ''
+  owner_title.concat(' all') if context[:channel_scope] == :all_channels
+  owner_title.concat(' open') if context[:open_option]
+  owner_title.concat(' due') if context[:due_option]
+  owner_title.concat(' done') if context[:done_option]
+  owner_title = ' -'.concat(owner_title) unless owner_title.empty?
+  context[:list_owner_name].concat(owner_title)
 end
 
 # Returns: updated attachments array.
@@ -120,20 +109,39 @@ def all_channels_display(_parsed, context, list_of_records)
          "#{list_of_records.empty? ? ' (empty)' : ''}"
   list_ids = []
   attachments = []
-  channel_index = 0
   current_channel_id = ''
-  list_of_records.each do |item|
+  list_of_records.each_with_index do |item, index|
     unless current_channel_id == item.channel_id
-      channel_index = 0
       current_channel_id = item.channel_id
       attachments << {
         text: "---- ##{item.channel_name} channel ----------",
         mrkdwn_in: ['text']
       }
     end
-    list_add_item_to_display_list(attachments, item, channel_index)
+    list_add_item_to_display_list(attachments, item, index)
     list_ids << item.id
-    channel_index += 1
   end
   [text, attachments, list_ids]
+end
+
+def adjust_list_cmd_action_context(parsed)
+  adjust_list_cmd_list_scope(parsed)
+  adjust_list_cmd_channel_scope(parsed)
+  implied_list_owner(parsed)
+end
+
+def adjust_list_cmd_list_scope(parsed)
+  # Case: 'list team'
+  parsed[:list_scope] = :team if parsed[:team_option] && parsed[:mentioned_member_id].nil?
+  # Case: 'list team @ray' (same as 'list @ray')
+  parsed[:team_option] = false if parsed[:team_option] && !parsed[:mentioned_member_id].nil?
+  # Case: 'list', 'list @ray'
+  # @me member is implied if no Other member is mentioned.
+  parsed[:list_scope] = :one_member unless parsed[:team_option]
+end
+
+def adjust_list_cmd_channel_scope(parsed)
+  # funcs: delete, list, unassign, done
+  parsed[:channel_scope] = :one_channel unless parsed[:all_option]
+  parsed[:channel_scope] = :all_channels if parsed[:all_option]
 end
