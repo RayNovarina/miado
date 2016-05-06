@@ -29,15 +29,27 @@ def list_command(parsed)
   format_display_list(parsed, parsed, list_from_parsed(parsed))
 end
 
-# Returns: slash_response() return values.
+# Returns: [text, attachments], parsed[:err_msg] if needed.
 def prepend_text_to_list_command(parsed, prepend_text)
   list_text, list_attachments =
-    format_display_list(parsed, parsed[:after_action_list_context],
-                        list_from_list_of_ids(parsed, parsed[:after_action_list_context][:list]))
+    format_display_list(
+      parsed,
+      parsed[:after_action_list_context],
+      list_from_list_of_ids(parsed, parsed[:after_action_list_context][:list]))
   combined_text =
     prepend_text.concat("   Updated list as follows: \n").concat(list_text)
   [combined_text, list_attachments]
 end
+
+# Display whatever the parsed/context block params say to do.
+# Returns: [text, attachments], parsed[:err_msg] if needed.
+def redisplay_action_list(context)
+  format_display_list(
+    context,
+    context,
+    list_from_list_of_ids(context, context[:list]))
+end
+
 
 # Returns: [text, attachments]
 def format_display_list(parsed, context, list_of_records)
