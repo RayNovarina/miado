@@ -125,6 +125,8 @@ def all_channels_display(_parsed, context, list_of_records)
 end
 
 def adjust_list_cmd_action_context(parsed)
+  # list command defaults to OPEN tasks.
+  parsed[:open_option] = true unless parsed[:done_option] == true
   adjust_list_cmd_list_scope(parsed)
   adjust_list_cmd_channel_scope(parsed)
   implied_mentioned_member(parsed)
