@@ -261,6 +261,8 @@ def adjust_due_date_into_future(p_hash, is_day_of_week)
   p_hash[:due_date] = p_hash[:due_date].to_date.next_year.to_datetime
 end
 
+#----------- HELPERS for command methods after parsing done ----------------
+#
 # Case: command function split has been processed, leaving:
 #       '' was 'help' or 'list', '1 @tony' was 'assign 1 @tony',
 #       'team', was 'delete team', 'a new task @ray /jun15' is unchanged,
@@ -292,4 +294,39 @@ def implied_list_owner(p_hash)
   p_hash[:mentioned_member_name] = p_hash[:url_params][:user_name] if p_hash[:mentioned_member_id].nil?
   p_hash[:mentioned_member_id] = p_hash[:url_params][:user_id] if p_hash[:mentioned_member_id].nil?
   p_hash[:list_owner_name] = "@#{p_hash[:mentioned_member_name]}"
+end
+
+def assigned_member_is_mentioned_member(p_hash)
+  # Assigned member info will be stored in db and persisted as after action info
+  p_hash[:assigned_member_id] = p_hash[:mentioned_member_id]
+  p_hash[:assigned_member_name] = p_hash[:mentioned_member_name]
+end
+
+# The user is looking at either:
+#   1) Items assigned to a member for one channel.
+#      i.e. 'list' or 'list @dawn open'
+#   2) All items for this channel.
+#      i.e. 'list team'
+#   3) All items for all channels.
+#      i.e. 'list all'
+#-------------------------------------------
+# /do assign 3 @tony Assigns "@tony" to task 3 for this channel.
+#--------------------------------------------------------
+def adjust_inherited_cmd_action_context(p_hash)
+  assigned_member_is_mentioned_member(p_hash)
+  # Assign task from list user is looking at.
+  inherit_list_scope(p_hash)
+  inherit_channel_scope(p_hash)
+  # Figure out the list we are working on and its attributes.
+  adjust_inherited_cmd_action_list(p_hash)
+  implied_list_owner(p_hash)
+end
+
+def adjust_inherited_cmd_action_list(p_hash)
+  # We are trying to assign/unassign/due/done a task to a specific member
+  # on a member or team list. This is the only option to get here. We will
+  # err out otherwise.
+  return p_hash[:list] = [] if p_hash[:previous_action_list_context].empty?
+  # Inherit item list from what user is looking at.
+  p_hash[:list] = p_hash[:previous_action_list_context][:list]
 end

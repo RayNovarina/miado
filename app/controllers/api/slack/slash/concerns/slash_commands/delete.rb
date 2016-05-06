@@ -21,7 +21,6 @@ user_name	ray
 #-----------------------------------
 # LIST_SCOPES  = %w(one_member team)
 # CHANNEL_SCOPES = %w(one_channel all_channels)
-# SUB_FUNCS  = %w(open due more done)
 # list_owner = :team, :mine, <@name>
 # assigned_member_name = <@name>
 #------------------------------
