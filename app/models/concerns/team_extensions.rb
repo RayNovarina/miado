@@ -38,9 +38,7 @@ module TeamExtensions
     end
 
     def find_or_create_from_slack_id(slack_team_id)
-      team = Team.where(slack_team_id: slack_team_id).first
-      return team unless team.nil?
-      nil # create_from_slack_id(slack_team_id)
+      Team.where(slack_team_id: slack_team_id).first
     end
 
     private

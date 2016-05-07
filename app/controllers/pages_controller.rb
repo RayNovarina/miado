@@ -18,7 +18,7 @@ class PagesController < ApplicationController
 
   def welcome_add_to_slack_new
     @view.user = @view.current_user
-    @view.team = Team.last
+    @view.team = Team.find_or_create_from(:slack_id, params[:team_id])
   end
 
   def add_to_slack
