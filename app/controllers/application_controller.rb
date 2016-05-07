@@ -33,6 +33,11 @@ class ApplicationController < ActionController::Base
     #                     current_user is valid.
     # user_path(@view.current_user) # users#show
     # registered_applications_path # registered_applications#index
+    if @view.nil?
+      # we seem to get here in a dev environment if we haven't signed out the
+      # previous session/loaded new dev app.
+      return root_path
+    end
     if @view.flash_messages.key?(:notice) &&
        @view.flash_messages[:notice] == 'Signed in successfully.'
       # Our view makes up it own welcome msg.

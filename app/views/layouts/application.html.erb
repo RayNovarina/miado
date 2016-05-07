@@ -18,7 +18,7 @@
 <% #------------------------------------------------------- %>
 <% # Section0: (CSS: doc#header) -Global- %>
   <% # <header> Page Header  %>
-  <% if @view.policy(:include, :header) %>
+  <% if @view.policy(:include, :header) # Note: policy defined in pages_controller %>
     <%= render 'layouts/page_header' %>
      <% # <nav> Page Header navigation  %>
   <% end %>
@@ -42,7 +42,7 @@
 <% #------------------------------------------------------- %>
 <% # Section2: (CSS: doc#footer) Global %>
   <% # <footer> Page Footer %>
-  <% if @view.policy(:include, :footer) %>
+  <% if @view.policy(:include, :footer) # Note: policy defined in pages_controller %>
     <%= render 'layouts/page_footer' %>
       <% # <nav> Page Footer navigation  %>
   <% end %>
