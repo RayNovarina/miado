@@ -26,21 +26,29 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   def local_response_or_bot_msg
     # Cmd Context: We need to know our team members and the last list displayed.
     @view.channel, previous_action_parse_hash = recover_previous_action_list
-    return { response_type: 'ephemeral', text: '`MiaDo ERROR: team or channel not found. MiaDo command not installed?`' } if @view.channel.nil?
+    return err_resp(params, '`MiaDo ERROR: team or channel not found. MiaDo command not installed?`', nil) if @view.channel.nil?
     # Note: previous_action_list_context: {} becomes our
     # BEFORE action list(mine) or list(team) or list(all)
     parsed = parse_slash_cmd(params, @view, previous_action_parse_hash)
-    return { response_type: 'ephemeral', text: "`MiaDo ERROR: #{parsed[:err_msg]}`" } unless parsed[:err_msg].empty?
+    return err_resp(params, "`MiaDo ERROR: #{parsed[:err_msg]}`", nil) unless parsed[:err_msg].empty?
     text, attachments = process_cmd(parsed)
     # after_action_list_context: {} is AFTER action list(mine) or
     # list(team) or list(all)
-    add_standard_err_help_info(parsed, text)
-    return slash_response(text, attachments, parsed) unless parsed[:err_msg].empty?
+    # add_standard_err_help_info(parsed, text)
+    # return slash_response(text, attachments, parsed) unless parsed[:err_msg].empty?
+    return err_resp(params, text, attachments) unless parsed[:err_msg].empty?
     # Display an updated AFTER ACTION list if useful, i.e. task has been added
     # or deleted.
     text, attachments = prepend_text_to_list_command(parsed, text) if parsed[:display_after_action_list]
     slash_response(text, attachments, parsed)
     # return handoff_slash_command_to_bot(parsed, list) if parsed[:handoff]
+  end
+
+  def err_resp(url_params, err_msg, err_attachments)
+    { response_type: 'ephemeral',
+      text: add_standard_err_help_info(nil, url_params, err_msg),
+      attachments: err_attachments
+    }
   end
 
   def recover_previous_action_list

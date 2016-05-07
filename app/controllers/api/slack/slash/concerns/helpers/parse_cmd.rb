@@ -141,13 +141,12 @@ def scan4_mentioned_member(p_hash)
   at_pos = p_hash[:command].index(' @')
   return p_hash[:err_msg] = 'Error: team member must be mentioned.' if at_pos.nil? && p_hash[:requires_mentioned_member]
   return if at_pos.nil?
-  blank_pos = p_hash[:command].index(' ', at_pos)
+  blank_pos = p_hash[:command].index(' ', at_pos + 1)
 
   end_of_name_pos = p_hash[:command].length - 1 if blank_pos.nil?
   end_of_name_pos = blank_pos - 1 unless blank_pos.nil?
 
-  name = p_hash[:command].slice(at_pos + 1, end_of_name_pos - at_pos)
-
+  name = p_hash[:command].slice(at_pos + 2, end_of_name_pos - at_pos + 1)
   p_hash[:mentioned_member_id], p_hash[:mentioned_member_name] =
     slack_member_from_name(p_hash, name)
   return if p_hash[:mentioned_member_id].nil?
@@ -165,11 +164,11 @@ end
 
 def slack_member_from_name(p_hash, name)
   return [p_hash[:user_id], p_hash[:user_name]] if name == 'me'
-  member = Member.find_or_create_from_slack_name(@view, name,
-                                                 p_hash[:url_params][:team_id])
+  member = Member.find_or_create_from_slack_name(
+    @view, name,
+    p_hash[:url_params][:team_id])
   if member.nil?
-    p_hash[:err_msg] =
-      "Error: Member @#{name} not found."
+    p_hash[:err_msg] = "Error: Member @#{name} not found."
     return [nil, name]
   end
   [member.slack_user_id, name]
