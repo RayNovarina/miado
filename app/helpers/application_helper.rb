@@ -6,7 +6,7 @@ module ApplicationHelper
   class View
     attr_reader :id, :name, :controller, :model, :url_params
     attr_accessor :locals, :signed_out_user, :users, :user, :teams, :team,
-                  :provider, :web_client, :rtm_client, :members, :member,
+                  :providers, :provider, :web_client, :rtm_client, :members, :member,
                   :channels, :channel, :items, :item
 
     def initialize(controller, model)

@@ -3,9 +3,7 @@
 
     <% if @view.user_signed_in? %>
       <% if @view.current_user.admin? %>
-        <li><%= link_to 'Admin Dashboard',
-                users_path,
-                class: 'css-apps-link' %></li>
+        <%= render 'layouts/page_header_navbar_admin_picklist' %>
         <li><%= link_to '|', '' %></li>
       <% elsif true # policy(Team).index? %>
         <li><%= link_to 'My Teams',

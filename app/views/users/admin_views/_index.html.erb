@@ -13,6 +13,7 @@
           <th>Name</th>
           <th>Email</th>
           <th>SignUp Date</th>
+          <th><%= link_to 'Oauth Providers', omniauth_providers_path %><%= " (#{@view.providers.count})" %></th>
           <th><%= link_to 'Teams', teams_path %><%= " (#{@view.teams.count})" %></th>
         </tr>
       </thead>

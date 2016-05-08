@@ -6,6 +6,7 @@ class UsersController < ApplicationController
   def index
     @view.users = User.all
     @view.teams = Team.all
+    @view.providers = OmniauthProvider.all
   end
 
   def show
