@@ -1,46 +1,35 @@
-<div class="container-fluid">
+<div class="container-fluid css-add-to-slack">
   <div class="row">
     <div class="col-md-10 col-md-offset-1">
       <div class="jumbotron">
         <center>
-          <h3>Thanks ! &nbsp;<%= "#{@view.current_user.name.capitalize}" %>
-              for adding <%= (defined? @view.team.bot).nil? ? '@miabot' : @view.team.bot.name %>.<br>
-              to your <%= @view.team.name %> team.
-          </h3>
-          <br>
-          ------------------------------- * ------------------------------------
+          <h1>MiaDo</h1>
+          <%= image_tag 'dog_head_icon.png', class: 'img-circle',
+              style: 'margin-right: 20px;',
+              size: '100x100' %>
+              <%
+                user_name = 'No Name' if @view.current_user.nil?
+                user_name = @view.current_user.name.capitalize unless @view.current_user.nil?
+                bot_name = '/do' if @view.team.nil? || (defined? @view.team.bot).nil?
+                bot_name = @view.team.bot unless @view.team.nil? || (defined? @view.team.bot).nil?
+                team_name = 'No Name' if @view.team.nil?
+                team_name = @view.team.name unless @view.team.nil?
+                slack_url = '#' if @view.team.nil? || (defined? @view.team.url).nil?
+                slack_url = @view.team.url unless @view.team.nil? || (defined? @view.team.url).nil?
+              %>
+              <h3>Thanks ! &nbsp;<%= "#{user_name} for adding #{bot_name}." %><br>
+                  <%= "to your #{team_name} team." %>
+              </h3>
           <br><br>
-          <p>Start managing lists for your Slack teams in
-            <%= link_to 'Slack', @view.team.url, class: 'btn btn-primary btn-sm' %>
-            &nbsp;or here in <%= link_to 'MiaDo', teams_path %>.
+          <p>
+            <%= link_to 'Continue to Slack', slack_url, class: 'btn btn-primary btn-lg' %>
           </p>
           <br>
-          <div class="row">
-            <div class="col-md-6 col-md-offset-3">
-                <div class="well well-lg text-left">
-                  <small>
-                    <div style="margin-bottom: 4px;">
-                      <%= image_tag 'dog_head_icon.png', class: 'img-rounded',
-                          style: 'margin-left: -4px; ',
-                          size: '22x22' %>
-                      <strong style="margin-left: -4px; padding-right: 2px;">
-                        @do</strong> Bot 11:06 PM<br>
-                        <span class="text-primary">#weeklycalls</span>
-                        &nbsp;to-do list
-                    </div>
-                    1) order flow CRM @dawn<br>
-                    2) Brent & shipping info @tony<br>
-                    3) Kendra todo invoices @tony<br>
-                    4) CSM leads in @susan<br>
-                    5) SMP @tony<br>
-                    6) NEXT/APTA @susan /jun<br>
-                    7) example newsletter @tony<br>
-                  </small>
-                </div>
-            </div>
-          </div>
-        </center>
-      </div>
-    </div>
+          <br>
+          <h5><mark>MiaDo is beta software. Please report bugs to admin@miado.net</mark></h5>
+
+       </center>
+     </div>
+   </div>
   </div>
 </div>

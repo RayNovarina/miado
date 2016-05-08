@@ -37,6 +37,10 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     # Gmail, then we need a OmniAuthProviders model with provider, uid and
     # auth_token fields. To find the user, first query the Providers model for
     # the provider/uid.
+    # Note: we are using omniauth-slack at
+    #       https://github.com/kmrshntr/omniauth-slack for a ruby oauth lib.
+    #       It stores oauth info in the environment, which is accessed via
+    #       request.env
     @view.provider = OmniauthProvider.find_or_create_from(:omniauth_callback, request.env)
     @view.user = User.find_or_create_from(:omniauth_provider, @view.provider)
     @view.team = Team.find_or_create_from(:omniauth_provider, @view.provider)

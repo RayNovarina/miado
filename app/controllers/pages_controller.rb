@@ -18,15 +18,16 @@ class PagesController < ApplicationController
 
   def welcome_add_to_slack_new
     @view.user = @view.current_user
-    @view.team = Team.last
+    @view.team = Team.find_or_create_from(:slack_id, params[:team_id])
   end
 
   def add_to_slack
   end
 
   def show_header
-    return true unless @view.name == 'pages-add_to_slack'
-    false
+    return false if @view.name == 'pages-add_to_slack'
+    return false if @view.name == 'pages-welcome_add_to_slack_new'
+    true
   end
 
   def show_footer

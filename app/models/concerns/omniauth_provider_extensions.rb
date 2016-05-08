@@ -15,7 +15,11 @@ module OmniauthProviderExtensions
   module ClassMethods
     #-------------------- For omniauth support ----------------------
 
-    # If source = :omniauth_callback, then data = response environment
+    # If source = :omniauth_callback, then data = response environment.
+    # Note: we are using omniauth-slack at
+    #       https://github.com/kmrshntr/omniauth-slack for a ruby oauth lib.
+    #       It stores oauth info in the environment, which is accessed via
+    #       request.env
     def find_or_create_from(source, data)
       return find_or_create_from_omniauth_callback(data) if source == :omniauth_callback
     end

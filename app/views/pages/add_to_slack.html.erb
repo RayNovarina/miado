@@ -8,7 +8,7 @@
               style: 'margin-right: 20px;',
               size: '100x100' %>
           <h3>Organize and manage your micro teams.</h3>
-          <h3>To get started you just need to login with your Slack account.</h3>
+          <h3>To add MiaDo to your Slack account, just click on the button below.</h3>
           <br><br>
           <p>
             <a href="<%= new_user_registration_path(oauth: 'slack') %>">
@@ -20,8 +20,7 @@
           <br>
           <h4><%= "#{Team.count} registered active #{'team'.pluralize(Team.count)}!" %></h4>
           <br>
-          <h5><mark>MiaDo is alpha software. Please report bugs to admin@miado.net</mark></h5>
-          <h6 class="text-muted"><%= render 'layouts/page_footer_created_by' %></h6>
+          <h5><mark>MiaDo is beta software. Please report bugs to admin@miado.net</mark></h5>
 
        </center>
      </div>

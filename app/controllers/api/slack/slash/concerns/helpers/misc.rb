@@ -5,10 +5,10 @@ def check_for_debug(url_params)
   [command, debug]
 end
 
-def add_standard_err_help_info(parsed, text)
+def add_standard_err_help_info(parsed, url_params, text)
   text.concat("\n`You typed: `  ")
-      .concat(parsed[:url_params][:command]).concat(' ')
-      .concat(parsed[:url_params][:text]) unless parsed[:err_msg].empty?
+      .concat(url_params[:command]).concat(' ')
+      .concat(url_params[:text]) if parsed.nil? || !parsed[:err_msg].empty?
 end
 
 # Returns json response with text, attachments fields.

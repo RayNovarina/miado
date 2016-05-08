@@ -72,7 +72,8 @@ end
 #       'a new task', 'list team'
 CMD_FUNCS = %w(append assign delete done due help list redo unassign).freeze
 def scan4_command_func(p_hash)
-  return p_hash[:func] = :last_action_list if p_hash[:cmd_splits].length == 0
+  return p_hash[:func] = :help if p_hash[:cmd_splits].empty? && p_hash[:previous_action_list_context].empty?
+  return p_hash[:func] = :last_action_list if p_hash[:cmd_splits].empty? && !p_hash[:previous_action_list_context].empty?
   maybe_func = p_hash[:cmd_splits][0]
   p_hash[:func] = CMD_FUNCS.include?(maybe_func) ? maybe_func.to_sym : nil
   # discard/consume func word if we have one.
@@ -137,16 +138,15 @@ end
 # s = 'get donuts @susan /fri all kinds'
 def scan4_mentioned_member(p_hash)
   return unless p_hash[:err_msg].empty?
-  at_pos = p_hash[:command].index('@')
+  at_pos = p_hash[:command].index(' @')
   return p_hash[:err_msg] = 'Error: team member must be mentioned.' if at_pos.nil? && p_hash[:requires_mentioned_member]
   return if at_pos.nil?
-  blank_pos = p_hash[:command].index(' ', at_pos)
+  blank_pos = p_hash[:command].index(' ', at_pos + 1)
 
   end_of_name_pos = p_hash[:command].length - 1 if blank_pos.nil?
   end_of_name_pos = blank_pos - 1 unless blank_pos.nil?
 
-  name = p_hash[:command].slice(at_pos + 1, end_of_name_pos - at_pos)
-
+  name = p_hash[:command].slice(at_pos + 2, end_of_name_pos - at_pos + 1)
   p_hash[:mentioned_member_id], p_hash[:mentioned_member_name] =
     slack_member_from_name(p_hash, name)
   return if p_hash[:mentioned_member_id].nil?
@@ -164,11 +164,11 @@ end
 
 def slack_member_from_name(p_hash, name)
   return [p_hash[:user_id], p_hash[:user_name]] if name == 'me'
-  member = Member.find_or_create_from_slack_name(@view, name,
-                                                 p_hash[:url_params][:team_id])
+  member = Member.find_or_create_from_slack_name(
+    @view, name,
+    p_hash[:url_params][:team_id])
   if member.nil?
-    p_hash[:err_msg] =
-      "Error: Member @#{name} not found."
+    p_hash[:err_msg] = "Error: Member @#{name} not found."
     return [nil, name]
   end
   [member.slack_user_id, name]
@@ -214,8 +214,10 @@ def date_from_due_date(due_date_string)
     rescue ArgumentError
       return [nil, false]
     end
-    return due_date,
-           Date::ABBR_DAYNAMES.map {|abbr| abbr.downcase}.include?(numeric_partition[0].downcase)
+    is_day_of_week =
+      Date::ABBR_DAYNAMES.map(&:downcase).include?(numeric_partition[0].downcase) ||
+      Date::DAYNAMES.map(&:downcase).include?(numeric_partition[0].downcase)
+    return due_date, is_day_of_week
   end
   # Case: just day of month specified. /12
   if numeric_partition[0].empty?
