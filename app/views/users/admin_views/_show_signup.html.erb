@@ -1,0 +1,11 @@
+<tr>
+  <td><%= @view.locals[:user].created_at.strftime("%a, %d %b %Y") %></td>
+    <% if @view.locals[:user].sign_in_count == 0
+         signup_method = 'Web Page'
+       else
+         signup_method =
+           'oauth-'.concat(@view.locals[:user].omniauth_providers.first.name.capitalize)
+       end
+    %>
+  <td><%= signup_method %></td>
+</tr>

@@ -1,0 +1,11 @@
+<% @view.locals[:teams].each do |team| %>
+  <tr>
+    <td><%= team.name %></td>
+    <td><%= team.created_at.strftime("%a, %d %b %Y") %></td>
+    <td>Add to Slack Button</td>
+    <td><%= team.slack_team_id %></td>
+    <td><%= team.api_token %></td>
+    <td><%= team.bot_user_id %></td>
+    <td><%= team.bot_access_token %></td>
+  <tr>
+<% end %>

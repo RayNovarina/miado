@@ -14,5 +14,29 @@
           class: 'btn btn-primary btn-sm',
           data: { confirm: 'Are you sure?' }, method: :delete %>
     </p>
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr><th>Signup</th></tr>
+        <tr><th>Date</th><th>Method</th><th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th><th>&nbsp;</th><tr>
+      </thead>
+      <tbody>
+        <%= render partial: 'users/admin_views/show_signup',
+                   locals: @view.locals = { user: @view.user }
+        %>
+      </tbody>
+    </table>
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr><th>Teams</th></tr>
+        <tr><th>Name</th><th>Install Date</th><th>Oauth Provider</th><th>Slack Id</th><th>Slack Api Token</th><th>Bot Name</th><th>Bot Access Token</th><tr>
+      </thead>
+      <tbody>
+        <%= render partial: 'users/admin_views/show_teams',
+                   locals: @view.locals = { user: @view.user,
+                                            teams: @view.user.teams
+                                          }
+        %>
+      </tbody>
+    </table>
   </div>
 </main>
