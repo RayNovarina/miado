@@ -1,6 +1,6 @@
 <% @view.locals[:teams].each do |team| %>
   <tr>
-    <td><%= team.name %></td>
+    <td><%= link_to team.name, team_path(team) %><%=  %></td>
     <td><%= team.created_at.strftime("%a, %d %b %Y") %></td>
     <td>Add to Slack Button</td>
     <td><%= team.slack_team_id %></td>

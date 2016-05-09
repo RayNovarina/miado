@@ -1,0 +1,40 @@
+<%
+current_channel_id = ''
+task_num = 0
+@view.locals[:lists].each_with_index do |item, index|
+  unless current_channel_id == item.channel_id
+    unless current_channel_id == '' %>
+         </tbody>
+        </table>
+      <br>
+    <% end %>
+    <% current_channel_id = item.channel_id
+       task_num = 1
+    %>
+    <h3><%= "##{Channel.where(slack_id: current_channel_id).first.name}(#{current_channel_id})" %></h3>
+      <table class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th>Task Number</th>
+            <th>Description</th>
+            <th>Assigned To</th>
+            <th>Due Date</th>
+            <th>Open/Done</th>
+            <th>Created Date</th>
+            <th>Last Updated Date</th>
+          </tr>
+        </thead>
+        <tbody>
+  <% end %>
+  <%= render partial: 'items/admin_views/index_item',
+             locals: @view.locals = { task_num: task_num,
+                                      item: item
+                                    }
+  %>
+  <% task_num += 1 %>
+<% end %>
+<% unless current_channel_id == '' %>
+         </tbody>
+       </table>
+     <br>
+<% end %>

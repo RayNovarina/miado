@@ -1,0 +1,22 @@
+<h3><%= "Channels(#{team.channels.size}) for Team #{team.name} added by #{team.user.name}" %></h3>
+<% unless @view.locals[:team].channels.empty? %>
+  <table class="table table-bordered table-hover">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Slack Channel Id</th>
+        <th>Added To MiaDo on Date</th>
+        <th>Last Updated Date</th>
+        <th>Tasks</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @view.locals[:team].channels.each do |channel| %>
+        <%= render partial: 'channels/admin_views/index_channel',
+                   locals: @view.locals = { channel: channel }
+        %>
+      <% end %>
+    </tbody>
+  </table>
+  <% end %>
+<br>

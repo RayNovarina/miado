@@ -1,0 +1,24 @@
+<% team = @view.locals[:team] %>
+<h3><%= "Task Lists for Channels(#{team.channels.size}) for Team #{team.name} added by #{team.user.name}" %></h3>
+<% unless @view.locals[:team].channels.empty? %>
+  <% parsed = { team_option: true,
+                all_option: true,
+                open_option: true,
+                done_option: true,
+                due: false,
+                err_msg: '',
+                func: :list,
+                url_params: { team_id: @view.locals[:team].slack_team_id },
+                list_scope: :team,
+                channel_scope: :all_channels,
+                mentioned_member_id: nil,
+                assigned_due_date: nil
+              }
+     all_channel_lists_for_this_team = ListItem.query(parsed)
+  %>
+  <%= render partial: 'items/admin_views/index_team_lists',
+             locals: @view.locals = { team: team,
+                                      lists: all_channel_lists_for_this_team
+                                    }
+  %>
+<% end %>

@@ -29,6 +29,9 @@ Rails.application.routes.draw do
   resources :channels, only: [:index, :show, :destroy] do
     resources :items, only: [:index]
   end
+
+  resources :items, only: [:index]
+
   get '/settings', to: 'users#settings', as: 'settings'
 
   # For api. api/slack/slash for Slack slash commands.

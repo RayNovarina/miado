@@ -7,12 +7,9 @@ class MembersController < ApplicationController
   # in the following order:
   #   index, show, new, edit, create, update and destroy.
   #
-  # Note: we get here via /members to display all members in system (admin link)
-  #                    or /user/:user_id/members for "My members" link
+
   def index
-    @view.members = @view.url_params.key?('user_id') \
-      ? Member.where('user_id = ?', current_user.id) \
-      : Member.all
+    @view.members = Member.all
     # authorize @view.members
     # Response: Controller will forward_to
     #           /views/members/index.html.erb with @view

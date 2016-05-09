@@ -48,7 +48,7 @@ module OmniauthProviderExtensions
         name: auth.provider,
         uid: auth.uid,
         uid_email: auth.info.email,
-        uid_name: auth.info.name,
+        uid_name: auth.info.name.empty? ? auth.info.user : auth.info.name,
         auth_token: auth.credentials[:token])
       update_provider_auth_info(provider, auth, auth_params)
       provider.save!
