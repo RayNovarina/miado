@@ -1,0 +1,10 @@
+<% item = @view.locals[:item] %>
+<tr>
+  <td><%= @view.locals[:task_num] %></td>
+  <td><%= item.description %></td>
+  <td><%= "#{item.assigned_member_name.nil? || item.assigned_member_name.empty? ? '': "@#{item.assigned_member_name}"}" %></td>
+  <td><%= item.assigned_due_date.nil? ? '' : item.assigned_due_date.strftime("%a, %d %b %Y") %></td>
+  <td><%= item.done? ? 'done' : 'open' %></td>
+  <td><%= item.created_at.strftime("%a, %d %b %Y") %></td>
+  <td><%= item.updated_at.strftime("%a, %d %b %Y") %></td>
+</tr>

@@ -1,0 +1,17 @@
+<header class="css-body-header">
+  <%= render partial: 'shared/index_page_header',
+             locals: @view.locals = { title: 'Admin Dashboard - Members' }
+  %>
+</header>
+
+<main class="css-body-main">
+  <div class="container">
+    <h2><%= "#{Member.count} Members in #{Team.count} Teams"  %></h2>
+    <hr>
+    <% Team.all.reorder('name ASC').each do |team| %>
+      <%= render partial: 'members/admin_views/index_team',
+                 locals: @view.locals = { team: team }
+      %>
+    <% end %>
+    </div>
+</main>

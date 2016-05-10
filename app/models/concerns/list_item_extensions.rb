@@ -41,6 +41,15 @@ module ListItemExtensions
         slack_deferred_response_url: params[:response_url]
       )
     end
+
+    def query(p_hash)
+      # For ALL team members in ALL channels clumped by channel via sorted by
+      # channel name and creation date.
+
+      # open and done: All tasks.
+      ListItem.where(team_id: p_hash[:url_params][:team_id])
+              .reorder('channel_name ASC, created_at ASC')
+    end
   end # module ClassMethods
 
   #

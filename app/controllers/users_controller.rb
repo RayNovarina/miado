@@ -5,7 +5,6 @@ class UsersController < ApplicationController
 
   def index
     @view.users = User.all
-    @view.teams = Team.all
   end
 
   def show

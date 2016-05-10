@@ -1,0 +1,31 @@
+<header class="css-body-header">
+  <%= render partial: 'shared/index_page_header',
+             locals: @view.locals = { title: 'Admin Dashboard - Oauth Providers' }
+  %>
+</header>
+
+<main class="css-body-main">
+  <div class="container">
+    <h2>OmniAuth Providers<%= " (#{@view.providers.size})" %></h2>
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Creation Date</th>
+          <th>info.team</th>
+          <th>uid_name</th>
+          <th>uid_email</th>
+          <th>uid</th>
+          <th>auth_token</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% @view.providers.each do |provider| %>
+          <%= render partial: 'omniauth_providers/admin_views/index_provider',
+                     locals: @view.locals = { provider: provider }
+          %>
+        <% end %>
+      </tbody>
+    </table>
+    </div>
+</main>

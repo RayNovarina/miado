@@ -7,12 +7,8 @@ class ChannelsController < ApplicationController
   # in the following order:
   #   index, show, new, edit, create, update and destroy.
   #
-  # Note: we get here via /channels to display all channels in system (admin link)
-  #                    or /user/:user_id/channels for "My channels" link
   def index
-    @view.channels = @view.url_params.key?('user_id') \
-      ? Channel.where('user_id = ?', current_user.id) \
-      : Channel.all
+    @view.channels = Channel.all
     # authorize @view.channels
     # Response: Controller will forward_to
     #           /views/channels/index.html.erb with @view

@@ -7,12 +7,8 @@ class ItemsController < ApplicationController
   # in the following order:
   #   index, show, new, edit, create, update and destroy.
   #
-  # Note: we get here via /items to display all items in system (admin link)
-  #                    or /user/:user_id/items for "My items" link
   def index
-    @view.items = @view.url_params.key?('user_id') \
-      ? ListItem.where('user_id = ?', current_user.id) \
-      : ListItem.all
+    @view.items = ListItem.all
     # authorize @view.items
     # Response: Controller will forward_to
     #           /views/items/index.html.erb with @view

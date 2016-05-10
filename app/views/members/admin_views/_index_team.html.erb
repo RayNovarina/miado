@@ -1,0 +1,22 @@
+<h3><%= "Members(#{team.members.size}) for Team #{team.name} added by #{team.user.name}" %></h3>
+<% unless @view.locals[:team].members.empty? %>
+  <table class="table table-bordered table-hover">
+    <thead>
+      <tr>
+        <th>Slack User Name</th>
+        <th>Real Name</th>
+        <th>Slack User Id</th>
+        <th>Added To MiaDo on Date</th>
+        <th>Last Updated Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% @view.locals[:team].members.each do |member| %>
+        <%= render partial: 'members/admin_views/index_member',
+                   locals: @view.locals = { member: member }
+        %>
+      <% end %>
+    </tbody>
+  </table>
+  <% end %>
+<br>

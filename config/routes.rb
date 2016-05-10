@@ -1,24 +1,5 @@
 Rails.application.routes.draw do
-  get 'items/index'
-
-  get 'items/show'
-
-  get 'items/destroy'
-
-  get 'channels/index'
-
-  get 'channels/show'
-
-  get 'channels/destroy'
-
-  get 'members/index'
-
-  get 'members/show'
-
-  get 'members/destroy'
-
-  get 'messages/index', to: 'messages#index'
-
+  resources :omniauth_providers, only: [:index, :show, :destroy]
   #
   # per: https://github.com/plataformatec/devise#getting-started
   #   "you can customize each controller", "Tell the router to use this
@@ -48,6 +29,9 @@ Rails.application.routes.draw do
   resources :channels, only: [:index, :show, :destroy] do
     resources :items, only: [:index]
   end
+
+  resources :items, only: [:index]
+
   get '/settings', to: 'users#settings', as: 'settings'
 
   # For api. api/slack/slash for Slack slash commands.
@@ -60,6 +44,8 @@ Rails.application.routes.draw do
       end
     end
   end
+
+  get 'messages/index', to: 'messages#index'
 
   # -------------------------------
   # App:

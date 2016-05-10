@@ -6,8 +6,18 @@
 
 <main class="css-body-main">
   <div class="container">
-    <h2>All Teams<%= " (#{@view.teams.length})" %></h2>
+    <h2>Teams<%= " (#{@view.teams.length})" %></h2>
     <table class="table table-bordered table-hover">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Added By</th>
+          <th>Members</th>
+          <th>Channels</th>
+          <th>Channel Lists</th>
+          <th>Bot Lists</th>
+        </tr>
+      </thead>
       <tbody>
         <% @view.teams.each do |team| %>
           <%= render partial: 'teams/admin_views/index_team',
@@ -16,5 +26,5 @@
         <% end %>
       </tbody>
     </table>
-    </div>
+  </div>
 </main>

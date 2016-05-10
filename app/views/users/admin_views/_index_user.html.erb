@@ -5,11 +5,20 @@
   </td>
   <td><%= @view.locals[:user].email %></td>
   <td><%= @view.locals[:user].created_at.strftime("%a, %d %b %Y") %></td>
-  <% user.teams.each_with_index do |team, index| %>
-    <%= render partial: 'users/admin_views/index_team',
-               locals: @view.locals = { team: team,
-                                        teams_index: index
-                                      }
+  <% # Fill in variable number of Slack teams and omniauth_providers
+  next_idx = 0
+  while next_idx < user.teams.length && next_idx < user.omniauth_providers.length do
+  %>
+    <%= render partial: 'users/admin_views/index_provider',
+               locals: @view.locals = { provider: user.omniauth_providers[next_idx] }
     %>
-  <% end %>
+    <%= render partial: 'users/admin_views/index_team',
+               locals: @view.locals = { team: user.teams[next_idx] }
+    %>
+    </tr>
+    <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>
+  <% next_idx += 1
+  end
+  %>
+  <td>&nbsp;</td><td>&nbsp;</td>
 </tr>

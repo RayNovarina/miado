@@ -21,10 +21,6 @@
 //= require jquery_ujs
 //= require turbolinks
 // ------------------------------
-// For Twitter Bootstrap per:
-//   https://www.bloc.io/users/ray-novarina/checkpoints/1634#css-frameworks-and-bootstrap
-//= require bootstrap
-// -------------------------------
 // per: // per: http://www.sitepoint.com/devise-authentication-in-depth/
 //= require bootstrap/dropdown
 // ------------------------------
