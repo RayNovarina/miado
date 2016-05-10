@@ -1,17 +1,3 @@
-=begin
-Form Params
-channel_id	C0VNKV7BK
-channel_name	general
-command	/do
-response_url	https://hooks.slack.com/commands/T0VN565N0/36163731489/YAHWUMXlBdviTE1rBILELuFK
-team_domain	shadowhtracteam
-team_id	T0VN565N0
-text	remove 4
-token	3ZQVG7rk4p7EZZluk1gTH3aN
-user_id	U0VLZ5P51
-user_name	ray
-=end
-
 # Inputs: parsed = parsed command line info that has been verified.
 #         before_action list: [ListItem.id] for the list that the user
 #                             is referencing.
@@ -21,8 +7,9 @@ user_name	ray
 #-----------------------------------
 # LIST_SCOPES  = %w(one_member team)
 # CHANNEL_SCOPES = %w(one_channel all_channels)
+# SUB_FUNCS  = %w(open due more)
 # list_owner = :team, :mine, <@name>
-# assigned_member_name = <@name>
+# mentioned_member_name = <@name>
 #------------------------------
 def delete_command(parsed)
   adjust_delete_cmd_action_context(parsed)
@@ -40,7 +27,7 @@ def delete_command(parsed)
 end
 
 def delete_item(parsed)
-  return delete_all(parsed) if parsed[:task_num].nil?
+  return delete_many(parsed) if parsed[:task_num].nil?
   return delete_one(parsed) unless parsed[:task_num].nil?
 end
 
@@ -66,7 +53,7 @@ def delete_task(id, parsed)
   parsed[:err_msg] = 'Error: There was an error deleting this Task.'
 end
 
-def delete_all(parsed)
+def delete_many(parsed)
   return parsed[:err_msg] = 'Error: Delete command requires \'task number\', \'team\' or \'all\' options.' unless parsed[:all_option] || parsed[:team_option]
   destroy_all_by_ids(parsed[:list], parsed)
   if parsed[:err_msg].empty?
@@ -78,8 +65,8 @@ end
 
 def delete_all_msg(parsed)
   if parsed[:list_scope] == :team
-    return 'Deleted ALL tasks in this channel for ANY team member.' if parsed[:channel_scope] == :one_channel
-    return 'Deleted ALL tasks in ANY channel for ANY team member.' if parsed[:channel_scope] == :all_channels
+    return 'Deleted tasks in THIS channel for ANY team member.' if parsed[:channel_scope] == :one_channel
+    return 'Deleted tasks in ANY channel for ANY team member.' if parsed[:channel_scope] == :all_channels
   end
   # parsed[:list_scope] == :one_member
   if parsed[:channel_scope] == :one_channel
@@ -136,26 +123,15 @@ end
 #      i.e. 'list all'
 #------------------------------------
 def delete_cmd_context_matches(parsed)
-  # Case: 'list @dawn' or 'list'
-  #       AND THEN 'delete 1'
-  #       OR THEN 'delete team'
-  if parsed[:previous_action_list_context][:list_scope] == :one_member
-    # We are trying to delete from a specific member list.
-    return true if parsed[:list_scope] == :one_member
-    # Else we are deleting a team. Must get a new team list.
-  else # displaying team list.
-    # Case  'list team @ray' OR 'list team'
-    #       AND THEN 'delete 1'
-    #       OR THEN 'delete team'
-    #       OR THEN 'delete team all'
-    # We are trying to delete from a team list on current channel.
-    return true
-  end
-
-  # List context Doesn't match. Must get a new team list.
-  parsed[:list_scope] = :team
-  parsed[:channel_scope] = :one_channel
-  false
+  # Case: look at a list AND THEN 'delete 1'
+  # Ok, just delete from the list.
+  return true unless parsed[:task_num].nil?
+  # Otherwise, fetch a list based on the list command options
+  # so that delete command syntax matches what list would do. i.e. 'delete team'
+  # will delete whatever 'list team' will display.
+  list_of_ids_from_list_cmd(parsed)
+  # Now that we have a new parsed[:list], use it.
+  true
 end
 
 # @me member is implied if no Other member is mentioned. However, 'list team'
