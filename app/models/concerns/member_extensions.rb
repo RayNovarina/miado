@@ -20,7 +20,7 @@ module MemberExtensions
     # Slack and merge those into our db.
     def find_or_create_from_slack_name(view, name, slack_team_id)
       @view ||= view
-      member = Member.where(name: name).first
+      member = find_by_name_and_slack_team(name, slack_team_id)
       return member unless member.nil?
       create_from_slack_name(view, name, slack_team_id)
     end
@@ -28,7 +28,7 @@ module MemberExtensions
     def create_from_slack_name(view, name, slack_team_id)
       @view ||= view
       create_all_from_slack(@view, slack_team_id)
-      Member.where(name: name).first
+      find_by_name_and_slack_team(name, slack_team_id)
     end
 
     def create_all_from_slack(view, slack_team_id)
@@ -53,6 +53,11 @@ module MemberExtensions
       return Member.all if Member.count > 0
       create_all_from_slack(@view)
       Member.all
+    end
+
+    def find_by_name_and_slack_team(name, slack_team_id)
+      Member.where(team_id: Team.where(slack_team_id: slack_team_id).first,
+                   name: name).first
     end
 
     private
