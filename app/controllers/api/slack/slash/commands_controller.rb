@@ -10,6 +10,7 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   # Returns json slash command response. Empty text msg if command handed off
   # to bot.
   def create
+    return render json: {}, status: 200 if params.key?('ssl_check')
     render json: local_response_or_bot_msg, status: 200
   end
 

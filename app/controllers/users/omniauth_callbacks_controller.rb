@@ -15,15 +15,15 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
 
   # Flow is generally the same for all. But customize as needed here.
   def slack
-    sign_in_omniauth_user
+    omniauth_callback
   end
 
   def github
-    sign_in_omniauth_user
+    omniauth_callback
   end
 
   def google_oauth2
-    sign_in_omniauth_user
+    omniauth_callback
   end
 
   def failure
@@ -32,7 +32,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
 
   private
 
-  def sign_in_omniauth_user
+  def omniauth_callback
     # IF we allow multiple oath login providers, i.e. login with GitHub and
     # Gmail, then we need a OmniAuthProviders model with provider, uid and
     # auth_token fields. To find the user, first query the Providers model for
@@ -41,17 +41,11 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     #       https://github.com/kmrshntr/omniauth-slack for a ruby oauth lib.
     #       It stores oauth info in the environment, which is accessed via
     #       request.env
-    # Note: we use the update_from methods so as to update existing providers
-    #       or teams if we are reauthorizing a registered team.
-    if request.env['omniauth.params']['state'] == 'sign_up'
-      @view.provider = OmniauthProvider.update_from_or_create_from(:omniauth_callback, request.env)
-      @view.user = User.find_or_create_from(:omniauth_provider, @view.provider)
-      @view.team = Team.update_from_or_create_from(:omniauth_provider, @view.provider)
-    else # auth_params['state'] == 'sign_in'
-      @view.provider = OmniauthProvider.find_from(:omniauth_callback, request.env)
-      @view.user = User.find_from(:omniauth_provider, @view.provider)
-      @view.team = Team.find_from(:omniauth_provider, @view.provider)
-    end
+    #---------------------------------------------------------------------------
+    # Note: We get here from an oauth callback due to a sign_up or a sign_in.
+    #---------------------------------------------------------------------------
+    sign_up_from_omniauth if request.env['omniauth.params']['state'] == 'sign_up'
+    sign_in_from_omniauth if request.env['omniauth.params']['state'] == 'sign_in'
     #
     # Note: sign_in_and_redirect method is at:
     # .rvm/gems/ruby-2.3.0/gems/devise-3.5.6/lib/devise/controllers/helpers.rb
@@ -61,6 +55,43 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     # redirects a welcome aboard landing page.
     sign_in_and_redirect @view.user, event: :authentication
     set_flash_message(:notice, :success, kind: @view.provider.name.capitalize) if is_navigational_format?
+  end
+
+  # Note: we use the update_from methods so as to update existing providers
+  #       or teams if we are reauthorizing a registered team.
+  #       The provider, user or team can already be in our db due to other
+  #       ways to add em. i.e. signup via manual form, user tries signup via
+  #       multiple signup with buttons.
+  def sign_up_from_omniauth
+    @view.provider = OmniauthProvider.update_from_or_create_from(:omniauth_callback, request.env)
+    @view.user = User.find_or_create_from(:omniauth_provider, @view.provider)
+    @view.team = Team.update_from_or_create_from(:omniauth_provider, @view.provider)
+  end
+
+  # Note: The provider, user or team can already be in our db due to other
+  #       ways to add em. i.e. signin/up via manual form, user tries signin/up
+  #       via multiple signin with buttons.
+  # Returns: @view.user = nil means not a known user.
+  def sign_in_from_omniauth
+    @view.provider = OmniauthProvider.find_or_create_from(:omniauth_callback, request.env)
+    unless @view.provider.user.nil?
+      @view.user = User.find_from(:omniauth_provider, @view.provider)
+      @view.team = Team.find_from(:omniauth_provider, @view.provider)
+      return
+    end
+    # We have not authenticated with this oauth server for the oauth user
+    # before. But we may have already created a user via a email/pwd sign-up.
+
+    # Case: # User signing in with GitHub/Slack but has not setup account yet.
+    return if (@view.user = User.where(email: @view.provider.uid_email.downcase).first).nil?
+
+    # We have the user, link it to the new OmniauthProvider.
+    @view.provider.user = @view.user
+    @view.provider.save!
+    # And link the OmniauthProvider to the user.
+    @view.user.omniauth_providers << @view.provider
+    @view.user.save!
+    @view.team = Team.find_from(:omniauth_provider, @view.provider)
   end
 
   def make_view_helper

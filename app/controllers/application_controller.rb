@@ -38,22 +38,17 @@ class ApplicationController < ActionController::Base
       # previous session/loaded new dev app.
       return root_path
     end
+    # Case: oauth sign_in or sign_up
+    return after_sign_in_path_for_omniauth_callback if @view.controller.is_a?(Devise::OmniauthCallbacksController)
+    # Case: admin login. users_path => "/users"
+    return users_path if @view.current_user.admin?
     # Case: Manual login.
     if @view.flash_messages.key?(:notice) &&
        @view.flash_messages[:notice] == 'Signed in successfully.'
       # Our view makes up it own welcome msg.
       @view.flash_messages[:notice] = ''
     end
-    # Case: oauth sign_in or sign_up
-    if @view.controller.is_a?(Devise::OmniauthCallbacksController)
-      # request.env['omniauth.params']['state'] => "sign_in" or "sign_up"
-      return welcome_back_path if request.env['omniauth.params']['state'] == "sign_in"
-      # omniauth_landing_page => "/welcome/add_to_slack_new?team_id=T0VN565N0"
-      return omniauth_landing_page
-    end
-    # Case: admin login. users_path => "/users"
-    return users_path if @view.current_user.admin?
-    # Case: ? welcome_back_path => "/welcome/back"
+    # Flash msgs are filled in.
     welcome_back_path
   end
 
@@ -75,6 +70,19 @@ class ApplicationController < ActionController::Base
   def user_not_authorized
     flash[:alert] = 'You are not authorized to perform this action.'
     redirect_to(request.referrer || root_path)
+  end
+
+  # request.env['omniauth.params']['state'] => "sign_in" or "sign_up"
+  def after_sign_in_path_for_omniauth_callback
+    if @view.user.nil?
+      # Signin failed. User not known.
+      flash.now[:alert] = 'oauth user not found. You must sign up first.'
+      return new_user_session_path if request.env['omniauth.params']['state'] == "sign_in"
+      return new_user_registration_path if request.env['omniauth.params']['state'] == "sign_up"
+    end
+    return welcome_back_path if request.env['omniauth.params']['state'] == "sign_in"
+    # omniauth_landing_page => "/welcome/add_to_slack_new?team_id=T0VN565N0"
+    return omniauth_landing_page if request.env['omniauth.params']['state'] == "sign_up"
   end
 
   def omniauth_landing_page

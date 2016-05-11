@@ -20,6 +20,10 @@ module OmniauthProviderExtensions
     #       https://github.com/kmrshntr/omniauth-slack for a ruby oauth lib.
     #       It stores oauth info in the environment, which is accessed via
     #       request.env
+    def find_or_create_from(source, data)
+      return find_or_create_from_omniauth_callback(data) if source == :omniauth_callback
+    end
+
     def update_from_or_create_from(source, data)
       return update_from_or_create_from_omniauth_callback(data) if source == :omniauth_callback
     end
@@ -29,6 +33,14 @@ module OmniauthProviderExtensions
     end
 
     private
+
+    def find_or_create_from_omniauth_callback(response_env)
+      if (provider = find_from_omniauth_callback(response_env)).nil?
+        # Case: We have not authenticated this oauth user before.
+        provider = create_from_omniauth_callback(response_env)
+      end
+      provider
+    end
 
     def update_from_or_create_from_omniauth_callback(response_env)
       auth, auth_params = auth_info_from_env(response_env)
@@ -54,6 +66,15 @@ module OmniauthProviderExtensions
 
     def find_by_oauth(auth)
       OmniauthProvider.where(name: auth.provider, uid: auth.uid)
+    end
+
+    def create_from_omniauth_callback(response_env)
+      auth, auth_params = auth_info_from_env(response_env)
+      provider = create_from_oauth(auth, auth_params)
+      update_provider_auth_info(provider, auth, auth_params)
+      provider.save!
+      # Return oauth provider with current auth callback info
+      provider
     end
 
     def create_from_oauth(auth, auth_params)
