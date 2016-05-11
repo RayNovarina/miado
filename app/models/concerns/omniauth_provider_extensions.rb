@@ -20,23 +20,27 @@ module OmniauthProviderExtensions
     #       https://github.com/kmrshntr/omniauth-slack for a ruby oauth lib.
     #       It stores oauth info in the environment, which is accessed via
     #       request.env
-    def find_or_create_from(source, data)
-      return find_or_create_from_omniauth_callback(data) if source == :omniauth_callback
+    def update_from_or_create_from(source, data)
+      return update_from_or_create_from_omniauth_callback(data) if source == :omniauth_callback
     end
 
-    def find_or_create_from_omniauth_callback(response_env)
-      auth = response_env['omniauth.auth']
-      auth_params = response_env['omniauth.params']
-      if (provider = find_by_oauth(auth).first).nil?
-        # We have not authenticated this oauth user before.
-        provider = create_from_oauth(auth, auth_params)
-      else
-        # Just update for current auth callback info.
-        update_provider_auth_info(provider, auth, auth_params)
-        provider.save!
-      end
-      # Return oauth provider with current auth callback info.
+    private
+
+    def update_from_or_create_from_omniauth_callback(response_env)
+      auth, auth_params = auth_info_from_env(response_env)
+      # Case: We have not authenticated this oauth user before.
+      return create_from_oauth(auth, auth_params) if (provider = find_by_oauth(auth).first).nil?
+      # Case: We are reauthorizing. Update auth info.
+      update_provider_auth_info(provider, auth, auth_params)
+      provider.save!
+      # Return oauth provider with current auth callback info
       provider
+    end
+
+    def auth_info_from_env(response_env)
+      [response_env['omniauth.auth'],
+       response_env['omniauth.params']
+      ]
     end
 
     def find_by_oauth(auth)
@@ -44,22 +48,21 @@ module OmniauthProviderExtensions
     end
 
     def create_from_oauth(auth, auth_params)
-      provider = OmniauthProvider.create(
+      provider = OmniauthProvider.create!(
         name: auth.provider,
-        uid: auth.uid,
-        uid_email: auth.info.email,
-        uid_name: auth.info.name.empty? ? auth.info.user : auth.info.name,
-        auth_token: auth.credentials[:token])
+        uid: auth.uid
+      )
       update_provider_auth_info(provider, auth, auth_params)
       provider.save!
       provider
     end
 
-    private
-
     def update_provider_auth_info(provider, auth, auth_params)
       provider.auth_json = auth
       provider.auth_params_json = auth_params
+      provider.uid_email = auth.info.email
+      provider.uid_name = auth.info.name.empty? ? auth.info.user : auth.info.name
+      provider.auth_token = auth.credentials[:token]
     end
     #
   end # module ClassMethods

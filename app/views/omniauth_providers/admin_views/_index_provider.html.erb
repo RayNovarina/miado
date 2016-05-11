@@ -1,6 +1,7 @@
 <tr>
   <td><%= @view.locals[:provider].name %></td>
   <td><%= @view.locals[:provider].created_at.strftime("%a, %d %b %Y") %></td>
+  <td><%= @view.locals[:provider].updated_at.strftime("%a, %d %b %Y") %></td>
   <td><%= @view.locals[:provider].auth_json['info']['team'] %></td>
   <td><%= @view.locals[:provider].uid_name %></td>
   <td><%= @view.locals[:provider].uid_email %></td>

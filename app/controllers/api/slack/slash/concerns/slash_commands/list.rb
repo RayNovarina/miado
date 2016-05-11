@@ -41,6 +41,14 @@ def prepend_text_to_list_command(parsed, prepend_text)
   [combined_text, list_attachments]
 end
 
+# Used by the delete command, to fetch a list based on the list command options
+# so that delete command syntax matches what list would do. i.e. 'delete team'
+# will delete whatever 'list team' will display.
+def list_of_ids_from_list_cmd(parsed)
+  adjust_list_cmd_action_context(parsed)
+  parsed[:list] = ids_from_parsed(parsed)
+end
+
 # Display whatever the parsed/context block params say to do.
 # Returns: [text, attachments], parsed[:err_msg] if needed.
 def redisplay_action_list(context)

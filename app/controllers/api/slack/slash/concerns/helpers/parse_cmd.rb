@@ -146,7 +146,7 @@ def scan4_mentioned_member(p_hash)
   end_of_name_pos = p_hash[:command].length - 1 if blank_pos.nil?
   end_of_name_pos = blank_pos - 1 unless blank_pos.nil?
 
-  name = p_hash[:command].slice(at_pos + 2, end_of_name_pos - at_pos + 1)
+  name = p_hash[:command].slice(at_pos + 2, end_of_name_pos - (at_pos + 1))
   p_hash[:mentioned_member_id], p_hash[:mentioned_member_name] =
     slack_member_from_name(p_hash, name)
   return if p_hash[:mentioned_member_id].nil?

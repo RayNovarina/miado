@@ -41,9 +41,11 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     #       https://github.com/kmrshntr/omniauth-slack for a ruby oauth lib.
     #       It stores oauth info in the environment, which is accessed via
     #       request.env
-    @view.provider = OmniauthProvider.find_or_create_from(:omniauth_callback, request.env)
+    # Note: we use the update_from methods so as to update existing providers
+    #       or teams if we are reauthorizing a registered team.
+    @view.provider = OmniauthProvider.update_from_or_create_from(:omniauth_callback, request.env)
     @view.user = User.find_or_create_from(:omniauth_provider, @view.provider)
-    @view.team = Team.find_or_create_from(:omniauth_provider, @view.provider)
+    @view.team = Team.update_from_or_create_from(:omniauth_provider, @view.provider)
     #
     # Note: sign_in_and_redirect method is at:
     # .rvm/gems/ruby-2.3.0/gems/devise-3.5.6/lib/devise/controllers/helpers.rb

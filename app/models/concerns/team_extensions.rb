@@ -23,50 +23,69 @@ module TeamExtensions
     end
 
     def find_or_create_from_omniauth_provider(provider)
-      @provider = provider
-      find_by_provider.first || create_from_provider
+      find_by_provider(provider).first || create_from_provider(provider)
     end
 
-    def find_by_provider
-      Team.where(slack_team_id: make_auth_info[:raw_info]['team_id'])
+    def find_by_provider(provider)
+      Team.where(slack_team_id: make_auth_info(provider)[:raw_info]['team_id'])
     end
 
-    def create_from_provider
-      make_auth_info
-      # create_from_provider_auth_info
-      create_from_slack_web_api
+    def create_from_provider(provider)
+      # create_from_provider_auth_info(provider, make_auth_info(provider))
+      create_from_slack_web_api(provider, make_auth_info(provider))
     end
 
     def find_or_create_from_slack_id(slack_team_id)
       Team.where(slack_team_id: slack_team_id).first
     end
 
+    # If source = :omniauth_callback, then data = response environment
+    def update_from_or_create_from(source, data)
+      return update_from_or_create_from_omniauth_provider(data) if source == :omniauth_provider
+    end
+
+    def update_from_or_create_from_omniauth_provider(provider)
+      # Case: We have not authenticated this team before.
+      return create_from_provider(provider) if (team = find_by_provider(provider).first).nil?
+      # Case: We are reauthorizing. Update auth info.
+      update_team_auth_info(team, make_auth_info(provider))
+      team.save!
+      team
+    end
+
     private
 
     # The omniauth-slack gem returns standard info in the environment. We save
     # that json info off in the db.
-    def make_auth_info
-      @auth_hash = {
-        auth: @provider.auth_json,
-        team_info: @provider.auth_json['extra']['team_info'],
-        raw_info: @provider.auth_json['extra']['raw_info'],
-        bot_info: @provider.auth_json['extra']['bot_info']
+    def make_auth_info(provider)
+      { auth: provider.auth_json,
+        team_info: provider.auth_json['extra']['team_info'],
+        raw_info: provider.auth_json['extra']['raw_info'],
+        bot_info: provider.auth_json['extra']['bot_info']
       }
     end
 
-    def create_from_provider_auth_info
-      Team.create!(
-        name: @auth_hash[:raw_info]['team'],
-        url: @auth_hash[:raw_info]['url'],
-        slack_team_id: @auth_hash[:raw_info]['team_id'],
-        api_token: @auth_hash[:auth]['credentials']['token'],
-        bot_user_id: @auth_hash[:bot_info]['bot_user_id'],
-        bot_access_token: @auth_hash[:bot_info]['bot_access_token'],
-        user: @provider.user)
+    def create_from_provider_auth_info(provider, auth_hash)
+      team =
+        Team.create!(
+          name: auth_hash[:raw_info]['team'],
+          user: provider.user
+        )
+      update_team_auth_info(team, auth_hash)
+      team.save!
+      team
     end
 
-    def create_from_slack_web_api
-      # @web_client ||= make_web_client
+    def update_team_auth_info(team, auth_hash)
+      team.url = auth_hash[:raw_info]['url']
+      team.slack_team_id = auth_hash[:raw_info]['team_id']
+      team.api_token = auth_hash[:auth]['credentials']['token']
+      team.bot_user_id = auth_hash[:bot_info]['bot_user_id']
+      team.bot_access_token = auth_hash[:bot_info]['bot_access_token']
+    end
+
+    def create_from_slack_web_api(provider, auth_hash)
+      # @web_client ||= make_web_client(auth_hash[:auth]['credentials']['token'])
       # response has name of member installing slack app.
       # resp_auth_test = @web_client.auth_test
       # install_member_name = resp_auth_test['user']
@@ -81,21 +100,20 @@ module TeamExtensions
       # resp_team_members = @web_client.users_list['members']
       # response has name and id of every channel for this team.
       # resp_team_channels = @web_client.channels_list['channels']
-      Team.create!(
-        name: @auth_hash[:raw_info]['team'],
-        url: @auth_hash[:raw_info]['url'],
-        slack_team_id: @auth_hash[:raw_info]['team_id'],
-        api_token: @auth_hash[:auth]['credentials']['token'],
-        bot_user_id: @auth_hash[:bot_info]['bot_user_id'],
-        bot_access_token: @auth_hash[:bot_info]['bot_access_token'],
-        user: @provider.user
-      # members: Member.create_from_slack_web_api(resp_team_members, resp_team_channels)
-      )
+      team =
+        Team.create!(
+          name: auth_hash[:raw_info]['team'],
+          user: provider.user
+          # members: Member.create_from_slack_web_api(resp_team_members, resp_team_channels)
+        )
+      update_team_auth_info(team, auth_hash)
+      team.save!
+      team
     end
 
-    def make_web_client
+    def make_web_client(auth_token)
       Slack.configure do |config|
-        config.token = @auth_hash[:auth]['credentials']['token']
+        config.token = auth_token
       end
       Slack::Web::Client.new
     end

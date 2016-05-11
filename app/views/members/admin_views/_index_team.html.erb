@@ -1,4 +1,4 @@
-<h3><%= "Members(#{team.members.size}) for Team #{team.name} added by #{team.user.name}" %></h3>
+<h3><%= "Members(#{team.members.size}) for Team #{team.name}(#{team.slack_team_id}) added by #{team.user.name}" %></h3>
 <% unless @view.locals[:team].members.empty? %>
   <table class="table table-bordered table-hover">
     <thead>
