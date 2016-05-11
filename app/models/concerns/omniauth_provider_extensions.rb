@@ -24,6 +24,10 @@ module OmniauthProviderExtensions
       return update_from_or_create_from_omniauth_callback(data) if source == :omniauth_callback
     end
 
+    def find_from(source, data)
+      return find_from_omniauth_callback(data) if source == :omniauth_callback
+    end
+
     private
 
     def update_from_or_create_from_omniauth_callback(response_env)
@@ -35,6 +39,11 @@ module OmniauthProviderExtensions
       provider.save!
       # Return oauth provider with current auth callback info
       provider
+    end
+
+    def find_from_omniauth_callback(response_env)
+      auth, _auth_params = auth_info_from_env(response_env)
+      find_by_oauth(auth).first
     end
 
     def auth_info_from_env(response_env)

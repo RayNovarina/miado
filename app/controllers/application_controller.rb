@@ -29,7 +29,7 @@ class ApplicationController < ActionController::Base
   #       controllers/users/sessions_controller.rb
 
   def after_sign_in_path_for(_resource_or_scope)
-    # Note: at this time: flash[:notice] => "Signed in successfully."
+    # Note: at this time: flash[:notice] => "Signed in successfully." (or nil)
     #                     current_user is valid.
     # user_path(@view.current_user) # users#show
     # registered_applications_path # registered_applications#index
@@ -38,13 +38,22 @@ class ApplicationController < ActionController::Base
       # previous session/loaded new dev app.
       return root_path
     end
+    # Case: Manual login.
     if @view.flash_messages.key?(:notice) &&
        @view.flash_messages[:notice] == 'Signed in successfully.'
       # Our view makes up it own welcome msg.
       @view.flash_messages[:notice] = ''
     end
-    return omniauth_landing_page if @view.controller.is_a?(Devise::OmniauthCallbacksController)
+    # Case: oauth sign_in or sign_up
+    if @view.controller.is_a?(Devise::OmniauthCallbacksController)
+      # request.env['omniauth.params']['state'] => "sign_in" or "sign_up"
+      return welcome_back_path if request.env['omniauth.params']['state'] == "sign_in"
+      # omniauth_landing_page => "/welcome/add_to_slack_new?team_id=T0VN565N0"
+      return omniauth_landing_page
+    end
+    # Case: admin login. users_path => "/users"
     return users_path if @view.current_user.admin?
+    # Case: ? welcome_back_path => "/welcome/back"
     welcome_back_path
   end
 
