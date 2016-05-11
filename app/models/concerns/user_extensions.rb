@@ -26,6 +26,12 @@ module UserExtensions
       return find_or_create_from_omniauth_provider(data) if source == :omniauth_provider
     end
 
+    def find_from(source, data)
+      return find_from_omniauth_provider(data) if source == :omniauth_provider
+    end
+
+    private
+
     def find_or_create_from_omniauth_provider(provider)
       return provider.user unless provider.user.nil?
       # We have not authenticated with this oauth server for the oauth user
@@ -42,7 +48,9 @@ module UserExtensions
       user
     end
 
-    private
+    def find_from_omniauth_provider(provider)
+      provider.user
+    end
 
     def create_from_omniauth_provider(provider)
       User.create!(email: provider.uid_email.downcase,

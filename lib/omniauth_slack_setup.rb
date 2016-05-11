@@ -44,7 +44,7 @@ class OmniauthSlackSetup
                       'channels:read'
              }
     end
-    return { scope: 'identify' } if query == 'state=sign_in'
+    return { scope: 'identity.basic' } if query == 'state=sign_in'
     {}
   end
 end
