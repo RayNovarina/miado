@@ -1,6 +1,7 @@
 <tr>
   <td><%= "@#{@view.locals[:member].name}" %></td>
   <td><%= @view.locals[:member].real_name %></td>
+  <td><%= @view.locals[:member].is_bot %></td>
   <td><%= @view.locals[:member].slack_user_id %></td>
   <td><%= @view.locals[:member].created_at.strftime("%a, %d %b %Y") %></td>
   <td><%= @view.locals[:member].updated_at.strftime("%a, %d %b %Y") %></td>
