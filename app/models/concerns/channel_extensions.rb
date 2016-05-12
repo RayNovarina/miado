@@ -35,12 +35,23 @@ module ChannelExtensions
       @view ||= view
       @view.team ||= Team.find_or_create_from(:slack_id, slack_team_id)
       return [] if @view.team.nil?
-      slack_channels = slack_channels_from_rtm_data(@view)
-      slack_channels.each do |slack_channel|
-        next if slack_channel[:is_archived]
+      slack_team_channels = slack_team_channels_from_rtm_data(@view)
+      slack_team_channels.each do |team_channel|
+        next if team_channel[:is_archived]
         Channel.find_or_create_by(
-          name: slack_channel[:name],
-          slack_id: slack_channel[:id],
+          name: team_channel[:name],
+          slack_id: team_channel[:id],
+          team: @view.team
+        )
+      end
+      slack_dm_channels = slack_dm_channels_from_rtm_data(@view)
+      slack_dm_channels.each do |im|
+        next if im[:is_user_deleted]
+        Channel.find_or_create_by(
+          name: im[:user],
+          slack_id: im[:id],
+          is_im_channel: true,
+          dm_user_id: im[:user],
           team: @view.team
         )
       end
@@ -56,11 +67,18 @@ module ChannelExtensions
 
     private
 
-    def slack_channels_from_rtm_data(view)
+    def slack_team_channels_from_rtm_data(view)
       @view ||= view
       @view.web_client ||= make_web_client
       # response is an array of hashes. Each has name and id of a team channel.
       @view.web_client.channels_list['channels']
+    end
+
+    def slack_dm_channels_from_rtm_data(view)
+      @view ||= view
+      @view.web_client ||= make_web_client
+      # response is an array of hashes. Each has name and id of a team channel.
+      @view.web_client.im_list['ims']
     end
 
     def make_web_client

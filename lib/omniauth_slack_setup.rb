@@ -38,10 +38,15 @@ class OmniauthSlackSetup
       #                'search:read,'\
       #                'team:read,'\
       #                'users:read' }
-      return { scope: 'commands,'\
+      return { scope: 'bot,'\
+                      'chat:write:bot,'\
+                      'commands,'\
                       'team:read,'\
                       'users:read,'\
-                      'channels:read'
+                      'channels:history,'\
+                      'channels:read,'\
+                      'im:history,'\
+                      'im:read'
              }
     end
     return { scope: 'identity.basic' } if query == 'state=sign_in'
