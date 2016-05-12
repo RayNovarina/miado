@@ -71,6 +71,8 @@ module ChannelExtensions
       @view ||= view
       @view.web_client ||= make_web_client
       # response is an array of hashes. Each has name and id of a team channel.
+      require 'pry'
+      binding.pry
       @view.web_client.channels_list['channels']
     end
 
