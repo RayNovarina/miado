@@ -1,6 +1,19 @@
 <tr>
-  <td><%= "@#{@view.locals[:channel].name}" %></td>
+  <% if @view.locals[:channel].name == 'USLACKBOT'
+       name = '@slackbot'
+     elsif @view.locals[:channel].is_im_channel
+       member = Member.where(slack_user_id: @view.locals[:channel].name).first
+       name = '?? unknown' if member.nil?
+       name = "@#{member.name}" unless member.nil?
+     else
+       name = "##{@view.locals[:channel].name}"
+     end
+  %>
+  <td><%= name %></td>
   <td><%= @view.locals[:channel].slack_id %></td>
+  <td><%= @view.locals[:channel].is_im_channel %></td>
+  <td><%= @view.locals[:channel].archived %></td>
+  <td><%= @view.locals[:channel].deleted %></td>
   <td><%= @view.locals[:channel].created_at.strftime("%a, %d %b %Y") %></td>
   <td><%= @view.locals[:channel].updated_at.strftime("%a, %d %b %Y") %></td>
   <td><%= "Tasks(#{ListItem.where(channel_id: @view.locals[:channel].slack_id).count})" %></td>

@@ -36,12 +36,13 @@ module MemberExtensions
       @view.team ||= Team.find_or_create_from(:slack_id, slack_team_id)
       slack_members = slack_members_from_rtm_data(@view)
       slack_members.each do |slack_member|
-        next if slack_member[:deleted] ||
-                slack_member[:name] == 'slackbot'
+        # next if slack_member[:deleted] ||
+        #        slack_member[:name] == 'slackbot'
         Member.find_or_create_by(
           name: slack_member[:name],
           slack_user_id: slack_member[:id],
           is_bot: slack_member[:is_bot],
+          deleted: slack_member[:deleted],
           team: @view.team,
           real_name: slack_member[:real_name]
         )

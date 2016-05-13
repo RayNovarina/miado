@@ -37,20 +37,22 @@ module ChannelExtensions
       return [] if @view.team.nil?
       slack_team_channels = slack_team_channels_from_rtm_data(@view)
       slack_team_channels.each do |team_channel|
-        next if team_channel[:is_archived]
+        # next if team_channel[:is_archived]
         Channel.find_or_create_by(
           name: team_channel[:name],
           slack_id: team_channel[:id],
+          archived: team_channel[:is_archived],
           team: @view.team
         )
       end
       slack_dm_channels = slack_dm_channels_from_rtm_data(@view)
       slack_dm_channels.each do |im|
-        next if im[:is_user_deleted]
+        # next if im[:is_user_deleted]
         Channel.find_or_create_by(
           name: im[:user],
           slack_id: im[:id],
           is_im_channel: true,
+          deleted: im[:is_user_deleted],
           dm_user_id: im[:user],
           team: @view.team
         )
