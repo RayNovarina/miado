@@ -7,7 +7,7 @@ module ApplicationHelper
     attr_reader :id, :name, :controller, :model, :url_params
     attr_accessor :locals, :signed_out_user, :users, :user, :teams, :team,
                   :providers, :provider, :web_client, :rtm_client, :members, :member,
-                  :channels, :channel, :items, :item
+                  :channels, :channel, :items, :item, :exception
 
     def initialize(controller, model)
       @id = object_id

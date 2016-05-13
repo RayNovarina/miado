@@ -53,6 +53,9 @@ def perform_scans_for_functions(p_hash)
   when :list
     scan4_mentioned_member(p_hash)
     scan4_options(p_hash)
+  when :pub
+    scan4_mentioned_member(p_hash)
+    scan4_options(p_hash)
   when :redo
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
@@ -70,7 +73,7 @@ end
 #       'delete all open tasks for @susan is a new task'
 # Case: command is as entered from command line.
 #       'a new task', 'list team'
-CMD_FUNCS = %w(append assign delete done due help list redo unassign).freeze
+CMD_FUNCS = %w(append assign delete done due help list pub redo unassign).freeze
 def scan4_command_func(p_hash)
   return p_hash[:func] = :help if p_hash[:cmd_splits].empty? && p_hash[:previous_action_list_context].empty?
   return p_hash[:func] = :last_action_list if p_hash[:cmd_splits].empty? && !p_hash[:previous_action_list_context].empty?
@@ -112,8 +115,6 @@ def adjust_cmd_options_for_add_cmd(p_hash)
   num_options += 1 unless p_hash[:task_num].nil?
   num_options += 1 unless p_hash[:mentioned_member_id].nil?
   p_hash[:func] = :add if p_hash[:cmd_splits].length > num_options
-  if p_hash[:func] == :add
-  end
 end
 
 

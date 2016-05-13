@@ -28,9 +28,10 @@ module ChannelExtensions
     def create_from_slack_id(view, slack_channel_id, slack_team_id)
       @view ||= view
       create_all_from_slack(@view, slack_team_id)
-      channel = Channel.where(slack_id: slack_channel_id).first
-      return channel unless channel.nil?
-      create_from_slack_url_params(view)
+      Channel.where(slack_id: slack_channel_id).first
+      # channel = Channel.where(slack_id: slack_channel_id).first
+      # return channel unless channel.nil?
+      # create_from_slack_url_params(view)
     end
 
     def create_all_from_slack(view, slack_team_id)
@@ -86,7 +87,15 @@ module ChannelExtensions
       @view ||= view
       @view.web_client ||= make_web_client
       # response is an array of hashes. Each has name and id of a team channel.
-      @view.web_client.channels_list['channels']
+      begin
+        return @view.web_client.channels_list['channels']
+      rescue Slack::Web::Api::Error => e
+        @view.web_client.logger.error e
+        @view.web_client.logger.error "\ne.message: #{e.message}\n" \
+          "@view.team - name: #{@view.team.name}" \
+          "@view.team.api_token: #{@view.team.api_token}\n"
+        return @view.exception = e
+      end
     end
 
     def slack_dm_channels_from_rtm_data(view)

@@ -55,13 +55,13 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   def recover_previous_action_list
     @view.channel ||= Channel.find_or_create_from_slack_id(@view, params[:channel_id], params[:team_id])
     if @view.channel.nil?
-      # @view.channel = Channel.create_from_slack_url_params(@view)
-      # if @view.channel.nil?
-      return [nil,
-              "`MiaDo server ERROR: team #{params[:team_domain]}" \
-              "(#{params[:team_id]}) or channel #{params[:channel_name]}" \
-              "(#{params[:channel_id]}) not found.`"]
-      # end
+      @view.channel = Channel.create_from_slack_url_params(@view)
+      if @view.channel.nil?
+        return [nil,
+                "`MiaDo server ERROR: team #{params[:team_domain]}" \
+                "(#{params[:team_id]}) or channel #{params[:channel_name]}" \
+                "(#{params[:channel_id]}) not found.`"]
+      end
     end
     [@view.channel, @view.channel.after_action_parse_hash]
   end
@@ -76,6 +76,7 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
     return due_command(parsed) if parsed[:func] == :due
     return help_command(parsed) if parsed[:func] == :help
     return list_command(parsed) if parsed[:func] == :list
+    return pub_command(parsed) if parsed[:func] == :pub
     return redo_command(parsed) if parsed[:func] == :redo
     return unassign_command(parsed) if parsed[:func] == :unassign
     # Default if no command given.

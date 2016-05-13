@@ -67,7 +67,15 @@ module MemberExtensions
       @view ||= view
       @view.web_client ||= make_web_client
       # response is an array of hashes. Each has name and id of a team member.
-      @view.web_client.users_list['members']
+      begin
+        return @view.web_client.users_list['members']
+      rescue Slack::Web::Api::Error => e
+        @view.web_client.logger.error e
+        @view.web_client.logger.error "\ne.message: #{e.message}\n" \
+          "@view.team - name: #{@view.team.name}" \
+          "@view.team.api_token: #{@view.team.api_token}\n"
+        return @view.exception = e
+      end
     end
 
     def make_web_client
