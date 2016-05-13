@@ -7,27 +7,44 @@
 <main class="css-body-main">
   <div class="container">
     <h2>Teams<%= " (#{@view.teams.length})" %></h2>
-    <table class="table table-bordered table-hover">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Added By</th>
-          <th>Added On</th>
-          <th>Updated On</th>
-          <th>Api Token</th>
-          <th>Members</th>
-          <th>Channels</th>
-          <th>Channel Lists</th>
-          <th>Bot Lists</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% @view.teams.each do |team| %>
-          <%= render partial: 'teams/admin_views/index_team',
+    <br>
+    <% @view.teams.each do |team| %>
+      <h3><%= link_to team.name,
+                      team_path(team),
+                      title: "Created on #{team.created_at.strftime('%c')}" %></h3>
+      <table class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th>Added By</th>
+            <th>Added On</th>
+            <th>Updated On</th>
+            <th>Api Token</th>
+            <th>Members</th>
+            <th>Channels</th>
+            <th>Channel Lists</th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= render partial: 'teams/admin_views/index_team_line1',
                      locals: @view.locals = { user: team.user, team: team }
           %>
-        <% end %>
-      </tbody>
-    </table>
+        </tbody>
+      </table>
+
+      <table class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th>Bot Name</th>
+            <th>Bot Token</th>
+            <th>Bot Channel Lists</th>
+          </tr>
+        </thead>
+        <tbody>
+          <%= render partial: 'teams/admin_views/index_team_line2',
+                     locals: @view.locals = { user: team.user, team: team }
+          %>
+        </tbody>
+      </table>
+    <% end %>
   </div>
 </main>

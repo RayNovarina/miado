@@ -53,13 +53,15 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   end
 
   def recover_previous_action_list
-    @view.channel ||= Channel.find_or_create_from_slack_id(
-      @view, params[:channel_id], params[:team_id])
+    @view.channel ||= Channel.find_or_create_from_slack_id(@view, params[:channel_id], params[:team_id])
     if @view.channel.nil?
+      # @view.channel = Channel.create_from_slack_url_params(@view)
+      # if @view.channel.nil?
       return [nil,
               "`MiaDo server ERROR: team #{params[:team_domain]}" \
               "(#{params[:team_id]}) or channel #{params[:channel_name]}" \
               "(#{params[:channel_id]}) not found.`"]
+      # end
     end
     [@view.channel, @view.channel.after_action_parse_hash]
   end

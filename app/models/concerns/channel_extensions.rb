@@ -28,7 +28,9 @@ module ChannelExtensions
     def create_from_slack_id(view, slack_channel_id, slack_team_id)
       @view ||= view
       create_all_from_slack(@view, slack_team_id)
-      Channel.where(slack_id: slack_channel_id).first
+      channel = Channel.where(slack_id: slack_channel_id).first
+      return channel unless channel.nil?
+      create_from_slack_url_params(view)
     end
 
     def create_all_from_slack(view, slack_team_id)
@@ -58,6 +60,17 @@ module ChannelExtensions
         )
       end
       Channel.all
+    end
+
+    def create_from_slack_url_params(view)
+      url_params = view.url_params
+      Channel.create!(
+        name: url_params[:channel_name],
+        slack_id: url_params[:channel_name],
+        is_im_channel: url_params[:channel_name] == 'directmessage',
+        dm_user_id: nil,
+        team: view.team
+      )
     end
 
     def all_or_create_all_from_slack(view)
