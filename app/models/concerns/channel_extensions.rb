@@ -66,7 +66,7 @@ module ChannelExtensions
       url_params = view.url_params
       Channel.create!(
         name: url_params[:channel_name],
-        slack_id: url_params[:channel_name],
+        slack_id: url_params[:channel_id],
         is_im_channel: url_params[:channel_name] == 'directmessage',
         dm_user_id: nil,
         team: view.team

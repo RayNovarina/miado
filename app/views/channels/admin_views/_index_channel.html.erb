@@ -1,6 +1,8 @@
 <tr>
   <% if @view.locals[:channel].name == 'USLACKBOT'
        name = '@slackbot'
+     elsif @view.locals[:channel].name == 'directmessage'
+       name = '?miaBot Dm channel?'
      elsif @view.locals[:channel].is_im_channel
        member = Member.where(slack_user_id: @view.locals[:channel].name).first
        name = '?? unknown' if member.nil?
