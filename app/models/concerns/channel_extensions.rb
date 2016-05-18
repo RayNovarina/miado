@@ -22,7 +22,7 @@ module ChannelExtensions
     def find_or_create_from_slack(view, slack_user_id, slack_team_id, slack_channel_id)
       @view ||= view
       if (channel = find_from_slack(view, slack_user_id, slack_team_id, slack_channel_id)).nil?
-        channel = create_from_slack(view, slack_user_id, slack_team_id, slack_channel_id)
+        channel = create_from_slack(view, slack_user_id, slack_team_id)
       end
       channel
     end
@@ -34,10 +34,14 @@ module ChannelExtensions
                     slack_channel_id: slack_channel_id).first
     end
 
-    def create_from_slack(view, slack_user_id, slack_team_id, slack_channel_id)
+    def create_from_slack(view, _slack_user_id, _slack_team_id)
       @view ||= view
-      create_all_from_slack(@view, slack_user_id, slack_team_id)
-      find_from_slack(view, slack_user_id, slack_team_id, slack_channel_id)
+      # we could create channel and copy members_hash from last active channel
+      # for this team. Else we need to mimic an install and create a miado user,
+      # team, members, channels.
+      # create_all_from_slack(@view, slack_user_id, slack_team_id)
+      # find_from_slack(view, slack_user_id, slack_team_id, slack_channel_id)
+      nil
     end
 
     def create_all_from_slack(view, team)
@@ -108,7 +112,6 @@ module ChannelExtensions
       # members and to lookup api info about em.
       # We now know the taskbot dm channel id for the installing member.
       members_hash = {}
-      member_now_installing = nil
       # Get all installations for this Slack team.
       Team.where(slack_team_id: slack_team_id).each do |team|
         # Get member records for all known team members.

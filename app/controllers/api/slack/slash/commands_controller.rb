@@ -82,7 +82,9 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
       return [nil,
               "`MiaDo server ERROR: team #{params[:team_domain]}" \
               "(#{params[:team_id]}) or channel #{params[:channel_name]}" \
-              "(#{params[:channel_id]}) not found for Slack user #{params[:user_id]}.`"]
+              "(#{params[:channel_id]}) not found for Slack user #{params[:user_id]}." \
+              'MiaDo needs to be installed via add to Slack button ' \
+              'at www.miado.net/add_to_slack`']
     end
     [@view.channel, @view.channel.after_action_parse_hash]
   end

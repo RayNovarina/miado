@@ -32,7 +32,7 @@ def clear_channel_msgs(options)
       next if api_resp.key?('ok')
       err_msg = 'Error occurred on Slack\'s API:client.chat_delete'
       options[:api_client].logger.error(err_msg)
-      return err_msg
+      # return err_msg
     end
   end
   'ok'
