@@ -27,6 +27,9 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   end
 
   def failure
+    # No HTTP_REFERER was set in the request to this action,
+    # so redirect_to :back could not be called successfully. If this is a test,
+    # make sure to specify request.env["HTTP_REFERER"].
     redirect_to :back
   end
 
@@ -63,9 +66,44 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   #       ways to add em. i.e. signup via manual form, user tries signup via
   #       multiple signup with buttons.
   def sign_up_from_omniauth
-    @view.provider = OmniauthProvider.update_from_or_create_from(:omniauth_callback, request.env)
+    # @view.provider = OmniauthProvider.update_from_or_create_from(:omniauth_callback, request.env)
+    # @view.user = User.find_or_create_from(:omniauth_provider, @view.provider)
+    # @view.team = Team.update_from_or_create_from(:omniauth_provider, @view.provider)
+    @view.provider = OmniauthProvider.create_from(:omniauth_callback, request.env)
     @view.user = User.find_or_create_from(:omniauth_provider, @view.provider)
-    @view.team = Team.update_from_or_create_from(:omniauth_provider, @view.provider)
+    if @view.provider.name == 'slack'
+      # Since we have the user waiting for oauth completion and have full
+      # access to the slack api, seed our db with all current team data.
+      @view.team = Team.create_from(:omniauth_provider, @view.provider)
+      # Note: when a member is created, a new set of channels are created
+      #       for that member for this slack team. Each team.member.channel acts
+      #       as a channel control block, aka 'ccb' and is the MiaDo control
+      #       structure used app wide.
+      # members_hash, _members =
+      Member.create_all_from_slack(@view, @view.team)
+      # Note: when a member is created, a new set of channels are created
+      #       for that member for this slack team. Each team.member.channel acts
+      #       as a channel control block, aka 'ccb' and is the MiaDo control
+      #       structure used app wide.
+      bot_dm_channel_id = # , _channels =
+        Channel.create_all_from_slack(@view, @view.team)
+      unless bot_dm_channel_id.nil?
+        # When a Slack member installs MiaDo, they already have access to the
+        # /do slash command because it is enabled by the first member installing
+        # MiaDo. But they now have a taskbot dm channel and token which is only
+        # generated upon a MiaDo add to slack action. So we need to update all
+        # team member channels with a new members hash and the new takbot id.
+        member_installing_miado =
+          Member.where(team: @view.team,
+                       slack_user_id: @view.team.slack_user_id).first
+        member_installing_miado.bot_dm_channel_id = bot_dm_channel_id
+        member_installing_miado.save!
+        Channel.update_or_create_all_members_hash(@view, @view.team.slack_team_id)
+        # For the member now installing MiaDo, set its bot channel id.
+        # member_now_installing = member if member.slack_user_id == team.slack_user_id
+        # Channel.where(slack_user_id: slack_team_id).update_all(bot_dm_channel_id: member_now_installing.bot_dm_channel_id)
+      end
+    end
   end
 
   # Note: The provider, user or team can already be in our db due to other

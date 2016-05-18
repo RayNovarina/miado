@@ -33,7 +33,7 @@ def add_command(parsed)
   item.done = false
   item.channel_id, task_num_clause =
     add_channel(params, list)
-  item.assigned_member_id, item.assigned_member_name, assigned_to_clause =
+  item.assigned_member_id, _assigned_member_name, assigned_to_clause =
     add_assigned_member(parsed)
   item.assigned_due_date, due_date_clause =
     add_due_date(parsed)

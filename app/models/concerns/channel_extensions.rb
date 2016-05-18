@@ -18,52 +18,73 @@ module ChannelExtensions
     # channel = Channel.find_or_create_from_slack(@view, name)
     # Find the slack channel in our db or get a current Team channel list from
     # Slack and merge those into our db.
-    def find_or_create_from_slack_id(view, slack_channel_id, slack_team_id)
+    # find_or_create_from_slack(params[:user_id], params[:team_id], params[:channel_id])
+    def find_or_create_from_slack(view, slack_user_id, slack_team_id, slack_channel_id)
       @view ||= view
-      channel = Channel.where(slack_id: slack_channel_id).first
-      return channel unless channel.nil?
-      create_from_slack_id(view, slack_channel_id, slack_team_id)
+      if (channel = find_from_slack(view, slack_user_id, slack_team_id, slack_channel_id)).nil?
+        channel = create_from_slack(view, slack_user_id, slack_team_id, slack_channel_id)
+      end
+      channel
     end
 
-    def create_from_slack_id(view, slack_channel_id, slack_team_id)
+    def find_from_slack(view, slack_user_id, slack_team_id, slack_channel_id)
       @view ||= view
-      create_all_from_slack(@view, slack_team_id)
-      Channel.where(slack_id: slack_channel_id).first
-      # channel = Channel.where(slack_id: slack_channel_id).first
-      # return channel unless channel.nil?
-      # create_from_slack_url_params(view)
+      Channel.where(slack_user_id: slack_user_id,
+                    slack_team_id: slack_team_id,
+                    slack_channel_id: slack_channel_id).first
     end
 
-    def create_all_from_slack(view, slack_team_id)
+    def create_from_slack(view, slack_user_id, slack_team_id, slack_channel_id)
       @view ||= view
-      @view.team ||= Team.find_or_create_from(:slack_id, slack_team_id)
-      return [] if @view.team.nil?
-      slack_team_channels = slack_team_channels_from_rtm_data(@view)
+      create_all_from_slack(@view, slack_user_id, slack_team_id)
+      find_from_slack(view, slack_user_id, slack_team_id, slack_channel_id)
+    end
+
+    def create_all_from_slack(view, team)
+      @view ||= view
+      @view.web_client = make_web_client(team.api_token)
+      slack_team_channels = slack_team_channels_from_rtm_data
       slack_team_channels.each do |team_channel|
-        # next if team_channel[:is_archived]
+        next if team_channel[:is_archived]
         Channel.find_or_create_by(
-          name: team_channel[:name],
-          slack_id: team_channel[:id],
           archived: team_channel[:is_archived],
-          team: @view.team
+          slack_channel_name: team_channel[:name],
+          slack_channel_id: team_channel[:id],
+          slack_user_id: team.slack_user_id,
+          slack_team_id: team.slack_team_id,
+          slack_user_api_token: team.api_token,
+          bot_api_token: team.bot_access_token,
+          bot_user_id: team.bot_user_id,
+          # Note: members hash created separately via
+          #       Member.update_or_create_all_members_hash when all are known.
+          team: team
         )
       end
-      slack_dm_channels = slack_dm_channels_from_rtm_data(@view)
+      bot_dm_channel_id = nil
+      slack_dm_channels = slack_dm_channels_from_rtm_data
       slack_dm_channels.each do |im|
-        # next if im[:is_user_deleted]
+        next if im[:is_user_deleted]
         Channel.find_or_create_by(
-          name: im[:user],
-          slack_id: im[:id],
-          is_im_channel: true,
           deleted: im[:is_user_deleted],
           dm_user_id: im[:user],
-          team: @view.team
+          slack_channel_name: nil,
+          slack_channel_id: im[:id],
+          slack_user_id: team.slack_user_id,
+          slack_team_id: team.slack_team_id,
+          slack_user_api_token: team.api_token,
+          bot_api_token: team.bot_access_token,
+          bot_user_id: team.bot_user_id,
+          # Note: members hash created separately via
+          #       Member.update_or_create_all_members_hash when all are known.
+          team: team
         )
+        bot_dm_channel_id = im[:id] if im[:user] == team.bot_user_id
       end
-      Channel.all
+      bot_dm_channel_id
     end
 
     def create_from_slack_url_params(view)
+      @view ||= view
       url_params = view.url_params
       Channel.create!(
         name: url_params[:channel_name],
@@ -81,11 +102,45 @@ module ChannelExtensions
       Channel.all
     end
 
+    def update_or_create_all_members_hash(view, slack_team_id)
+      @view ||= view
+      # Build a hash to be used by our slash commands to verify mentioned
+      # members and to lookup api info about em.
+      # We now know the taskbot dm channel id for the installing member.
+      members_hash = {}
+      member_now_installing = nil
+      # Get all installations for this Slack team.
+      Team.where(slack_team_id: slack_team_id).each do |team|
+        # Get member records for all known team members.
+        team.members.each do |member|
+          unless members_hash[member.slack_user_id].nil?
+            # We have already seen this member. Part of another installation for
+            # this team. Skip it unless it installed the bot and has a dm id.
+            next if member.bot_dm_channel_id.nil?
+          end
+          m_hash = {
+            slack_user_name: member.name,
+            slack_real_name: member.real_name,
+            slack_user_id: member.slack_user_id,
+            slack_user_api_token: team.api_token,
+            bot_user_id: team.bot_user_id,
+            # Note: the bot_dm_channel_id is only present on a Member record
+            #       when the member installs the bot. Else it is nil when
+            #       someone else is installing.
+            bot_dm_channel_id: member.bot_dm_channel_id,
+            bot_api_token: team.bot_access_token
+          }
+          members_hash[member.name] = m_hash
+          members_hash[member.slack_user_id] = m_hash
+        end
+      end
+      # Channels for this team gets an updated member lookup hash.
+      Channel.where(slack_team_id: slack_team_id).update_all(members_hash: members_hash)
+    end
+
     private
 
-    def slack_team_channels_from_rtm_data(view)
-      @view ||= view
-      @view.web_client ||= make_web_client
+    def slack_team_channels_from_rtm_data
       # response is an array of hashes. Each has name and id of a team channel.
       begin
         return @view.web_client.channels_list['channels']
@@ -93,22 +148,21 @@ module ChannelExtensions
         @view.web_client.logger.error e
         @view.web_client.logger.error "\ne.message: #{e.message}\n" \
           "@view.team - name: #{@view.team.name}" \
-          "@view.team.api_token: #{@view.team.api_token}\n"
-        return @view.exception = e
+          "api_token: #{api_token}\n"
+        @view.exception = e
+        return []
       end
     end
 
-    def slack_dm_channels_from_rtm_data(view)
-      @view ||= view
-      @view.web_client ||= make_web_client
+    def slack_dm_channels_from_rtm_data
       # response is an array of hashes. Each has name and id of a team channel.
       @view.web_client.im_list['ims']
     end
 
-    def make_web_client
+    def make_web_client(api_token)
       # Slack.config.token = 'xxxxx'
       Slack.configure do |config|
-        config.token = @view.team.api_token
+        config.token = api_token
       end
       Slack::Web::Client.new
     end

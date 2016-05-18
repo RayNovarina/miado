@@ -2,7 +2,8 @@
   <h2>Simple Task Management for Slack Teams</h2>
   <% if true #policy(User).create? %>
     <p>
-      <%= link_to 'Start using Now', new_user_registration_path, class: 'btn btn-primary' %>
+      <% #<%= link_to 'Start using Now', new_user_registration_path, class: 'btn btn-primary' %>
+      <%= link_to 'Start using Now', add_to_slack_path, class: 'btn btn-primary' %>
     </p>
   <% end %>
   <p>

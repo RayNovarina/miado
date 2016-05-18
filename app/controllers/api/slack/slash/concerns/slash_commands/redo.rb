@@ -38,7 +38,7 @@ def redo_response_if_all_goes_well(parsed)
   # task num.
   new_task_cmd_string = parsed[:cmd_splits][1..-1].join(' ')
   # replaced_assigned_member = !item.assigned_member_id.nil?
-  # replaced_assigned_member_name = replaced_assigned_member ? item.assigned_member_name : ''
+  # replaced_assigned_member_name = replaced_assigned_member ? slack_member_name_from_slack_user_id(parsed, item.assigned_member_id) : ''
   # replaced_due_date = !item.due_date.nil?
   # replaced_due_date_string = replaced_due_date ? item.due_date.strftime('%a, %d %b') : ''
   # replaced_done_status = !item.done

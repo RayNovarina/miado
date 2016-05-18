@@ -32,6 +32,10 @@ module OmniauthProviderExtensions
       return find_from_omniauth_callback(data) if source == :omniauth_callback
     end
 
+    def create_from(source, data)
+      return create_from_omniauth_callback(data) if source == :omniauth_callback
+    end
+
     private
 
     def find_or_create_from_omniauth_callback(response_env)
@@ -65,7 +69,7 @@ module OmniauthProviderExtensions
     end
 
     def find_by_oauth(auth)
-      OmniauthProvider.where(name: auth.provider, uid: auth.uid)
+      OmniauthProvider.where(name: auth.provider, uid: auth.uid).first
     end
 
     def create_from_omniauth_callback(response_env)

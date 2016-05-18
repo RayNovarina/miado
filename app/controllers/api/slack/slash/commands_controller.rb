@@ -7,11 +7,20 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   before_action :authenticate_slash_user
   # before_action :authorize_user
 
-  # Returns json slash command response. Empty text msg if command handed off
-  # to bot.
+  # Returns json slash command response.
   def create
-    return render json: {}, status: 200 if params.key?('ssl_check')
-    render json: local_response_or_bot_msg, status: 200
+    return render nothing: true, status: :ok, content_type: 'text/html' if params.key?('ssl_check')
+    response, p_hash = local_response
+    return render nothing: true, status: :ok, content_type: 'text/html' if response.nil?
+    unless p_hash.nil? || !p_hash[:err_msg].empty?
+      # Sync up taskbot msgs, etc. in background task.
+      unless (def_cmds = generate_after_action_cmds(parsed_hash: p_hash)).nil?
+        # NOTE: a new Thread is generated to run these deferred commands.
+        after_action_deferred_logic(def_cmds)
+      end
+    end
+    # Reply to slash command. Could be an error response.
+    render json: response, status: 200
   end
 
   private
@@ -21,28 +30,27 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
 
   # Returns:
   #   If command processed by controller:
-  #      json response with text, attachments fields.
-  #   If command handed over to bot: empty string or err msg.
+  #      json response with { text, attachments} fields.
+  #      AND parsed_hash data hash.
   # In all cases, @view hash has url_params with Slack slash command form parms.
-  def local_response_or_bot_msg
+  def local_response
     # Cmd Context: We need to know our team members and the last list displayed.
-    @view.channel, previous_action_parse_hash = recover_previous_action_list
-    return err_resp(params, previous_action_parse_hash, nil) if @view.channel.nil?
+    ccb, previous_action_parse_hash = recover_previous_action_list
+    return [err_resp(params, previous_action_parse_hash, nil), nil] if ccb.nil?
     # Note: previous_action_list_context: {} becomes our
     # BEFORE action list(mine) or list(team) or list(all)
-    parsed = parse_slash_cmd(params, @view, previous_action_parse_hash)
-    return err_resp(params, "`MiaDo ERROR: #{parsed[:err_msg]}`", nil) unless parsed[:err_msg].empty?
+    parsed = parse_slash_cmd(params, ccb, previous_action_parse_hash)
+    return [err_resp(params, "`MiaDo ERROR: #{parsed[:err_msg]}`", nil), parsed] unless parsed[:err_msg].empty?
     text, attachments = process_cmd(parsed)
     # after_action_list_context: {} is AFTER action list(mine) or
     # list(team) or list(all)
     # add_standard_err_help_info(parsed, text)
     # return slash_response(text, attachments, parsed) unless parsed[:err_msg].empty?
-    return err_resp(params, text, attachments) unless parsed[:err_msg].empty?
+    return [err_resp(params, text, attachments), parsed] unless parsed[:err_msg].empty?
     # Display an updated AFTER ACTION list if useful, i.e. task has been added
     # or deleted.
     text, attachments = prepend_text_to_list_command(parsed, text) if parsed[:display_after_action_list]
-    slash_response(text, attachments, parsed)
-    # return handoff_slash_command_to_bot(parsed, list) if parsed[:handoff]
+    [slash_response(text, attachments, parsed), parsed]
   end
 
   def err_resp(url_params, err_msg, err_attachments)
@@ -52,16 +60,29 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
     }
   end
 
+  # the most recently active channel will have most recent member and taskbot channel list?
+  # Add slack_user_id to Channel model.
+  # To verify member using channel hash:
+  # channel.members.key?(parsed[:mentioned_member_name])
+  # rtm.members_list.each do |member|
+  #  channel.members[member.name] = member.slack_user_id
+  #  channel.members[member.slack_user_id] = member.name
+  #  channel.members[:taskbot_channel_id] = ''
+  # end
+
+  # Note: if a new member has been added, then we will not recognize the
+  #       slack_user_id.slack_team_id.slack_channel_id. In this case a new
+  #       channel/ccb is created and an updated ccb.members hash is created with
+  #       the new member's slack_user_id and taskbot_channel_id.
   def recover_previous_action_list
-    @view.channel ||= Channel.find_or_create_from_slack_id(@view, params[:channel_id], params[:team_id])
+    @view.channel ||=
+      Channel.find_or_create_from_slack(@view, params[:user_id],
+                                        params[:team_id], params[:channel_id])
     if @view.channel.nil?
-      @view.channel = Channel.create_from_slack_url_params(@view)
-      if @view.channel.nil?
-        return [nil,
-                "`MiaDo server ERROR: team #{params[:team_domain]}" \
-                "(#{params[:team_id]}) or channel #{params[:channel_name]}" \
-                "(#{params[:channel_id]}) not found.`"]
-      end
+      return [nil,
+              "`MiaDo server ERROR: team #{params[:team_domain]}" \
+              "(#{params[:team_id]}) or channel #{params[:channel_name]}" \
+              "(#{params[:channel_id]}) not found for Slack user #{params[:user_id]}.`"]
     end
     [@view.channel, @view.channel.after_action_parse_hash]
   end

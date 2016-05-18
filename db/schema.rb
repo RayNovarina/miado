@@ -11,15 +11,13 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160513023352) do
+ActiveRecord::Schema.define(version: 20160518012120) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "hstore"
 
   create_table "channels", force: :cascade do |t|
-    t.string   "slack_id"
-    t.string   "name"
     t.datetime "created_at",                              null: false
     t.datetime "updated_at",                              null: false
     t.integer  "team_id"
@@ -28,6 +26,15 @@ ActiveRecord::Schema.define(version: 20160513023352) do
     t.string   "dm_user_id"
     t.boolean  "archived",                default: false
     t.boolean  "deleted",                 default: false
+    t.string   "slack_channel_name"
+    t.string   "slack_channel_id"
+    t.string   "slack_user_id"
+    t.string   "slack_team_id"
+    t.string   "slack_user_api_token"
+    t.string   "bot_dm_channel_id"
+    t.string   "bot_api_token"
+    t.jsonb    "members_hash"
+    t.string   "bot_user_id"
   end
 
   add_index "channels", ["team_id"], name: "index_channels_on_team_id", using: :btree
@@ -49,7 +56,6 @@ ActiveRecord::Schema.define(version: 20160513023352) do
     t.string   "assigned_member_id"
     t.datetime "assigned_due_date"
     t.string   "debug_trace"
-    t.string   "assigned_member_name"
     t.boolean  "done"
   end
 
@@ -57,14 +63,16 @@ ActiveRecord::Schema.define(version: 20160513023352) do
 
   create_table "members", force: :cascade do |t|
     t.string   "name"
-    t.datetime "created_at",                    null: false
-    t.datetime "updated_at",                    null: false
+    t.datetime "created_at",                        null: false
+    t.datetime "updated_at",                        null: false
     t.string   "slack_user_id"
     t.integer  "team_id"
     t.string   "real_name"
     t.integer  "channel_id"
-    t.boolean  "is_bot",        default: false
-    t.boolean  "deleted",       default: false
+    t.boolean  "is_bot",            default: false
+    t.boolean  "deleted",           default: false
+    t.string   "slack_team_id"
+    t.string   "bot_dm_channel_id"
   end
 
   add_index "members", ["channel_id"], name: "index_members_on_channel_id", using: :btree
@@ -101,6 +109,8 @@ ActiveRecord::Schema.define(version: 20160513023352) do
     t.string   "api_token"
     t.string   "bot_user_id"
     t.string   "bot_access_token"
+    t.jsonb    "members_hash"
+    t.string   "slack_user_id"
   end
 
   add_index "teams", ["user_id"], name: "index_teams_on_user_id", using: :btree

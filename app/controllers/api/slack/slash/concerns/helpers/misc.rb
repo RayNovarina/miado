@@ -13,6 +13,7 @@ end
 
 # Returns json response with text, attachments fields.
 def slash_response(text, attachments, parsed)
+  return nil if text.nil? && attachments.nil?
   options = {
     # Required fields.
     response_type: 'ephemeral',
@@ -82,4 +83,57 @@ def task_num_out_of_range?(parsed)
     "#{'task'.pluralize(parsed[:list].length)}" \
     '.' if parsed[:task_num] > parsed[:list].length
   !parsed[:err_msg].empty?
+end
+
+# Convert text header for @taskbot display.
+def format_pub_header(parsed, _list_cmd_text)
+  channel_text = 'all Team channels' if parsed[:channel_scope] == :all_channels
+  channel_text = "##{parsed[:url_params]['channel_name']}" if parsed[:channel_scope] == :one_channel
+  options_text = ''
+  options_text.concat('Open') if parsed[:open_option]
+  options_text.concat(', ') if parsed[:open_option] && parsed[:due_option] && parsed[:done_option]
+  options_text.concat(' and ') if parsed[:open_option] && parsed[:due_option] && !parsed[:done_option]
+  options_text.concat('Due') if parsed[:due_option]
+  options_text.concat(' and ') if (parsed[:open_option] || parsed[:due_option]) && parsed[:done_option]
+  options_text.concat('Done') if parsed[:done_option]
+  "`Current tasks list for @#{parsed[:mentioned_member_name]} " \
+  "in #{channel_text} (#{options_text})`"
+end
+
+def make_web_client(api_token)
+  # Slack.config.token = 'xxxxx'
+  Slack.configure do |config|
+    config.token = api_token
+  end
+  Slack::Web::Client.new
+end
+
+def slack_member_from_name(parsed, name)
+  # Fixup if called with partial copy of parsed hash.
+  ccb = parsed[:ccb] || @view.channel
+  return [parsed[:url_params][:user_id], parsed[:url_params][:user_name]] if name == 'me' || name == parsed[:url_params][:user_name]
+  return [nil, name] if (m_hash = ccb.members_hash[name]).nil?
+  [m_hash['slack_user_id'], name]
+end
+
+def slack_member_name_from_slack_user_id(parsed, slack_member_user_id)
+  # Fixup if called with partial copy of parsed hash.
+  ccb = parsed[:ccb] || @view.channel
+  return parsed[:url_params][:user_name] if parsed[:url_params][:user_id] == slack_member_user_id
+  return '??not recognized' if (m_hash = ccb.members_hash[slack_member_user_id]).nil?
+  m_hash['slack_user_name']
+end
+
+def mentioned_member_not_found(p_hash, name)
+  # Note: TBD: could be a new member or a name change.
+  #       TBD: query slack for current member list for this slack user.
+  #            build new members_hash. Check again. If not found, then err.
+  # members_hash = Member.new_members_hash_from_ccb(@view, p_hash[:ccb], name)
+  # unless (m_hash = members_hash[name]).nil?
+  #  # new member or a name change. Use background task to add member, update
+  #  # the ccb.members hash for all channels for this team.
+  #  # NOTE: a new Thread is generated to run these deferred commands.
+  #  new_member_deferred_logic(p_hash, members_hash)
+  #  return [m_hash[:slack_user_id], name]
+  [nil, name]
 end
