@@ -16,7 +16,7 @@
   <td><%= @view.locals[:channel].is_im_channel %></td>
   <td><%= @view.locals[:channel].archived %></td>
   <td><%= @view.locals[:channel].deleted %></td>
-  <td><%= @view.locals[:channel].created_at.strftime("%a, %d %b %Y") %></td>
+  <td><%= @view.locals[:channel].created_at.strftime("%c") %></td>
   <td><%= @view.locals[:channel].updated_at.strftime("%c") %></td>
   <td><%= "Tasks(#{ListItem.where(channel_id: @view.locals[:channel].slack_channel_id).count})" %></td>
 </tr>

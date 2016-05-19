@@ -50,6 +50,7 @@ def perform_scans_for_functions(p_hash)
   when :help
     scan4_options(p_hash)
   when :last_action_list
+    # nothing to do.
   when :list
     scan4_mentioned_member(p_hash)
     scan4_options(p_hash)
