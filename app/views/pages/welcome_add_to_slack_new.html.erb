@@ -17,8 +17,9 @@
                 slack_url = '#' if @view.team.nil? || (defined? @view.team.url).nil?
                 slack_url = @view.team.url unless @view.team.nil? || (defined? @view.team.url).nil?
               %>
-              <h3>Thanks ! &nbsp;<%= "#{user_name} for adding #{bot_name}." %><br>
-                  <%= "to your #{team_name} team." %>
+              <h3>
+                Thanks,&nbsp;<%= "#{user_name} for adding #{bot_name} to manage" %><br>
+                tasks for your <%= team_name %>&nbsp;team!
               </h3>
           <br><br>
           <p>
@@ -26,7 +27,7 @@
           </p>
           <br>
           <br>
-          <h5><mark>MiaDo is beta software. Please report bugs to admin@miado.net</mark></h5>
+          <h5>MiaDo is beta software, so please let us know at admin@miado.net if you see any problems!</h5>
 
        </center>
      </div>
