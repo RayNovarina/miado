@@ -27,8 +27,9 @@ def assign_command(parsed)
 end
 
 def assign_one(parsed)
+  save_item_info(parsed, -1)
   return if task_num_invalid?(parsed)
-  item = ListItem.find(parsed[:list][parsed[:task_num] - 1])
+  item = save_item_info(parsed, parsed[:list][parsed[:task_num] - 1])
   return parsed[:err_msg] = "Error: Task #{parsed[:task_num]} is already " \
     "assigned to #{parsed[:assigned_member_name]}" if item.assigned_member_id == parsed[:assigned_member_id]
   prev_assigned_member_name = slack_member_name_from_slack_user_id(parsed, item.assigned_member_id)

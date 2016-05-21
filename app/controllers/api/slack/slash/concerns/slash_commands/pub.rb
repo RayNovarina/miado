@@ -1,6 +1,5 @@
-# Show what we will post to a member's taskbot dm channel.
+# Inputs: options{} type:, member_name:, member_id:
 def pub_command(parsed, options = nil)
-  # Example: # $pub @suemanley1
   # Note: this prevents the list_command from resaving an after action hash to
   #       the channel. We are just getting a list report.
   parsed[:display_after_action_list] = true

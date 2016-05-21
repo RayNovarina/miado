@@ -29,6 +29,7 @@ def make_parse_hash
     list_owner: nil,
     list_owner_name: nil,
     list: [],
+    list_info: nil,
     list_query_trace_info: '',
     requires_mentioned_member: false,
     mentioned_member_id: nil,
@@ -69,7 +70,8 @@ def context_from_ccb_hash(_p_hash, previous_action_parse_hash)
     mentioned_member_id: hash_value(context_s_splits[4]),
     mentioned_member_name: hash_value(context_s_splits[5]),
     all_option: hash_value(context_s_splits[6]),
-    func: hash_value(context_s_splits[7])
+    func: hash_value(context_s_splits[7]),
+    original_command: hash_value(context_s_splits[8])
   }
 end
 
@@ -83,7 +85,8 @@ def save_after_action_list_context(parsed, context, list_ids = nil)
     mentioned_member_id: context[:mentioned_member_id],
     mentioned_member_name: context[:mentioned_member_name],
     all_option: context[:all_option],
-    func: context[:func]
+    func: context[:func],
+    original_command: context[:original_command]
   }
   # Trim what we store to db, store, restore it.
   parsed[:url_params] = {}

@@ -27,6 +27,7 @@ def delete_command(parsed)
 end
 
 def delete_item(parsed)
+  save_item_info(parsed, -1)
   return delete_many(parsed) if parsed[:task_num].nil?
   return delete_one(parsed) unless parsed[:task_num].nil?
 end
@@ -49,8 +50,22 @@ end
 #          parsed[:err_msg] if needed.
 #          list is adjusted for deleted item(s)
 def delete_task(id, parsed)
-  return if ListItem.find(id).destroy
+  item = save_item_info(parsed, id)
+  return if item.destroy
   parsed[:err_msg] = 'Error: There was an error deleting this Task.'
+end
+
+def save_item_info(parsed, id)
+  if id == -1
+    parsed[:list_action_item_info] = []
+    return nil
+  end
+  item = ListItem.find(id)
+  parsed[:list_action_item_info] << {
+    db_id: item.id,
+    assigned_member_id: item.assigned_member_id
+  }
+  item
 end
 
 def delete_many(parsed)

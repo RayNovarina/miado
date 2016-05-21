@@ -14,9 +14,9 @@ def generate_after_action_cmds(options)
   return nil if CMD_FUNCS_IGNORED_BY_AFTER_ACTION_DEFERRED.include?(parsed[:func])
   return nil if parsed[:func] == :add && parsed[:assigned_member_id].nil?
 
-  impacted_task = 0
+  impacted_task = {}
   # Optional logic for here or to defer to background thread.
-  #   impacted_task = 0 means we did not look OR commented out the method call.
+  #   impacted_task = {} means we did not look OR commented out the method call.
   #   impacted_task = nil means we looked up task and we won't process it or it
   #                   doesn't require the taskbot list be updated.
   #   impacted_task = ListItem record means we have an updated task to process
@@ -85,13 +85,15 @@ end
 #-------------------------------------
 def generate_list_commands(parsed, deferred_cmd)
   list_cmds = []
-  determine_impacted_members(parsed, deferred_cmd).each do |impacted_member|
+  determine_impacted_members(parsed, deferred_cmd).each do |i_item|
+    # impacted_member = ['id string', {impacted_member_hash}
+    next unless i_item.respond_to?(:to_hash)
     list_cmds <<
       { type: 'all open due_first',
-        member_name: impacted_member[:name],
-        member_slack_user_id: impacted_member[:slack_user_id],
-        slack_user_api_token: impacted_member[:slack_user_api_token],
-        taskbot_channel_id: impacted_member[:taskbot_channel_id],
+        member_name: i_item[:name],
+        member_id: i_item[:id],
+        slack_user_api_token: i_item[:slack_user_api_token],
+        taskbot_channel_id: i_item[:taskbot_channel_id],
         taskbot_username: 'MiaDo Taskbot'
       }
     # ,
@@ -140,61 +142,97 @@ end
 
 # Note: deferred_cmd[:impacted_task] is optional logic for here or has already
 # been done.
-#   0 means we did not look OR commented out the method call.
+#   {} means we did not look OR commented out the method call.
 #   ListItem record means we have an updated task to process
 #     that may require the taskbot list to be updated.
 def determine_impacted_members(parsed, deferred_cmd)
   func = parsed[:func]
-  impacted_task = deferred_cmd[:impacted_task] unless deferred_cmd[:impacted_task] == 0
-  impacted_task = taskbot_list_item(parsed) if deferred_cmd[:impacted_task] == 0
+  impacted_task = deferred_cmd[:impacted_task] unless deferred_cmd[:impacted_task] == {}
+  impacted_task = taskbot_list_item(parsed) if deferred_cmd[:impacted_task] == {}
   am_hash = parsed[:ccb].members_hash[parsed[:assigned_member_id]] if impacted_task.nil?
-  am_hash = parsed[:ccb].members_hash[impacted_task.assigned_member_id] unless impacted_task.nil?
+  am_hash = parsed[:ccb].members_hash[impacted_task[:assigned_member_id]] unless impacted_task.nil?
   # taskbot_channel_id will be nil if MiaDo not installed by this member.
   return [] if am_hash.nil? || am_hash['bot_dm_channel_id'].nil?
   case func
   when :add, :assign, :unassign
-    return [build_impacted_member(name: parsed[:assigned_member_name],
-                                  id: parsed[:assigned_member_id],
-                                  am_hash: am_hash)]
+    return build_one_impacted_member(parsed: parsed, am_hash: am_hash)
   when :append, :done, :due
     return [] if impacted_task.nil?
-    return [build_impacted_member(name: am_hash['slack_user_name'],
-                                  id: impacted_task.assigned_member_id,
-                                  am_hash: am_hash)]
+    return build_one_impacted_member(am_hash: am_hash)
   when :delete
     # delete command has already deleted the impacted task.
-    return []
+    return build_many_impacted_members(parsed) if parsed[:list_action_item_info].size > 1
+    return build_one_impacted_member(impacted_task: impacted_task, am_hash: am_hash)
+  when :redo
+    return build_redo_impacted_members(parsed)
   end
   []
 end
-#   impacted_task = nil means we looked up task and we won't process it or it
+
+#   impacted_task{} = nil means we looked up task and we won't process it or it
 #                   doesn't require the taskbot list be updated.
-#   impacted_task = ListItem record means we have an updated task to process
-#                   that may require the taskbot list to be updated.
-CMD_FUNCS_IGNORED_IF_TASK_HAS_NO_ASSIGNED_MEMBER = [:append, :done, :due,
-                                                    :redo].freeze
+#   impacted_task{} = ListItem record info means we have an updated task to
+#                   process that may require the taskbot list to be updated.
+CMD_FUNCS_IGNORED_IF_TASK_HAS_NO_ASSIGNED_MEMBER = [:append, :done, :due].freeze
 # CMD_FUNCS_WE_ALWAYS_GET_impacted_task_FOR = [:assign, :unassign].freeze
 def taskbot_list_item(parsed)
   if CMD_FUNCS_IGNORED_IF_TASK_HAS_NO_ASSIGNED_MEMBER.include?(parsed[:func])
-    impacted_task = ListItem.where(id: parsed[:list][parsed[:task_num] - 1]).first
-    unless impacted_task.nil?
+    task = ListItem.where(id: parsed[:list][parsed[:task_num] - 1]).first
+    unless task.nil?
       return nil if parsed[:func] == :redo && parsed[:assigned_member_id].nil? &&
-                    impacted_task.assigned_member_id.nil?
-      return nil if impacted_task.assigned_member_id.nil?
-      return impacted_task
+                    task.assigned_member_id.nil?
+      return nil if task.assigned_member_id.nil?
+      return { db_id: task.id, assigned_member_id: task.assigned_member_id }
     end
   end
   # add, assign and unassign commands include the name of the impacted member,
-  # don't need to ask db. delete command has already deleted the impacted task.
+  # don't need to ask db. delete and redo commands have already deleted the
+  # impacted task.
+  return parsed[:list_action_item_info][0] if parsed[:func] == :delete || parsed[:func] == :redo
   nil
 end
 
-def build_impacted_member(options)
-  { name: options[:name],
-    slack_user_id: options[:id],
-    slack_user_api_token: options[:am_hash]['slack_user_api_token'],
-    taskbot_channel_id: options[:am_hash]['bot_dm_channel_id']
-  }
+# Inputs: am_hash, OPTIONAL: parsed
+def build_one_impacted_member(options)
+  impacted_member =
+    { name: options[:parsed][:assigned_member_name],
+      id: options[:parsed][:assigned_member_id] } if options.key?(:parsed)
+  impacted_member =
+    { name: options[:am_hash]['slack_user_name'],
+      id: options[:am_hash]['slack_user_id'] } unless options.key?(:parsed)
+
+  impacted_member[:slack_user_api_token] = options[:am_hash]['slack_user_api_token']
+  impacted_member[:taskbot_channel_id] = options[:am_hash]['bot_dm_channel_id']
+  [impacted_member[:id], impacted_member]
+end
+
+def build_many_impacted_members(parsed)
+  impacted_members = []
+  parsed[:list_action_item_info].each do |task_info|
+    am_hash = parsed[:ccb].members_hash[task_info[:assigned_member_id]]
+    next if impacted_members.include?(am_hash['slack_user_id'])
+    impacted_member_id, impacted_member = build_one_impacted_member(am_hash: am_hash)
+    impacted_members << impacted_member_id
+    impacted_members << impacted_member
+  end
+  impacted_members
+end
+
+# same as for add for new command and same as for delete for
+# the task being deleted. So the delete could impact one member and the
+# add could impact another.
+def build_redo_impacted_members(parsed)
+  # parsed[:list_action_item_info] = the task that was deleted.
+  # Do the deleted task first.
+  deleted_task_member = build_many_impacted_members(parsed)
+  # Now the add task. Don't generate dup msgs.
+  added_task_hash = parsed[:ccb].members_hash[parsed[:assigned_member_id]]
+  return deleted_task_member if deleted_task_member.include?(added_task_hash['slack_user_id'])
+  # Add task member is different from deleted task member. Both are impacted.
+  added_task_member_id, added_task_member = build_one_impacted_member(parsed: parsed, am_hash: added_task_hash)
+  impacted_members = deleted_task_member
+  impacted_members << added_task_member_id
+  impacted_members << added_task_member
 end
 
 =begin
@@ -222,7 +260,7 @@ def generate_task_list_msgs(parsed, list_cmds)
     text, attachments =
       pub_command(parsed, type: cmd_hash[:type],
                           member_name: cmd_hash[:member_name],
-                          member_id: cmd_hash[:member_slack_user_id])
+                          member_id: cmd_hash[:member_id])
     text = "`MiaDo ERROR: #{parsed[:err_msg]}`" unless parsed[:err_msg].empty?
     chat_msgs << { text: text, attachments: attachments,
                    taskbot_username: cmd_hash[:taskbot_username],
@@ -244,7 +282,8 @@ def send_taskbot_msg(options)
                         text: options[:text],
                         attachments: options[:attachments])
     options[:api_client].logger.error "\nSent taskbot msg to: " \
-      "#{options[:taskbot_username]} at dm_channel: #{options[:taskbot_channel_id]}\n"
+      "#{options[:taskbot_username]} at dm_channel: " \
+      "#{options[:taskbot_channel_id]}.  Msg title: #{text}\n"
     return 'ok' if api_resp.key?('ok')
     err_msg = 'Error occurred on Slack\'s API:client.im.history'
     options[:api_client].logger.error(err_msg)
