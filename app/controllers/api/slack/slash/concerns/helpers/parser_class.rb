@@ -15,6 +15,7 @@ def make_parse_hash
     command: nil,
     debug: false,
     cmd_splits: [],
+    is_taskbot_channel: false,
     team_option: false,
     all_option: false,
     open_option: false,

@@ -16,7 +16,10 @@ user_name	ray
 
 def parse_slash_cmd(params, ccb, previous_action_parse_hash)
   p_hash = new_parse_hash(params, ccb, previous_action_parse_hash)
-  scan4_command_func(p_hash)
+  scan4_taskbot_channel(p_hash)
+  scan4_command_func(p_hash) unless p_hash[:is_taskbot_channel]
+  scan4_taskbot_cmd_func(p_hash) if p_hash[:is_taskbot_channel]
+  return p_hash unless p_hash[:err_msg].empty?
   perform_scans_for_functions(p_hash)
   p_hash
 end
@@ -70,6 +73,16 @@ def perform_scans_for_functions(p_hash)
   end
 end
 
+def scan4_taskbot_channel(p_hash)
+  chan_id = p_hash[:url_params]['channel_id']
+  user_id = p_hash[:url_params]['user_id']
+  m_hash = p_hash[:ccb].members_hash[user_id]
+  return if m_hash.nil?
+  bot_dm_channel_id = m_hash['bot_dm_channel_id']
+  return if bot_dm_channel_id.nil?
+  p_hash[:is_taskbot_channel] = chan_id == bot_dm_channel_id
+end
+
 # Note: what looks like a command may actually be an added task, i.e.
 #       'delete all open tasks for @susan is a new task'
 # Case: command is as entered from command line.
@@ -84,6 +97,11 @@ def scan4_command_func(p_hash)
   p_hash[:cmd_splits].shift unless p_hash[:func].nil?
   # Default to add cmd if no func specified or implied.
   p_hash[:func] = :add if p_hash[:func].nil?
+end
+
+def scan4_taskbot_cmd_func(p_hash)
+  p_hash[:err_msg] = "Error: Sorry #{params[:command]} commands are not " \
+                     'allowed in the Taskbot channel.'
 end
 
 # Case: command function has been processed, leaving:
