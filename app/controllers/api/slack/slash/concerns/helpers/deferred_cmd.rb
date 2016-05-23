@@ -1,8 +1,8 @@
 
 def after_action_deferred_logic(def_cmds)
-  Thread.new do
+  #Thread.new do
     send_after_action_deferred_cmds(def_cmds)
-  end
+  #end
 end
 
 
@@ -39,21 +39,15 @@ def send_after_action_deferred_cmds(cmds)
     parsed = d_hash[:p_hash]
     list_cmds = generate_list_commands(parsed, d_hash)
     chat_msgs = generate_task_list_msgs(parsed, list_cmds)
-    chat_msgs.each do |msg|
-      resp = clear_taskbot_msg_channel(api_client: msg[:api_client],
-                                       taskbot_channel_id: msg[:taskbot_channel_id])
-      unless resp == 'ok'
-        msg[:text] = "`MiaDo ERROR: clear_taskbot_msgs failed with '#{resp}'`"
-        msg[:attachments] = nil
+    chat_msgs.each_with_index do |msg, index|
+      if index == 0
+        resp = clear_taskbot_msg_channel(api_client: msg[:api_client],
+                                         taskbot_channel_id: msg[:taskbot_channel_id])
+        unless resp == 'ok'
+          msg[:text] = "`MiaDo ERROR: clear_taskbot_msgs failed with '#{resp}'`"
+          msg[:attachments] = nil
+        end
       end
-      resp = send_taskbot_msg(api_client: msg[:api_client],
-                              taskbot_username: msg[:taskbot_username],
-                              taskbot_channel_id: msg[:taskbot_channel_id],
-                              text: msg[:text],
-                              attachments: msg[:attachments])
-      next if resp == 'ok'
-      msg[:text] = "`MiaDo ERROR: clear_taskbot_msgs failed with '#{resp}'`"
-      msg[:attachments] = nil
       send_taskbot_msg(api_client: msg[:api_client],
                        taskbot_username: msg[:taskbot_username],
                        taskbot_channel_id: msg[:taskbot_channel_id],
@@ -147,6 +141,8 @@ end
 #     that may require the taskbot list to be updated.
 def determine_impacted_members(parsed, deferred_cmd)
   func = parsed[:func]
+  # redo is such a special case, it is easier to handle it specially.
+  return build_redo_impacted_members(parsed) if func == :redo
   impacted_task = deferred_cmd[:impacted_task] unless deferred_cmd[:impacted_task] == {}
   impacted_task = taskbot_list_item(parsed) if deferred_cmd[:impacted_task] == {}
   am_hash = parsed[:ccb].members_hash[parsed[:assigned_member_id]] if impacted_task.nil?
@@ -163,8 +159,6 @@ def determine_impacted_members(parsed, deferred_cmd)
     # delete command has already deleted the impacted task.
     return build_many_impacted_members(parsed) if parsed[:list_action_item_info].size > 1
     return build_one_impacted_member(impacted_task: impacted_task, am_hash: am_hash)
-  when :redo
-    return build_redo_impacted_members(parsed)
   end
   []
 end
@@ -222,8 +216,16 @@ end
 # the task being deleted. So the delete could impact one member and the
 # add could impact another.
 def build_redo_impacted_members(parsed)
-  # parsed[:list_action_item_info] = the task that was deleted.
-  # Do the deleted task first.
+  deleted_member_id = parsed[:list_action_item_info][0][:assigned_member_id]
+  added_member_id = parsed[:assigned_member_id]
+  return [] if deleted_member_id.nil? && added_member_id.nil?
+  return build_redo_both_tasks(parsed) unless deleted_member_id.nil? ||
+                                              added_member_id.nil?
+  return build_redo_only_deleted_task(parsed) unless deleted_member_id.nil?
+  build_redo_only_added_task(parsed)
+end
+
+def build_redo_both_tasks(parsed)
   deleted_task_member = build_many_impacted_members(parsed)
   # Now the add task. Don't generate dup msgs.
   added_task_hash = parsed[:ccb].members_hash[parsed[:assigned_member_id]]
@@ -233,6 +235,16 @@ def build_redo_impacted_members(parsed)
   impacted_members = deleted_task_member
   impacted_members << added_task_member_id
   impacted_members << added_task_member
+end
+
+def build_redo_only_deleted_task(parsed)
+  # parsed[:list_action_item_info] = the task that was deleted.
+  build_many_impacted_members(parsed)
+end
+
+def build_redo_only_added_task(parsed)
+  added_task_hash = parsed[:ccb].members_hash[parsed[:assigned_member_id]]
+  build_one_impacted_member(parsed: parsed, am_hash: added_task_hash)
 end
 
 =begin
@@ -281,13 +293,14 @@ def send_taskbot_msg(options)
                         channel: options[:taskbot_channel_id],
                         text: options[:text],
                         attachments: options[:attachments])
-    options[:api_client].logger.error "\nSent taskbot msg to: " \
+    # options[:api_client].logger.error "\nSent taskbot msg to: " \
+    puts "\nSent taskbot msg to: " \
       "#{options[:taskbot_username]} at dm_channel: " \
-      "#{options[:taskbot_channel_id]}.  Msg title: #{text}\n"
+      "#{options[:taskbot_channel_id]}.  Msg title: #{options[:text]}\n"
     return 'ok' if api_resp.key?('ok')
     err_msg = 'Error occurred on Slack\'s API:client.im.history'
     options[:api_client].logger.error(err_msg)
-    err_msg
+    return err_msg
   rescue Slack::Web::Api::Error => e # (not_authed)
     options[:api_client].logger.error e
     options[:api_client].logger.error "\ne.message: #{e.message}\n" \
