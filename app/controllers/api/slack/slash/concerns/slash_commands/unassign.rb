@@ -29,7 +29,6 @@ def unassign_one(parsed)
   return parsed[:err_msg] = "Error: Task #{parsed[:task_num]} is not " \
     "assigned to #{parsed[:assigned_member_name]}" unless item.assigned_member_id == parsed[:assigned_member_id]
   item.assigned_member_id = nil
-  item.assigned_member_name = nil
   if item.save
     adjust_unassign_after_action_list(parsed)
     return "Unassigned task #{parsed[:task_num]} from " \

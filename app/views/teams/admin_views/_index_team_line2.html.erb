@@ -1,0 +1,9 @@
+<tr>
+  <% bot_member = Member.where(slack_user_id: 'U18F7T2H2').first
+     bot_name = "??(#{@view.locals[:team].bot_user_id})" if bot_member.nil?
+     bot_name = "@#{bot_member.name}" unless bot_member.nil?
+  %>
+  <td><%= link_to bot_name, '#' %></td>
+  <td><%= @view.locals[:team].bot_access_token %></td>
+  <td><%= link_to " (0)", '#' %></td>
+</tr>

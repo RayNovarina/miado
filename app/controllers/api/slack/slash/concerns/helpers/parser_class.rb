@@ -1,11 +1,12 @@
-def new_parse_hash(params, previous_action_parse_hash)
+def new_parse_hash(params, ccb, previous_action_parse_hash)
   p_hash = make_parse_hash
   p_hash[:original_command], p_hash[:debug] = check_for_debug(params)
   # Initialize() to defaults.
   p_hash[:command] = String.new(p_hash[:original_command])
   p_hash[:cmd_splits] = p_hash[:command].split(' ')
   p_hash[:url_params] = params
-  p_hash[:previous_action_list_context] = context_from_channel_hash(p_hash, previous_action_parse_hash)
+  p_hash[:ccb] = ccb
+  p_hash[:previous_action_list_context] = context_from_ccb_hash(p_hash, previous_action_parse_hash)
   p_hash
 end
 
@@ -20,6 +21,7 @@ def make_parse_hash
     due_option: false,
     done_option: false,
     err_msg: '',
+    ccb: nil,
     previous_action_list_context: {},
     # For current action
     list_scope: nil,
@@ -50,8 +52,8 @@ def make_parse_hash
   }
 end
 
-def context_from_channel_hash(p_hash, previous_action_parse_hash)
-  # Deserialize Channel.previous_action fields of interest.
+def context_from_ccb_hash(_p_hash, previous_action_parse_hash)
+  # Deserialize ccb.previous_action fields of interest.
   return {} if previous_action_parse_hash.nil?
   context_s = previous_action_parse_hash['after_action_list_context']
   # First hash item is list[ids]. Pluck it out first because we don't handle
@@ -83,7 +85,13 @@ def save_after_action_list_context(parsed, context, list_ids = nil)
     all_option: context[:all_option],
     func: context[:func]
   }
+  # Trim what we store to db, store, restore it.
+  parsed[:url_params] = {}
+  parsed[:ccb] = nil
   @view.channel.after_action_parse_hash = parsed
-  return if @view.channel.save
+  ok = @view.channel.save
+  parsed[:url_params] = params
+  parsed[:ccb] = @view.channel
+  return if ok
   parsed[:err_msg] = '  Error: Saving after action context.'
 end

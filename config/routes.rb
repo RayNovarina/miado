@@ -41,6 +41,7 @@ Rails.application.routes.draw do
     namespace :slack do
       namespace :slash do
         resources :commands, only: [:create]
+        resources :deferred, only: [:create]
       end
     end
   end

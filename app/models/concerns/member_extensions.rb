@@ -15,34 +15,35 @@ module MemberExtensions
   # User.find_by_email(email).authenticate(password).
   module ClassMethods
     attr_accessor :view
-    # member = Member.find_or_create_from_slack(@view, name)
-    # Find the slack team member in our db or get a current member list from
-    # Slack and merge those into our db.
-    def find_or_create_from_slack_name(view, name, slack_team_id)
-      @view ||= view
-      member = find_by_name_and_slack_team(name, slack_team_id)
+
+    def find_or_create_from_slack(channel, name)
+      member = find_by_slack(channel.user, channel.slack_user_id,
+                             channel.slack_team_id, name)
       return member unless member.nil?
-      create_from_slack_name(view, name, slack_team_id)
+      create_from_slack(channel, name, slack_team_id)
     end
 
     def create_from_slack_name(view, name, slack_team_id)
       @view ||= view
       create_all_from_slack(@view, slack_team_id)
-      find_by_name_and_slack_team(name, slack_team_id)
+      find_by_name_and_slack_team(@view.user, name, slack_team_id)
     end
 
-    def create_all_from_slack(view, slack_team_id)
+    def create_all_from_slack(view, team)
       @view ||= view
-      @view.team ||= Team.find_or_create_from(:slack_id, slack_team_id)
-      slack_members = slack_members_from_rtm_data(@view)
+      @view.web_client = make_web_client(team.api_token)
+      slack_members = slack_members_from_rtm_data
       slack_members.each do |slack_member|
-        next if slack_member[:deleted] ||
-                slack_member[:is_bot]  ||
-                slack_member[:name] == 'slackbot'
+        # next if slack_member[:deleted] ||
+        #        slack_member[:name] == 'slackbot'
+        next if slack_member[:name] == 'slackbot' || (slack_member[:deleted] && slack_member[:is_bot])
         Member.find_or_create_by(
           name: slack_member[:name],
           slack_user_id: slack_member[:id],
-          team: @view.team,
+          slack_team_id: slack_member[:team_id],
+          is_bot: slack_member[:is_bot],
+          deleted: slack_member[:deleted],
+          team: team,
           real_name: slack_member[:real_name]
         )
       end
@@ -55,24 +56,30 @@ module MemberExtensions
       Member.all
     end
 
-    def find_by_name_and_slack_team(name, slack_team_id)
-      Member.where(team_id: Team.where(slack_team_id: slack_team_id).first,
+    def find_by_name_and_slack_team(user, name, slack_team_id)
+      Member.where(team: Team.where(user: user, slack_team_id: slack_team_id).first,
                    name: name).first
     end
 
     private
 
-    def slack_members_from_rtm_data(view)
-      @view ||= view
-      @view.web_client ||= make_web_client
+    def slack_members_from_rtm_data
       # response is an array of hashes. Each has name and id of a team member.
-      @view.web_client.users_list['members']
+      begin
+        return @view.web_client.users_list['members']
+      rescue Slack::Web::Api::Error => e
+        @view.web_client.logger.error e
+        @view.web_client.logger.error "\ne.message: #{e.message}\n" \
+          "@view.team - name: #{@view.team.name}" \
+          "api_token: #{api_token}\n"
+        return @view.exception = e
+      end
     end
 
-    def make_web_client
+    def make_web_client(api_token)
       # Slack.config.token = 'xxxxx'
       Slack.configure do |config|
-        config.token = @view.team.api_token
+        config.token = api_token
       end
       Slack::Web::Client.new
     end

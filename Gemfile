@@ -84,6 +84,8 @@ gem 'slack-ruby-client'
 # gem 'eventmachine'
 # gem 'faye-websocket'
 #------------------------------------------------------
+# HTTP lib per: https://github.com/jnunemaker/httparty
+# gem install httparty
 #
 #
 #============== DEVELOPMENT only GEMS =================

@@ -25,7 +25,7 @@ def done_one(parsed)
   item.done = true
   if item.save
     return "Task #{parsed[:task_num]} " \
-           "#{item.assigned_member_id.nil? ? '' : "for @#{item.assigned_member_name}"} " \
+           "#{item.assigned_member_id.nil? ? '' : "for @#{slack_member_name_from_slack_user_id(parsed, item.assigned_member_id)}"} " \
            'set to a completed/DONE status.'
   end
   parsed[:err_msg] = 'Error: There was an error setting this Task to a DONE status.'

@@ -1,17 +1,3 @@
-=begin
-  Form Params
-  channel_id	C0VNKV7BK
-  channel_name	general
-  command	/do
-  response_url	https://hooks.slack.com/commands/T0VN565N0/36163731489/YAHWUMXlBdviTE1rBILELuFK
-  team_domain	shadowhtracteam
-  team_id	T0VN565N0
-  text	list me
-  token	3ZQVG7rk4p7EZZluk1gTH3aN
-  user_id	U0VLZ5P51
-  user_name	ray
-=end
-
 # Inputs: parsed = parsed command line info that has been verified.
 #         list = [ListItem.id] for the list that the user is referencing.
 # Returns: [text, attachments]
@@ -58,7 +44,6 @@ def redisplay_action_list(context)
     list_from_list_of_ids(context, context[:list]))
 end
 
-
 # Returns: [text, attachments]
 def format_display_list(parsed, context, list_of_records)
   text, attachments, list_ids = one_channel_display(parsed, context, list_of_records) if context[:channel_scope] == :one_channel
@@ -77,7 +62,7 @@ def one_channel_display(parsed, context, list_of_records)
   list_ids = []
   attachments = []
   list_of_records.each_with_index do |item, index|
-    list_add_item_to_display_list(attachments, item, index)
+    list_add_item_to_display_list(parsed, attachments, item, index)
     list_ids << item.id
   end
   [text, attachments, list_ids]
@@ -94,22 +79,22 @@ def format_owner_title(context)
 end
 
 # Returns: updated attachments array.
-def list_add_item_to_display_list(attachments, item, index)
+def list_add_item_to_display_list(parsed, attachments, item, index)
   # { text: '1) rev 1 spec @susan /jun15 | *Assigned* to @susan',
   #  mrkdwn_in: ['text']
   # }
   attachments << {
     text: "#{index + 1}) #{item.description}" \
-          "#{list_cmd_assigned_to_clause(item)}" \
+          "#{list_cmd_assigned_to_clause(parsed, item)}" \
           "#{list_cmd_due_date_clause(item)}" \
           "#{list_cmd_task_completed_clause(item)}",
     mrkdwn_in: ['text']
   }
 end
 
-def list_cmd_assigned_to_clause(item)
+def list_cmd_assigned_to_clause(parsed, item)
   return '' if item.assigned_member_id.nil?
-  " | *Assigned* to @#{item.assigned_member_name}."
+  " | *Assigned* to @#{slack_member_name_from_slack_user_id(parsed, item.assigned_member_id)}."
 end
 
 def list_cmd_due_date_clause(item)
@@ -123,7 +108,7 @@ def list_cmd_task_completed_clause(item)
 end
 
 # Returns: [text, attachments, list_ids]
-def all_channels_display(_parsed, context, list_of_records)
+def all_channels_display(parsed, context, list_of_records)
   text = '#all-channels ' \
          "to-do list (#{format_owner_title(context)})" \
          "#{list_of_records.empty? ? ' (empty)' : ''}"
@@ -138,7 +123,7 @@ def all_channels_display(_parsed, context, list_of_records)
         mrkdwn_in: ['text']
       }
     end
-    list_add_item_to_display_list(attachments, item, index)
+    list_add_item_to_display_list(parsed, attachments, item, index)
     list_ids << item.id
   end
   [text, attachments, list_ids]
@@ -151,13 +136,6 @@ def adjust_list_cmd_action_context(parsed)
   adjust_list_cmd_channel_scope(parsed)
   implied_mentioned_member(parsed)
   implied_list_owner(parsed)
-end
-
-# @me member is implied if 'list' and no Other member is mentioned.
-def implied_mentioned_member(parsed)
-  return if parsed[:list_scope] == :team
-  parsed[:mentioned_member_name] = parsed[:url_params][:user_name] if parsed[:mentioned_member_id].nil?
-  parsed[:mentioned_member_id] = parsed[:url_params][:user_id] if parsed[:mentioned_member_id].nil?
 end
 
 # Note: 'list' implies a mentioned member of @me. BUT 'list team' does not.

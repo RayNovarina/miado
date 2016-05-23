@@ -14,8 +14,8 @@ user_id	U0VLZ5P51
 user_name	ray
 =end
 
-def parse_slash_cmd(params, _view, previous_action_parse_hash)
-  p_hash = new_parse_hash(params, previous_action_parse_hash)
+def parse_slash_cmd(params, ccb, previous_action_parse_hash)
+  p_hash = new_parse_hash(params, ccb, previous_action_parse_hash)
   scan4_command_func(p_hash)
   perform_scans_for_functions(p_hash)
   p_hash
@@ -53,6 +53,9 @@ def perform_scans_for_functions(p_hash)
   when :list
     scan4_mentioned_member(p_hash)
     scan4_options(p_hash)
+  when :pub
+    scan4_mentioned_member(p_hash)
+    scan4_options(p_hash)
   when :redo
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
@@ -70,7 +73,7 @@ end
 #       'delete all open tasks for @susan is a new task'
 # Case: command is as entered from command line.
 #       'a new task', 'list team'
-CMD_FUNCS = %w(append assign delete done due help list redo unassign).freeze
+CMD_FUNCS = %w(append assign delete done due help list pub redo unassign).freeze
 def scan4_command_func(p_hash)
   return p_hash[:func] = :help if p_hash[:cmd_splits].empty? && p_hash[:previous_action_list_context].empty?
   return p_hash[:func] = :last_action_list if p_hash[:cmd_splits].empty? && !p_hash[:previous_action_list_context].empty?
@@ -86,7 +89,7 @@ end
 #       'open' was 'list open', '' was 'list ', '4' was 'delete team 4',
 #       'open team' was 'list open team', 'team all' was 'list team all',
 #       'all open tasks for @susan is a new task' was 'delete all open tasks for @susan is a new task'
-CMD_OPTIONS = %w(open due done all team).freeze
+CMD_OPTIONS = %w(open due due_first done all team).freeze
 def scan4_options(p_hash)
   return unless p_hash[:err_msg].empty?
   # Have to be adding task if command is longer than options allow.
@@ -102,6 +105,8 @@ end
 # Case: command function has been processed, leaving:
 #       'all open tasks for @susan is a new task' was 'delete all open tasks for @susan is a new task'
 def adjust_cmd_options_for_add_cmd(p_hash)
+  # OR?? remove each option as it is processed and see if anything left over.
+  #      task num, due date and mentioned_member_name removed too?
   # Have to be adding task if command is longer than options specified.
   num_options = 0
   num_options += 1 if p_hash[:team_option]
@@ -112,10 +117,7 @@ def adjust_cmd_options_for_add_cmd(p_hash)
   num_options += 1 unless p_hash[:task_num].nil?
   num_options += 1 unless p_hash[:mentioned_member_id].nil?
   p_hash[:func] = :add if p_hash[:cmd_splits].length > num_options
-  if p_hash[:func] == :add
-  end
 end
-
 
 # Trim off the leading command func, scope and options. Remainder is what
 # most of our following parse logic cares about.
@@ -149,7 +151,12 @@ def scan4_mentioned_member(p_hash)
   name = p_hash[:command].slice(at_pos + 2, end_of_name_pos - (at_pos + 1))
   p_hash[:mentioned_member_id], p_hash[:mentioned_member_name] =
     slack_member_from_name(p_hash, name)
-  return if p_hash[:mentioned_member_id].nil?
+  if p_hash[:mentioned_member_id].nil?
+    p_hash[:mentioned_member_id], p_hash[:mentioned_member_name] =
+      mentioned_member_not_found(p_hash, name)
+  end
+  return p_hash[:err_msg] = "Error: Member @#{name} not found." if p_hash[:mentioned_member_id].nil?
+
   p_hash[:mentioned_member_name_begin_pos] = at_pos
   p_hash[:mentioned_member_name_end_pos] = end_of_name_pos
   remove_mentioned_member_from_command(p_hash)
@@ -160,18 +167,6 @@ def remove_mentioned_member_from_command(p_hash)
   begin_phrase = p_hash[:command].slice(0, p_hash[:mentioned_member_name_begin_pos]).rstrip
   end_phrase = p_hash[:command].slice(p_hash[:mentioned_member_name_end_pos] + 1, p_hash[:command].length - p_hash[:mentioned_member_name_end_pos] - 1)
   p_hash[:command] = begin_phrase.concat(end_phrase)
-end
-
-def slack_member_from_name(p_hash, name)
-  return [p_hash[:user_id], p_hash[:user_name]] if name == 'me'
-  member = Member.find_or_create_from_slack_name(
-    @view, name,
-    p_hash[:url_params][:team_id])
-  if member.nil?
-    p_hash[:err_msg] = "Error: Member @#{name} not found."
-    return [nil, name]
-  end
-  [member.slack_user_id, name]
 end
 
 def scan4_due_date(p_hash)
@@ -190,6 +185,7 @@ def scan4_due_date(p_hash)
   p_hash[:due_date], is_day_of_week = date_from_due_date(p_hash[:due_date_string])
   adjust_due_date_into_future(p_hash, is_day_of_week)
   return if p_hash[:due_date].nil?
+
   p_hash[:due_date_begin_pos] = slash_pos
   p_hash[:due_date_end_pos] = end_of_date_pos
   remove_due_date_from_command(p_hash)
@@ -287,6 +283,13 @@ def inherit_channel_scope(p_hash)
   #       And then to adjust channel_scope in each individual command if needed.
   return p_hash[:channel_scope] = :one_channel if p_hash[:previous_action_list_context].empty?
   p_hash[:channel_scope] = p_hash[:previous_action_list_context][:channel_scope]
+end
+
+# @me member is implied if 'list' and no Other member is mentioned.
+def implied_mentioned_member(parsed)
+  return if parsed[:list_scope] == :team
+  parsed[:mentioned_member_name] = parsed[:url_params][:user_name] if parsed[:mentioned_member_id].nil?
+  parsed[:mentioned_member_id] = parsed[:url_params][:user_id] if parsed[:mentioned_member_id].nil?
 end
 
 # @me member is implied if no Other member is mentioned.

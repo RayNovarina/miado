@@ -16,19 +16,26 @@ module TeamExtensions
   module ClassMethods
     #-------------------- For omniauth support ----------------------
 
-    # If source = :omniauth_callback, then data = response environment
-    def find_from(source, data)
-      return find_from_omniauth_provider(data) if source == :omniauth_provider
-      return find_from_slack_id(data) if source == :slack_id
+    # If source = :omniauth_callback, then options = response environment
+    def find_from(source, options)
+      return find_from_omniauth_provider(options) if source == :omniauth_provider
+      return find_from_slack_id(options) if source == :slack_id
     end
 
-    def find_or_create_from(source, data)
-      return find_or_create_from_omniauth_provider(data) if source == :omniauth_provider
-      return find_or_create_from_slack_id(data) if source == :slack_id
+    def find_or_create_from(source, options)
+      return find_or_create_from_omniauth_provider(options) if source == :omniauth_provider
+      return find_or_create_from_slack_id(options) if source == :slack_id
     end
 
     def find_by_provider(provider)
-      Team.where(slack_team_id: make_auth_info(provider)[:raw_info]['team_id'])
+      Team.where(user: provider.user,
+                 slack_team_id: make_auth_info(provider)[:raw_info]['team_id']
+                ).first
+    end
+
+    def create_from(source, options)
+      return create_from_provider(options) if source == :omniauth_provider
+      return create_from_slack_id(options) if source == :slack_id
     end
 
     def create_from_provider(provider)
@@ -36,9 +43,9 @@ module TeamExtensions
       create_from_slack_web_api(provider, make_auth_info(provider))
     end
 
-    # If source = :omniauth_callback, then data = response environment
-    def update_from_or_create_from(source, data)
-      return update_from_or_create_from_omniauth_provider(data) if source == :omniauth_provider
+    # If source = :omniauth_callback, then options = response environment
+    def update_from_or_create_from(source, options)
+      return update_from_or_create_from_omniauth_provider(options) if source == :omniauth_provider
     end
 
     private
@@ -47,16 +54,17 @@ module TeamExtensions
       find_by_provider(provider).first
     end
 
-    def find_from_slack_id(slack_team_id)
-      Team.where(slack_team_id: slack_team_id).first
+    def find_from_slack_id(options)
+      user, slack_team_id = options
+      Team.where(user: user, slack_team_id: slack_team_id).first
     end
 
     def find_or_create_from_omniauth_provider(provider)
       find_by_provider(provider).first || create_from_provider(provider)
     end
 
-    def find_or_create_from_slack_id(slack_team_id)
-      Team.where(slack_team_id: slack_team_id).first
+    def find_or_create_from_slack_id(options)
+      find_from_slack_id(options)
     end
 
     def update_from_or_create_from_omniauth_provider(provider)
@@ -91,6 +99,7 @@ module TeamExtensions
 
     def update_team_auth_info(team, auth_hash)
       team.url = auth_hash[:raw_info]['url']
+      team.slack_user_id = auth_hash[:raw_info]['user_id']
       team.slack_team_id = auth_hash[:raw_info]['team_id']
       team.api_token = auth_hash[:auth]['credentials']['token']
       team.bot_user_id = auth_hash[:bot_info]['bot_user_id']
@@ -117,7 +126,6 @@ module TeamExtensions
         Team.create!(
           name: auth_hash[:raw_info]['team'],
           user: provider.user
-          # members: Member.create_from_slack_web_api(resp_team_members, resp_team_channels)
         )
       update_team_auth_info(team, auth_hash)
       team.save!

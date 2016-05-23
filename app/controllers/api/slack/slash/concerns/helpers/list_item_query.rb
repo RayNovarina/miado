@@ -83,7 +83,6 @@ def list_of_assigned_tasks_for_one_member_in_all_channels(parsed, params)
   parsed[:list_query_trace_info] = 'list_of_assigned_tasks_for_one_member_in_all_channels' if parsed[:debug]
   # For specified member in all channels clumped by channel via sorted by
   # channel name and creation date.
-
   if parsed[:due_option]
     # due: All with a due date.
     ListItem.where(team_id: params[:team_id],
