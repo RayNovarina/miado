@@ -39,18 +39,15 @@ def send_after_action_deferred_cmds(cmds)
     parsed = d_hash[:p_hash]
     list_cmds = generate_list_commands(parsed, d_hash)
     chat_msgs = generate_task_list_msgs(parsed, list_cmds)
-    chat_msgs.each_with_index do |msg, index|
-      if index == 0
-        resp = clear_taskbot_msg_channel(api_client: msg[:api_client],
-                                         taskbot_channel_id: msg[:taskbot_channel_id])
-        unless resp == 'ok'
-          msg[:text] = "`MiaDo ERROR: clear_taskbot_msgs failed with '#{resp}'`"
-          msg[:attachments] = nil
-        end
-      end
+    chat_msgs.each do |msg|
+      clear_taskbot_msg_channel(api_client: msg[:api_client],
+                                taskbot_username: msg[:taskbot_username],
+                                taskbot_channel_id: msg[:taskbot_channel_id],
+                                member_name: msg[:member_name])
       send_taskbot_msg(api_client: msg[:api_client],
                        taskbot_username: msg[:taskbot_username],
                        taskbot_channel_id: msg[:taskbot_channel_id],
+                       member_name: msg[:member_name],
                        text: msg[:text],
                        attachments: msg[:attachments])
       # update_taskbot_channel(parsed: parsed,
@@ -284,6 +281,7 @@ def generate_task_list_msgs(parsed, list_cmds)
                    taskbot_username: cmd_hash[:taskbot_username],
                    taskbot_channel_id: cmd_hash[:taskbot_channel_id],
                    taskbot_user_id: cmd_hash[:taskbot_user_id],
+                   member_name: cmd_hash[:member_name],
                    api_client: make_web_client(cmd_hash[:slack_user_api_token])
                  }
   end
@@ -292,11 +290,21 @@ end
 
 # Returns: text status msg. 'ok' or err msg.
 def clear_taskbot_msg_channel(options)
-  clear_channel_msgs(type: :direct,
-                     api_client: options[:api_client],
-                     channel_id: options[:taskbot_channel_id],
-                     time_range: { start_ts: 0, end_ts: 0 },
-                     exclude_bot_msgs: false)
+  api_resp =
+    clear_channel_msgs(type: :direct,
+                       api_client: options[:api_client],
+                       channel_id: options[:taskbot_channel_id],
+                       time_range: { start_ts: 0, end_ts: 0 },
+                       exclude_bot_msgs: false)
+  # options[:api_client].logger.error
+  puts "\nCleared taskbot channel for: " \
+       "#{options[:taskbot_username]} at dm_channel: " \
+       "#{options[:taskbot_channel_id]}. " \
+       "For member: #{options[:member_name]}\n"
+  return 'ok' if api_resp == 'ok'
+  err_msg = "ERROR: clear_taskbot_msgs failed with '#{api_resp}"
+  options[:api_client].logger.error(err_msg)
+  err_msg
 end
 
 # Returns: text status msg. 'ok' or err msg.
@@ -309,10 +317,11 @@ def send_taskbot_msg(options)
                         channel: options[:taskbot_channel_id],
                         text: options[:text],
                         attachments: options[:attachments])
-    # options[:api_client].logger.error "\nSent taskbot msg to: " \
+    # options[:api_client].logger.error
     puts "\nSent taskbot msg to: " \
       "#{options[:taskbot_username]} at dm_channel: " \
-      "#{options[:taskbot_channel_id]}.  Msg title: #{options[:text]}\n"
+      "#{options[:taskbot_channel_id]}.  Msg title: #{options[:text]}. " \
+      "For member: #{options[:member_name]}\n"
     return 'ok' if api_resp.key?('ok')
     err_msg = 'Error occurred on Slack\'s API:client.im.history'
     options[:api_client].logger.error(err_msg)

@@ -12,11 +12,7 @@ def clear_channel_msgs(options)
     api_resp = web_api_history(options[:api_client], options[:type],
                                channel: options[:channel_id], latest: latest,
                                oldest: oldest, inclusive: 1)
-    unless api_resp.key?('ok')
-      err_msg = 'Error occurred on Slack\'s API:client.im.history'
-      options[:api_client].logger.error(err_msg)
-      return err_msg
-    end
+    return 'Error occurred on Slack\'s API:client.im.history' unless api_resp.key?('ok')
     return 'ok' if (messages = api_resp['messages']).length == 0
     has_more = api_resp.key?('has_more')
     messages.each do |m|
