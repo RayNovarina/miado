@@ -53,6 +53,10 @@ def send_after_action_deferred_cmds(cmds)
                        taskbot_channel_id: msg[:taskbot_channel_id],
                        text: msg[:text],
                        attachments: msg[:attachments])
+      # update_taskbot_channel(parsed: parsed,
+      #                       taskbot_username: msg[:taskbot_username],
+      #                       taskbot_user_id: msg[:taskbot_user_id],
+      #                       taskbot_channel_id: msg[:taskbot_channel_id])
     end
   end
 end
@@ -88,6 +92,7 @@ def generate_list_commands(parsed, deferred_cmd)
         member_id: i_item[:id],
         slack_user_api_token: i_item[:slack_user_api_token],
         taskbot_channel_id: i_item[:taskbot_channel_id],
+        taskbot_user_id: i_item[:taskbot_user_id],
         taskbot_username: 'MiaDo Taskbot'
       }
     # ,
@@ -197,6 +202,7 @@ def build_one_impacted_member(options)
 
   impacted_member[:slack_user_api_token] = options[:am_hash]['slack_user_api_token']
   impacted_member[:taskbot_channel_id] = options[:am_hash]['bot_dm_channel_id']
+  impacted_member[:taskbot_user_id] = options[:am_hash]['bot_user_id']
   [impacted_member[:id], impacted_member]
 end
 
@@ -277,10 +283,20 @@ def generate_task_list_msgs(parsed, list_cmds)
     chat_msgs << { text: text, attachments: attachments,
                    taskbot_username: cmd_hash[:taskbot_username],
                    taskbot_channel_id: cmd_hash[:taskbot_channel_id],
+                   taskbot_user_id: cmd_hash[:taskbot_user_id],
                    api_client: make_web_client(cmd_hash[:slack_user_api_token])
                  }
   end
   chat_msgs
+end
+
+# Returns: text status msg. 'ok' or err msg.
+def clear_taskbot_msg_channel(options)
+  clear_channel_msgs(type: :direct,
+                     api_client: options[:api_client],
+                     channel_id: options[:taskbot_channel_id],
+                     time_range: { start_ts: 0, end_ts: 0 },
+                     exclude_bot_msgs: false)
 end
 
 # Returns: text status msg. 'ok' or err msg.
@@ -310,14 +326,19 @@ def send_taskbot_msg(options)
   end
 end
 
-# Returns: text status msg. 'ok' or err msg.
-def clear_taskbot_msg_channel(options)
-  clear_channel_msgs(type: :direct,
-                     api_client: options[:api_client],
-                     channel_id: options[:taskbot_channel_id],
-                     time_range: { start_ts: 0, end_ts: 0 },
-                     exclude_bot_msgs: false)
-end
+# parsed: parsed,
+# taskbot_username: msg[:taskbot_username],
+# taskbot_user_id: msg[:taskbot_user_id],
+# taskbot_channel_id: msg[:taskbot_channel_id])
+# def update_taskbot_channel(options)
+#  # taskbot_channel is the channel we just sent the msg to.
+#  taskbot_channel =
+#    Channel.find_from_slack(@view, options[:taskbot_user_id],
+#                            options[:parsed][:url_params][:team_id],
+#                            options[:taskbot_channel_id])
+#  # taskbot_channel.after_action_parse_hash = parsed
+#  # taskbot_channel.save
+# end
 
 # new member or a name change. Use background task to add member, update
 # the ccb.members hash for all channels for this team.

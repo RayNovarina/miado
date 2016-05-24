@@ -6,6 +6,7 @@
 #-------------------------------------------------
 # /do done 4  Marks task 4 for this channel as done.
 def done_command(parsed)
+  return taskbot_done_command(parsed) if parsed[:is_taskbot_channel]
   # We are trying to set a task's done status on a list the user is looking at.
   adjust_inherited_cmd_action_context(parsed)
   text = done_one(parsed)
@@ -18,10 +19,9 @@ def done_command(parsed)
 end
 
 def done_one(parsed)
+  save_item_info(parsed, -1)
   return if task_num_invalid?(parsed)
-  item = ListItem.find(parsed[:list][parsed[:task_num] - 1])
-  # return parsed[:err_msg] = "Error: Task #{parsed[:task_num]} is not " \
-  #  'assigned to anyone.' if item.assigned_member_id.nil?
+  item = save_item_info(parsed, parsed[:list][parsed[:task_num] - 1])
   item.done = true
   if item.save
     return "Task #{parsed[:task_num]} " \
@@ -29,4 +29,8 @@ def done_one(parsed)
            'set to a completed/DONE status.'
   end
   parsed[:err_msg] = 'Error: There was an error setting this Task to a DONE status.'
+end
+
+def taskbot_done_command(parsed)
+  parsed[:err_msg] = 'Error: Taskbot done command not supported yet.'
 end

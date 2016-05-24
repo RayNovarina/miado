@@ -74,13 +74,9 @@ def perform_scans_for_functions(p_hash)
 end
 
 def scan4_taskbot_channel(p_hash)
-  chan_id = p_hash[:url_params]['channel_id']
-  user_id = p_hash[:url_params]['user_id']
-  m_hash = p_hash[:ccb].members_hash[user_id]
-  return if m_hash.nil?
-  bot_dm_channel_id = m_hash['bot_dm_channel_id']
-  return if bot_dm_channel_id.nil?
-  p_hash[:is_taskbot_channel] = chan_id == bot_dm_channel_id
+  return if (m_hash = p_hash[:ccb].members_hash[p_hash[:url_params]['user_id']]).nil?
+  return if (bot_dm_channel_id = m_hash['bot_dm_channel_id']).nil?
+  p_hash[:is_taskbot_channel] = p_hash[:url_params]['channel_id'] == bot_dm_channel_id
 end
 
 # Note: what looks like a command may actually be an added task, i.e.
@@ -100,8 +96,12 @@ def scan4_command_func(p_hash)
 end
 
 def scan4_taskbot_cmd_func(p_hash)
-  p_hash[:err_msg] = "Error: Sorry #{params[:command]} commands are not " \
-                     'allowed in the Taskbot channel.'
+  scan4_command_func(p_hash)
+  p_hash[:err_msg] =
+    # "Error: only the '#{params[:command]} /done' command is " \
+    # 'allowed in the Taskbot channel.' unless p_hash[:func] == :done
+    "Error: Sorry, no '#{params[:command]}' commands allowed in the " \
+    'Taskbot channel.'
 end
 
 # Case: command function has been processed, leaving:
