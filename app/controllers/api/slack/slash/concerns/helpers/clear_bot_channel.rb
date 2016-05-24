@@ -1,3 +1,4 @@
+# Returns: 'ok' or err_msg
 def clear_channel_msgs(options)
   # api_client, channel_id, time_range, exclude_bot_msgs = false
   # Setup time range for query
@@ -26,11 +27,8 @@ def clear_channel_msgs(options)
       next if exclude_pinned_msgs && m.key?('subtype') && m['subtype'] == 'pinned_item'
       api_resp = delete_message_on_channel(api_client: options[:api_client], channel_id: options[:channel_id], message: m)
       next if api_resp.key?('ok')
-      err_msg = 'Error occurred on Slack\'s API:client.chat_delete'
-      options[:api_client].logger.error(err_msg)
       # If we can't delete a msg, abandon delete loop, else we just keep trying.
-      return 'ok'
-      # return err_msg
+      return "Error occurred on Slack\'s API:client.chat_delete: #{api_resp}"
     end
   end
   'ok'
@@ -41,7 +39,6 @@ def delete_message_on_channel(options)
     # No response is a good response
     return options[:api_client].chat_delete(channel: options[:channel_id], ts: options[:message]['ts'])
   rescue Slack::Web::Api::Error => e # (cant_delete_message)
-    options[:api_client].logger.error e
     options[:api_client].logger.error "\ne.message: #{e.message}\n" \
       "channel_id: #{options[:channel_id]}  " \
       "message timestamp id: #{options[:message]['ts']}\n"
