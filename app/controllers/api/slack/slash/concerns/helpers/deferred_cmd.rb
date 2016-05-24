@@ -296,8 +296,7 @@ def clear_taskbot_msg_channel(options)
                        channel_id: options[:taskbot_channel_id],
                        time_range: { start_ts: 0, end_ts: 0 },
                        exclude_bot_msgs: false)
-  # options[:api_client].logger.error
-  puts "\nCleared taskbot channel for: " \
+  options[:api_client].logger.error "\nCleared taskbot channel for: " \
        "#{options[:taskbot_username]} at dm_channel: " \
        "#{options[:taskbot_channel_id]}. " \
        "For member: #{options[:member_name]}\n"
@@ -317,8 +316,7 @@ def send_taskbot_msg(options)
                         channel: options[:taskbot_channel_id],
                         text: options[:text],
                         attachments: options[:attachments])
-    # options[:api_client].logger.error
-    puts "\nSent taskbot msg to: " \
+    options[:api_client].logger.error "\nSent taskbot msg to: " \
       "#{options[:taskbot_username]} at dm_channel: " \
       "#{options[:taskbot_channel_id]}.  Msg title: #{options[:text]}. " \
       "For member: #{options[:member_name]}\n"

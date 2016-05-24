@@ -51,8 +51,9 @@ end
 #          list is adjusted for deleted item(s)
 def delete_task(id, parsed)
   item = save_item_info(parsed, id)
+  return parsed[:err_msg] = "Error: Task(id: #{id}) not found to be deleted." if item.nil?
   return if item.destroy
-  parsed[:err_msg] = 'Error: There was an error deleting this Task.'
+  parsed[:err_msg] = "Error: There was an error deleting this Task(id: #{id})."
 end
 
 def save_item_info(parsed, id)
