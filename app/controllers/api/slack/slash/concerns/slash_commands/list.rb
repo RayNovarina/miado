@@ -70,14 +70,14 @@ end
 
 def channel_display_header(_parsed, context, list_of_records, channel_name)
   "#{channel_name}" \
-  "`to-do list (#{format_owner_title(context)})`" \
+  "`to-do list#{format_owner_title(context)}`" \
   "#{list_of_records.empty? ? ' (empty)' : ''}"
 end
 
 def channel_display_footer(_parsed, context, list_of_records, _text, attachments)
   if list_of_records.size > 10
     attachments << {
-      text: "`to-do list (#{context[:list_owner_name]})`" \
+      text: "`to-do list#{format_owner_title(context)}`" \
             "#{list_of_records.empty? ? ' (empty)' : ''}",
       mrkdwn_in: ['text']
     }
@@ -85,13 +85,13 @@ def channel_display_footer(_parsed, context, list_of_records, _text, attachments
 end
 
 def format_owner_title(context)
-  title = ''
-  title.concat(' all') if context[:channel_scope] == :all_channels
-  title.concat(' open') if context[:open_option]
-  title.concat(' due') if context[:due_option]
-  title.concat(' done') if context[:done_option]
-  context[:list_owner_name] = "#{context[:list_owner_name]} - #{title}" unless title.empty?
-  context[:list_owner_name]
+  subtitle = ''
+  subtitle.concat(' all') if context[:channel_scope] == :all_channels
+  subtitle.concat(' open') if context[:open_option]
+  subtitle.concat(' due') if context[:due_option]
+  subtitle.concat(' done') if context[:done_option]
+  return " (#{context[:list_owner_name]} - #{subtitle})" unless subtitle.empty?
+  " (#{context[:list_owner_name]})" if subtitle.empty?
 end
 
 # Returns: updated attachments array.
