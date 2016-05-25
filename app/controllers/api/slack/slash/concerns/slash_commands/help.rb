@@ -29,7 +29,7 @@ SLASH_CMD_HLP_TEXT =
  " Lists all TEAM tasks that are OPEN for THIS channel.\n" \
  '• `/do list team all`' \
  " Lists all TEAM tasks that are OPEN for ALL channels.\n" \
- # ':bulb: Click on the "miaDo" member to see all of your up to date lists.' \
+ ':bulb: Click on the "a.Taskbot" member to see all of your up to date lists.' \
  "\n".freeze
 
 # Returns: [text, attachments]
