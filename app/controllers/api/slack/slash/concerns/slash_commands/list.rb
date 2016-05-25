@@ -20,10 +20,10 @@ def prepend_text_to_list_command(parsed, prepend_text)
   list_text, list_attachments =
     format_display_list(
       parsed,
-      parsed[:after_action_list_context],
+      parsed[:previous_action_list_context],
       list_from_list_of_ids(parsed, parsed[:after_action_list_context][:list]))
   combined_text =
-    prepend_text.concat("   Updated list as follows: \n").concat(list_text)
+    prepend_text.concat('   Updated list as follows: ').concat(list_text)
   [combined_text, list_attachments]
 end
 
@@ -56,26 +56,42 @@ end
 
 # Returns: [text, attachments]
 def one_channel_display(parsed, context, list_of_records)
-  text = "<##{parsed[:url_params]['channel_id']}|#{parsed[:url_params]['channel_name']}> " \
-         "to-do list (#{format_owner_title(context)})" \
-         "#{list_of_records.empty? ? ' (empty)' : ''}"
+  # "<##{parsed[:url_params]['channel_id']}|#{parsed[:url_params]['channel_name']}> "
+  text = channel_display_header(parsed, context, list_of_records, '')
   list_ids = []
   attachments = []
   list_of_records.each_with_index do |item, index|
     list_add_item_to_display_list(parsed, attachments, item, index)
     list_ids << item.id
   end
+  channel_display_footer(parsed, context, list_of_records, text, attachments)
   [text, attachments, list_ids]
 end
 
+def channel_display_header(_parsed, context, list_of_records, channel_name)
+  "#{channel_name}" \
+  "`to-do list (#{format_owner_title(context)})`" \
+  "#{list_of_records.empty? ? ' (empty)' : ''}"
+end
+
+def channel_display_footer(_parsed, context, list_of_records, _text, attachments)
+  if list_of_records.size > 10
+    attachments << {
+      text: "`to-do list (#{context[:list_owner_name]})`" \
+            "#{list_of_records.empty? ? ' (empty)' : ''}",
+      mrkdwn_in: ['text']
+    }
+  end
+end
+
 def format_owner_title(context)
-  owner_title = ''
-  owner_title.concat(' all') if context[:channel_scope] == :all_channels
-  owner_title.concat(' open') if context[:open_option]
-  owner_title.concat(' due') if context[:due_option]
-  owner_title.concat(' done') if context[:done_option]
-  owner_title = ' -'.concat(owner_title) unless owner_title.empty?
-  context[:list_owner_name].concat(owner_title)
+  title = ''
+  title.concat(' all') if context[:channel_scope] == :all_channels
+  title.concat(' open') if context[:open_option]
+  title.concat(' due') if context[:due_option]
+  title.concat(' done') if context[:done_option]
+  context[:list_owner_name] = "#{context[:list_owner_name]} - #{title}" unless title.empty?
+  context[:list_owner_name]
 end
 
 # Returns: updated attachments array.
@@ -109,9 +125,7 @@ end
 
 # Returns: [text, attachments, list_ids]
 def all_channels_display(parsed, context, list_of_records)
-  text = '#all-channels ' \
-         "to-do list (#{format_owner_title(context)})" \
-         "#{list_of_records.empty? ? ' (empty)' : ''}"
+  text = channel_display_header(parsed, context, list_of_records, '#all-channels ')
   list_ids = []
   attachments = []
   current_channel_id = ''
@@ -126,6 +140,7 @@ def all_channels_display(parsed, context, list_of_records)
     list_add_item_to_display_list(parsed, attachments, item, index)
     list_ids << item.id
   end
+  channel_display_footer(parsed, context, list_of_records, text, attachments)
   [text, attachments, list_ids]
 end
 

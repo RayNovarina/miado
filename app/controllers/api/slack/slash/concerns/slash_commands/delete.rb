@@ -40,8 +40,8 @@ def delete_one(parsed)
   delete_task(parsed[:list][parsed[:task_num] - 1], parsed)
   if parsed[:err_msg].empty?
     parsed[:list].delete_at(parsed[:task_num] - 1)
-    return "Deleted #{parsed[:list_scope == :team ? 'team' : 'your']} " \
-           "task #{parsed[:task_num]}."
+    return "`Deleted #{parsed[:list_scope] == :team ? 'team' : 'your'} " \
+           "task #{parsed[:task_num]}.`"
   end
   parsed[:err_msg]
 end
@@ -81,17 +81,17 @@ end
 
 def delete_all_msg(parsed)
   if parsed[:list_scope] == :team
-    return 'Deleted tasks in THIS channel for ANY team member.' if parsed[:channel_scope] == :one_channel
-    return 'Deleted tasks in ANY channel for ANY team member.' if parsed[:channel_scope] == :all_channels
+    return '`Deleted tasks in THIS channel for ANY team member.`' if parsed[:channel_scope] == :one_channel
+    return '`Deleted tasks in ANY channel for ANY team member.`' if parsed[:channel_scope] == :all_channels
   end
   # parsed[:list_scope] == :one_member
   if parsed[:channel_scope] == :one_channel
-    return 'Deleted ALL of your ASSIGNED tasks in this channel.' if parsed[:list_owner] == :mine
-    return "Deleted ALL of #{parsed[:list_owner_name]}\'s ASSIGNED tasks in this channel."
+    return '`Deleted ALL of your ASSIGNED tasks in this channel.`' if parsed[:list_owner] == :mine
+    return "`Deleted ALL of #{parsed[:list_owner_name]}\'s ASSIGNED tasks in this channel.`"
   end
   # parsed[:channel_scope] == :all_channels
-  return 'Deleted ALL of your ASSIGNED tasks in ALL channels.' if parsed[:list_owner] == :mine
-  "Deleted ALL of #{parsed[:list_owner]} ASSIGNED tasks in ALL channel."
+  return '`Deleted ALL of your ASSIGNED tasks in ALL channels.`' if parsed[:list_owner] == :mine
+  "`Deleted ALL of #{parsed[:list_owner]} ASSIGNED tasks in ALL channels.`"
 end
 
 def destroy_all_by_ids(list, parsed)
