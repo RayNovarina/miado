@@ -1,5 +1,9 @@
 #
 class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
+  #
+  require_relative '../api/slack/slash/concerns/commands' # method for each slack command
+  require_relative '../api/slack/slash/concerns/helpers' # various utility methods/controller lib.
+
   before_action :make_view_helper
   # Implemented per: https://github.com/plataformatec/devise/wiki/OmniAuth:-Overview
   # Note: we get here here when the user has finished with the oauth provider's
@@ -98,10 +102,20 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
                        slack_user_id: @view.team.slack_user_id).first
         member_installing_miado.bot_dm_channel_id = bot_dm_channel_id
         member_installing_miado.save!
-        Channel.update_or_create_all_members_hash(@view, @view.team.slack_team_id)
-        # For the member now installing MiaDo, set its bot channel id.
-        # member_now_installing = member if member.slack_user_id == team.slack_user_id
-        # Channel.where(slack_user_id: slack_team_id).update_all(bot_dm_channel_id: member_now_installing.bot_dm_channel_id)
+        # All team members' ccbs need an updated members_hash.
+        members_hash = Channel.update_or_create_all_members_hash(@view, @view.team.slack_team_id)
+        # Now that member has a taskbot installed, send it an updated list.
+        p_hash = make_parse_hash
+        p_hash[:func] = :add
+        p_hash[:assigned_member_id] = @view.provider.auth_json['info']['user_id']
+        p_hash[:assigned_member_name] = @view.provider.auth_json['info']['user']
+        p_hash[:ccb] = Channel.where(slack_team_id: @view.team.slack_team_id).first
+        p_hash[:ccb].members_hash = members_hash
+        p_hash[:url_params] = params
+        p_hash[:url_params][:team_id] = @view.team.slack_team_id
+        def_cmds = generate_after_action_cmds(parsed_hash: p_hash)
+        # NOTE: a new Thread is generated to run these deferred commands.
+        after_action_deferred_logic(def_cmds)
       end
     end
   end

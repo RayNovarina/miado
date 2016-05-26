@@ -43,7 +43,8 @@ def debug_headers(parsed)
     "[due: #{parsed[:due_option]}] `\n"
   query_info =
     "`  query via: #{parsed[:list_query_trace_info]}" \
-    "(channel name: #{params[:channel_name]}  " \
+    "(team_id: #{params[:team_id]}  " \
+    "channel name: #{params[:channel_name]}  " \
     "member name: #{parsed[:mentioned_member_name]})`\n" unless parsed[:list_query_trace_info].empty?
   query_info = '' if parsed[:list_query_trace_info].empty?
   cmd_info.concat(slack_info).concat(parse_trace_info).concat(query_info)

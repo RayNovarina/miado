@@ -156,6 +156,7 @@ module ChannelExtensions
       end
       # Channels for this team gets an updated member lookup hash.
       Channel.where(slack_team_id: slack_team_id).update_all(members_hash: members_hash)
+      members_hash
     end
 
     private
