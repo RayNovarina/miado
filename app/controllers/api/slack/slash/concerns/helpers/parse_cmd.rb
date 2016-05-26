@@ -175,7 +175,7 @@ def scan4_mentioned_member(p_hash)
     p_hash[:mentioned_member_id], p_hash[:mentioned_member_name] =
       mentioned_member_not_found(p_hash, name)
   end
-  return p_hash[:err_msg] = "Error: Member '@#{name}' not found." if p_hash[:mentioned_member_id].nil?
+  return p_hash[:err_msg] = "Error: Member '@#{name}' not recognized." if p_hash[:mentioned_member_id].nil?
 
   p_hash[:mentioned_member_name_begin_pos] = at_pos
   p_hash[:mentioned_member_name_end_pos] = end_of_name_pos

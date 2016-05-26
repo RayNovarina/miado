@@ -168,7 +168,7 @@ module ChannelExtensions
         @view.web_client.logger.error e
         @view.web_client.logger.error "\ne.message: #{e.message}\n" \
           "@view.team - name: #{@view.team.name}" \
-          "api_token: #{api_token}\n"
+          "api_token: #{Slack.config.token}\n"
         @view.exception = e
         return []
       end

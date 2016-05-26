@@ -1,10 +1,14 @@
-
 def after_action_deferred_logic(def_cmds)
   Thread.new do
     send_after_action_deferred_cmds(def_cmds)
   end
 end
 
+def new_member_deferred_logic(options)
+  Thread.new do
+    update_channel_members_hash(options)
+  end
+end
 
 CMD_FUNCS_IGNORED_BY_AFTER_ACTION_DEFERRED = [:help, :list, :pub].freeze
 #
@@ -333,32 +337,9 @@ def send_taskbot_msg(options)
   end
 end
 
-# parsed: parsed,
-# taskbot_username: msg[:taskbot_username],
-# taskbot_user_id: msg[:taskbot_user_id],
-# taskbot_channel_id: msg[:taskbot_channel_id])
-# def update_taskbot_channel(options)
-#  # taskbot_channel is the channel we just sent the msg to.
-#  taskbot_channel =
-#    Channel.find_from_slack(@view, options[:taskbot_user_id],
-#                            options[:parsed][:url_params][:team_id],
-#                            options[:taskbot_channel_id])
-#  # taskbot_channel.after_action_parse_hash = parsed
-#  # taskbot_channel.save
-# end
-
-# new member or a name change. Use background task to add member, update
-# the ccb.members hash for all channels for this team.
-def new_member_deferred_logic(p_hash, new_members_hash, new_member_name)
-  # ccb = p_hash[:ccb]
-  # m_hash = new_members_hash[new_member_name]
-  # Thread.new do
-  #  if Member.find_by_slack(view.user, ccb[:slack_team_id], m_hash[:slack_user_id]).nil?
-  #    # new member, not a name change.
-  #  else # name change. Update all team channels with updated members hash.
-  #    Channel.set(members: new_members_hash)
-  #           .where(user: view.user, slack_team_id: ccb[:slack_team_id],
-  #                  slack_user_id: m_hash[:slack_user_id])
-  #  end
-  # end
+# Inputs: options{ members_hash: hash, slack_team_id: team_id }
+# Update the ccb.members hash for all channels for this team.
+def update_channel_members_hash(options)
+  Channel.where(slack_team_id: options[:slack_team_id])
+         .update_all(members_hash: options[:members_hash])
 end
