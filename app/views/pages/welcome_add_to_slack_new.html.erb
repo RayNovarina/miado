@@ -7,23 +7,13 @@
           <%= image_tag 'dog_head_icon.png', class: 'img-circle',
               style: 'margin-right: 20px;',
               size: '100x100' %>
-              <%
-                user_name = 'No Name' if @view.current_user.nil?
-                user_name = @view.current_user.name.capitalize unless @view.current_user.nil?
-                bot_name = '/do' if @view.team.nil? || (defined? @view.team.bot).nil?
-                bot_name = @view.team.bot unless @view.team.nil? || (defined? @view.team.bot).nil?
-                team_name = 'No Name' if @view.team.nil?
-                team_name = @view.team.name unless @view.team.nil?
-                slack_url = '#' if @view.team.nil? || (defined? @view.team.url).nil?
-                slack_url = @view.team.url unless @view.team.nil? || (defined? @view.team.url).nil?
-              %>
               <h3>
-                Thanks,&nbsp;<%= "#{user_name} for adding #{bot_name} to manage" %><br>
-                tasks for your <%= team_name %>&nbsp;team!
+                Thanks,&nbsp;<%= "#{@view.locals[:user_name]} for adding #{@view.locals[:bot_name]} to manage" %><br>
+                tasks for your <%= @view.locals[:team_name] %>&nbsp;team!
               </h3>
           <br><br>
           <p>
-            <%= link_to 'Continue to Slack', slack_url, class: 'btn btn-primary btn-lg' %>
+            <%= link_to 'Continue to Slack', @view.locals[:slack_url], class: 'btn btn-primary btn-lg' %>
           </p>
           <br>
           <br>
