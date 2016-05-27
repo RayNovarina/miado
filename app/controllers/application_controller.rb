@@ -31,8 +31,6 @@ class ApplicationController < ActionController::Base
   def after_sign_in_path_for(_resource_or_scope)
     # Note: at this time: flash[:notice] => "Signed in successfully." (or nil)
     #                     current_user is valid.
-    # user_path(@view.current_user) # users#show
-    # registered_applications_path # registered_applications#index
     if @view.nil?
       # we seem to get here in a dev environment if we haven't signed out the
       # previous session/loaded new dev app.

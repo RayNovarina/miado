@@ -15,17 +15,6 @@ module ChannelExtensions
   # User.find_by_email(email).authenticate(password).
   module ClassMethods
     attr_accessor :view
-    # channel = Channel.find_or_create_from_slack(@view, name)
-    # Find the slack channel in our db or get a current Team channel list from
-    # Slack and merge those into our db.
-    # find_or_create_from_slack(params[:user_id], params[:team_id], params[:channel_id])
-    def find_or_create_from_slack(view, slack_user_id, slack_team_id, slack_channel_id)
-      @view ||= view
-      if (channel = find_from_slack(view, slack_user_id, slack_team_id, slack_channel_id)).nil?
-        channel = create_from_slack(view, slack_user_id, slack_team_id)
-      end
-      channel
-    end
 
     def find_from_slack(view, slack_user_id, slack_team_id, slack_channel_id)
       @view ||= view
@@ -33,15 +22,43 @@ module ChannelExtensions
                     slack_team_id: slack_team_id,
                     slack_channel_id: slack_channel_id).first
     end
-
-    def create_from_slack(view, _slack_user_id, _slack_team_id)
+=begin
+      Form Params
+      channel_id	C0VNKV7BK
+      channel_name	general
+      command	/do
+      response_url	https://hooks.slack.com/commands/T0VN565N0/36163731489/YAHWUMXlBdviTE1rBILELuFK
+      team_domain	shadowhtracteam
+      team_id	T0VN565N0
+      text	call GoDaddy @susan /fri
+      token	3ZQVG7rk4p7EZZluk1gTH3aN
+      user_id	U0VLZ5P51
+      user_name	ray
+=end
+    def create_from_slack(view, slash_url_params)
       @view ||= view
       # we could create channel and copy members_hash from last active channel
       # for this team. Else we need to mimic an install and create a miado user,
       # team, members, channels.
-      # create_all_from_slack(@view, slack_user_id, slack_team_id)
-      # find_from_slack(view, slack_user_id, slack_team_id, slack_channel_id)
-      nil
+      # team = Team.find_from_slack(:slack,
+      #                            slack_team_id: slash_url_params['team_id'],
+      #                            slack_user_id: slash_url_params['user_id'])
+      # return nil if team.nil?
+      # Get a members lookup hash from another member's channel.
+      other_member_channel =
+        Channel.where(slack_team_id: slash_url_params['team_id']).first
+      return nil if other_member_channel.nil?
+      Channel.create!(
+        slack_channel_name: slash_url_params['channel_name'],
+        slack_channel_id: slash_url_params['channel_id'],
+        slack_user_id: slash_url_params['user_id'],
+        slack_team_id: slash_url_params['team_id'],
+        slack_user_api_token: other_member_channel.slack_user_api_token,
+        bot_api_token: other_member_channel.bot_api_token,
+        bot_user_id: other_member_channel.bot_user_id,
+        members_hash: other_member_channel.members_hash,
+        team: other_member_channel.team
+      )
     end
 
     def create_all_from_slack(view, team)
@@ -139,6 +156,7 @@ module ChannelExtensions
       end
       # Channels for this team gets an updated member lookup hash.
       Channel.where(slack_team_id: slack_team_id).update_all(members_hash: members_hash)
+      members_hash
     end
 
     private
@@ -151,7 +169,7 @@ module ChannelExtensions
         @view.web_client.logger.error e
         @view.web_client.logger.error "\ne.message: #{e.message}\n" \
           "@view.team - name: #{@view.team.name}" \
-          "api_token: #{api_token}\n"
+          "api_token: #{Slack.config.token}\n"
         @view.exception = e
         return []
       end

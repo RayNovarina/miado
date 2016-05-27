@@ -19,6 +19,7 @@ module TeamExtensions
     # If source = :omniauth_callback, then options = response environment
     def find_from(source, options)
       return find_from_omniauth_provider(options) if source == :omniauth_provider
+      return find_from_slack(options) if source == :slack
       return find_from_slack_id(options) if source == :slack_id
     end
 
@@ -52,6 +53,10 @@ module TeamExtensions
 
     def find_from_omniauth_provider(provider)
       find_by_provider(provider).first
+    end
+
+    def find_from_slack(options)
+      Team.where(slack_team_id: options[:slack_team_id], slack_user_id: options[:slack_user_id])
     end
 
     def find_from_slack_id(options)

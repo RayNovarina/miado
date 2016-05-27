@@ -1,5 +1,9 @@
 #
 class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
+  #
+  require_relative '../api/slack/slash/concerns/commands' # method for each slack command
+  require_relative '../api/slack/slash/concerns/helpers' # various utility methods/controller lib.
+
   before_action :make_view_helper
   # Implemented per: https://github.com/plataformatec/devise/wiki/OmniAuth:-Overview
   # Note: we get here here when the user has finished with the oauth provider's
@@ -56,8 +60,15 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     # which we handle in our /controllers/application_controller
     # "after_sign_in_path_for(_resource_or_scope)" method which finally
     # redirects a welcome aboard landing page.
-    sign_in_and_redirect @view.user, event: :authentication
-    set_flash_message(:notice, :success, kind: @view.provider.name.capitalize) if is_navigational_format?
+    unless request.env['omniauth.params']['state'] == 'sign_up' && @view.provider.name == 'slack'
+      sign_in_and_redirect @view.user, event: :authentication
+      set_flash_message(:notice, :success, kind: @view.provider.name.capitalize) if is_navigational_format?
+    end
+    if request.env['omniauth.params']['state'] == 'sign_up' && @view.provider.name == 'slack'
+      set_flash_message(:notice, :success, kind: @view.provider.name.capitalize)
+      # omniauth_landing_page => "/welcome/add_to_slack_new?team_id=T0VN565N0"
+      redirect_to omniauth_landing_page
+    end
   end
 
   # Note: we use the update_from methods so as to update existing providers
@@ -70,6 +81,8 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     # @view.user = User.find_or_create_from(:omniauth_provider, @view.provider)
     # @view.team = Team.update_from_or_create_from(:omniauth_provider, @view.provider)
     @view.provider = OmniauthProvider.create_from(:omniauth_callback, request.env)
+    # NOTE: hack to not create so much overhead for slack installs.
+    @view.provider.uid_email = 'admin@example.com' if @view.provider.name == 'slack'
     @view.user = User.find_or_create_from(:omniauth_provider, @view.provider)
     if @view.provider.name == 'slack'
       # Since we have the user waiting for oauth completion and have full
@@ -79,7 +92,6 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       #       for that member for this slack team. Each team.member.channel acts
       #       as a channel control block, aka 'ccb' and is the MiaDo control
       #       structure used app wide.
-      # members_hash, _members =
       Member.create_all_from_slack(@view, @view.team)
       # Note: when a member is created, a new set of channels are created
       #       for that member for this slack team. Each team.member.channel acts
@@ -98,10 +110,20 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
                        slack_user_id: @view.team.slack_user_id).first
         member_installing_miado.bot_dm_channel_id = bot_dm_channel_id
         member_installing_miado.save!
-        Channel.update_or_create_all_members_hash(@view, @view.team.slack_team_id)
-        # For the member now installing MiaDo, set its bot channel id.
-        # member_now_installing = member if member.slack_user_id == team.slack_user_id
-        # Channel.where(slack_user_id: slack_team_id).update_all(bot_dm_channel_id: member_now_installing.bot_dm_channel_id)
+        # All team members' ccbs need an updated members_hash.
+        members_hash = Channel.update_or_create_all_members_hash(@view, @view.team.slack_team_id)
+        # Now that member has a taskbot installed, send it an updated list.
+        p_hash = make_parse_hash
+        p_hash[:func] = :add
+        p_hash[:assigned_member_id] = @view.provider.auth_json['info']['user_id']
+        p_hash[:assigned_member_name] = @view.provider.auth_json['info']['user']
+        p_hash[:ccb] = Channel.where(slack_team_id: @view.team.slack_team_id).first
+        p_hash[:ccb].members_hash = members_hash
+        p_hash[:url_params] = params
+        p_hash[:url_params][:team_id] = @view.team.slack_team_id
+        def_cmds = generate_after_action_cmds(parsed_hash: p_hash)
+        # NOTE: a new Thread is generated to run these deferred commands.
+        after_action_deferred_logic(def_cmds)
       end
     end
   end

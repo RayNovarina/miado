@@ -16,7 +16,10 @@ user_name	ray
 
 def parse_slash_cmd(params, ccb, previous_action_parse_hash)
   p_hash = new_parse_hash(params, ccb, previous_action_parse_hash)
-  scan4_command_func(p_hash)
+  scan4_taskbot_channel(p_hash)
+  scan4_command_func(p_hash) unless p_hash[:is_taskbot_channel]
+  scan4_taskbot_cmd_func(p_hash) if p_hash[:is_taskbot_channel]
+  return p_hash unless p_hash[:err_msg].empty?
   perform_scans_for_functions(p_hash)
   p_hash
 end
@@ -50,6 +53,7 @@ def perform_scans_for_functions(p_hash)
   when :help
     scan4_options(p_hash)
   when :last_action_list
+    # nothing to do.
   when :list
     scan4_mentioned_member(p_hash)
     scan4_options(p_hash)
@@ -69,6 +73,12 @@ def perform_scans_for_functions(p_hash)
   end
 end
 
+def scan4_taskbot_channel(p_hash)
+  return if (m_hash = p_hash[:ccb].members_hash[p_hash[:url_params]['user_id']]).nil?
+  return if (bot_dm_channel_id = m_hash['bot_dm_channel_id']).nil?
+  p_hash[:is_taskbot_channel] = p_hash[:url_params]['channel_id'] == bot_dm_channel_id
+end
+
 # Note: what looks like a command may actually be an added task, i.e.
 #       'delete all open tasks for @susan is a new task'
 # Case: command is as entered from command line.
@@ -83,6 +93,15 @@ def scan4_command_func(p_hash)
   p_hash[:cmd_splits].shift unless p_hash[:func].nil?
   # Default to add cmd if no func specified or implied.
   p_hash[:func] = :add if p_hash[:func].nil?
+end
+
+def scan4_taskbot_cmd_func(p_hash)
+  scan4_command_func(p_hash)
+  p_hash[:err_msg] =
+    # "Error: only the '#{params[:command]} /done' command is " \
+    # 'allowed in the Taskbot channel.' unless p_hash[:func] == :done
+    "Error: Sorry, no '#{params[:command]}' commands allowed in the " \
+    'Taskbot channel.'
 end
 
 # Case: command function has been processed, leaving:
@@ -140,22 +159,23 @@ end
 # s = 'get donuts @susan /fri all kinds'
 def scan4_mentioned_member(p_hash)
   return unless p_hash[:err_msg].empty?
-  at_pos = p_hash[:command].index(' @')
+  at_pos = 0 if p_hash[:command].starts_with?('@')
+  at_pos = p_hash[:command].index(' @') + 1 unless p_hash[:command].starts_with?('@') || p_hash[:command].index(' @').nil?
   return p_hash[:err_msg] = 'Error: team member must be mentioned.' if at_pos.nil? && p_hash[:requires_mentioned_member]
   return if at_pos.nil?
-  blank_pos = p_hash[:command].index(' ', at_pos + 1)
+  delimiter_pos = p_hash[:command].index(' ', at_pos) || p_hash[:command].index(',', at_pos)
 
-  end_of_name_pos = p_hash[:command].length - 1 if blank_pos.nil?
-  end_of_name_pos = blank_pos - 1 unless blank_pos.nil?
+  end_of_name_pos = p_hash[:command].length - 1 if delimiter_pos.nil?
+  end_of_name_pos = delimiter_pos - 1 unless delimiter_pos.nil?
 
-  name = p_hash[:command].slice(at_pos + 2, end_of_name_pos - (at_pos + 1))
+  name = p_hash[:command].slice(at_pos + 1, end_of_name_pos - at_pos)
   p_hash[:mentioned_member_id], p_hash[:mentioned_member_name] =
     slack_member_from_name(p_hash, name)
   if p_hash[:mentioned_member_id].nil?
     p_hash[:mentioned_member_id], p_hash[:mentioned_member_name] =
       mentioned_member_not_found(p_hash, name)
   end
-  return p_hash[:err_msg] = "Error: Member @#{name} not found." if p_hash[:mentioned_member_id].nil?
+  return p_hash[:err_msg] = "Error: Member '@#{name}' not recognized." if p_hash[:mentioned_member_id].nil?
 
   p_hash[:mentioned_member_name_begin_pos] = at_pos
   p_hash[:mentioned_member_name_end_pos] = end_of_name_pos

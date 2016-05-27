@@ -15,6 +15,7 @@ def make_parse_hash
     command: nil,
     debug: false,
     cmd_splits: [],
+    is_taskbot_channel: false,
     team_option: false,
     all_option: false,
     open_option: false,
@@ -29,6 +30,7 @@ def make_parse_hash
     list_owner: nil,
     list_owner_name: nil,
     list: [],
+    list_info: nil,
     list_query_trace_info: '',
     requires_mentioned_member: false,
     mentioned_member_id: nil,
@@ -69,7 +71,11 @@ def context_from_ccb_hash(_p_hash, previous_action_parse_hash)
     mentioned_member_id: hash_value(context_s_splits[4]),
     mentioned_member_name: hash_value(context_s_splits[5]),
     all_option: hash_value(context_s_splits[6]),
-    func: hash_value(context_s_splits[7])
+    func: hash_value(context_s_splits[7]),
+    original_command: hash_value(context_s_splits[8]),
+    open_option: hash_value(context_s_splits[9]),
+    done_option: hash_value(context_s_splits[10]),
+    due_option: hash_value(context_s_splits[11])
   }
 end
 
@@ -83,7 +89,11 @@ def save_after_action_list_context(parsed, context, list_ids = nil)
     mentioned_member_id: context[:mentioned_member_id],
     mentioned_member_name: context[:mentioned_member_name],
     all_option: context[:all_option],
-    func: context[:func]
+    func: context[:func],
+    original_command: context[:original_command],
+    open_option: context[:open_option],
+    done_option: context[:done_option],
+    due_option: context[:due_option]
   }
   # Trim what we store to db, store, restore it.
   parsed[:url_params] = {}

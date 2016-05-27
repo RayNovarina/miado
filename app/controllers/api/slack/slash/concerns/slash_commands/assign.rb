@@ -27,20 +27,22 @@ def assign_command(parsed)
 end
 
 def assign_one(parsed)
+  save_item_info(parsed, -1)
   return if task_num_invalid?(parsed)
-  item = ListItem.find(parsed[:list][parsed[:task_num] - 1])
+  item = save_item_info(parsed, parsed[:list][parsed[:task_num] - 1])
   return parsed[:err_msg] = "Error: Task #{parsed[:task_num]} is already " \
     "assigned to #{parsed[:assigned_member_name]}" if item.assigned_member_id == parsed[:assigned_member_id]
-  prev_assigned_member_name = slack_member_name_from_slack_user_id(parsed, item.assigned_member_id)
+  prev_assigned_member_name = 'no one' if item.assigned_member_id.nil?
+  prev_assigned_member_name =
+    slack_member_name_from_slack_user_id(parsed, item.assigned_member_id) unless item.assigned_member_id.nil?
   item.assigned_member_id = parsed[:assigned_member_id]
   if item.save
     task_owner = parsed[:list_owner]
     task_owner = 'your' if parsed[:list_owner] == :mine
     task_owner = 'team' if parsed[:list_owner] == :team
     return "Assigned #{task_owner} task #{parsed[:task_num]} to " \
-           "@#{parsed[:assigned_member_name]}." \
-           "#{prev_assigned_member_name.nil? ? '' : '  NOTE: It was previously assigned ' \
-           "to @#{prev_assigned_member_name}"}"
+           "@#{parsed[:assigned_member_name]}.  NOTE: It was previously " \
+           "assigned to #{prev_assigned_member_name}."
   end
   parsed[:err_msg] = 'Error: There was an error assigning this Task.'
 end

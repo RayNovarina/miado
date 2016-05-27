@@ -35,15 +35,15 @@ def add_command(parsed)
     add_channel(params, list)
   item.assigned_member_id, _assigned_member_name, assigned_to_clause =
     add_assigned_member(parsed)
-  item.assigned_due_date, due_date_clause =
-    add_due_date(parsed)
-  item.description = add_description(parsed)
+  item.assigned_due_date, due_date_clause = add_due_date(parsed)
+  item.description, description_clause = add_description(parsed)
 
   response =
-    "#{task_num_clause}#{assigned_to_clause}#{due_date_clause}" \
-    " Type `#{params[:command]}<enter>` for a current list."
-  # " Type `#{params[:command]} list` for YOUR current list." \
-  # " or `#{params[:command]} list team` for current TEAM list."
+    # "#{task_num_clause}#{assigned_to_clause}#{due_date_clause}" \
+    # " Type `#{params[:command]}<enter><enter>` for a current list."
+    "#{task_num_clause} as: ` #{description_clause}#{assigned_to_clause} " \
+    "#{due_date_clause}`" \
+    "\n`Type #{params[:command]}<enter><enter> for a current list.`"
   item.debug_trace =
     "From add command - Response:#{response}  " \
     "trace_syntax:#{parsed[:trace_syntax]}"
@@ -65,9 +65,8 @@ end
 
 # Returns: [channel_id, task_num_clause]
 def add_channel(params, list)
-  [params[:channel_id],
-   "Task #{list.length + 1} added. "
-  ]
+  [params[:channel_id], "Task #{list.length + 1} added"]
+  # "Task #{list.length + 1} added. "]
 end
 
 # Returns: [assigned_member_id, assigned_to_clause]
@@ -87,7 +86,7 @@ def add_due_date(parsed)
 end
 
 def add_description(parsed)
-  parsed[:command]
+  [parsed[:command], parsed[:command]]
 end
 
 def adjust_add_cmd_action_context(parsed)

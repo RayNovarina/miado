@@ -60,31 +60,38 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
     }
   end
 
-  # the most recently active channel will have most recent member and taskbot channel list?
-  # Add slack_user_id to Channel model.
-  # To verify member using channel hash:
-  # channel.members.key?(parsed[:mentioned_member_name])
-  # rtm.members_list.each do |member|
-  #  channel.members[member.name] = member.slack_user_id
-  #  channel.members[member.slack_user_id] = member.name
-  #  channel.members[:taskbot_channel_id] = ''
-  # end
-
-  # Note: if a new member has been added, then we will not recognize the
-  #       slack_user_id.slack_team_id.slack_channel_id. In this case a new
-  #       channel/ccb is created and an updated ccb.members hash is created with
-  #       the new member's slack_user_id and taskbot_channel_id.
+=begin
+  Form Params
+  channel_id	C0VNKV7BK
+  channel_name	general
+  command	/do
+  response_url	https://hooks.slack.com/commands/T0VN565N0/36163731489/YAHWUMXlBdviTE1rBILELuFK
+  team_domain	shadowhtracteam
+  team_id	T0VN565N0
+  text	call GoDaddy @susan /fri
+  token	3ZQVG7rk4p7EZZluk1gTH3aN
+  user_id	U0VLZ5P51
+  user_name	ray
+=end
+  # Case1: Member1 installs miaDo. We only generate channels for the installing
+  #        member. Only this member has a taskbot dm channel and token. BUT the
+  #        slash command is available to all members. Member2 uses /do.
+  # Case2: a new member has been added to a team.
+  #   In these cases we will not recognize the
+  #   slack_user_id.slack_team_id.slack_channel_id.  A new channel/ccb is
+  #   created. We get the members lookup hash from any channel for this team.
   def recover_previous_action_list
-    @view.channel ||=
-      Channel.find_or_create_from_slack(@view, params[:user_id],
-                                        params[:team_id], params[:channel_id])
+    @view.channel =
+      Channel.find_from_slack(@view, params[:user_id], params[:team_id],
+                              params[:channel_id])
+    @view.channel = Channel.create_from_slack(@view, params) if @view.channel.nil?
     if @view.channel.nil?
       return [nil,
-              "`MiaDo server ERROR: team #{params[:team_domain]}" \
-              "(#{params[:team_id]}) or channel #{params[:channel_name]}" \
-              "(#{params[:channel_id]}) not found for Slack user #{params[:user_id]}." \
-              'MiaDo needs to be installed via add to Slack button ' \
-              'at www.miado.net/add_to_slack`']
+            "`MiaDo server ERROR: team #{params[:team_domain]}" \
+            "(#{params[:team_id]}) or channel #{params[:channel_name]}" \
+            "(#{params[:channel_id]}) not found for Slack user #{params[:user_id]}." \
+            'MiaDo needs to be installed via add to Slack button ' \
+            'at www.miado.net/add_to_slack`']
     end
     [@view.channel, @view.channel.after_action_parse_hash]
   end
