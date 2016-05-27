@@ -2,11 +2,14 @@
 <header class="css-page-header">
   <!-- # == Begin: Page Header Navigation - Navbar, inverse == -->
   <nav>
-    <div class="navbar navbar-inverse">
+    <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
       <div class="container">
         <%= render 'layouts/page_header_navbar_left' %>
         <%= render 'layouts/page_header_navbar_right' %>
       </div>
+      <% if @view.current_user && @view.current_user.admin? %>
+        <%= render 'layouts/page_header_navbar_admin_links' %>
+      <% end %>
     </div>
   </nav>
   <!-- # ======== End: Page Header Navigation == -->
