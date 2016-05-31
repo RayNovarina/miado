@@ -1,51 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <!-- ==== Begin: HTML HEAD TAG === -->
-  <meta charset="utf-8">
   <title>MiaDo</title>
-  <% # Rails assest pipeline per: http://guides.rubyonrails.org/asset_pipeline.html %>
-  <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true %>
-  <%= javascript_include_tag 'application', 'data-turbolinks-track' => true %>
-  <%= csrf_meta_tags %>
-  <!-- ==== End: HTML HEAD TAG === -->
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+  <script src="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
 </head>
-<body class="css-<%= @view.name %>" >
+<body>
 
+  <!-- # == Begin: yield :Page Main Body Content AtLast -Default- == -->
+  <%= yield %>
+  <!-- # == End: yield :Page Main Body Content AtLast -Default- == -->
 
-<% # ===== Blocmarks Page LAYOUT: ====   %>
-<% # Note: default/global content can be override via content_for/yeild hooks %>
-<% #------------------------------------------------------- %>
-<% # Section0: (CSS: doc#header) -Global- %>
-  <% # <header> Page Header  %>
-  <% if @view.policy(:include, :header) # Note: policy defined in pages_controller %>
-    <%= render 'layouts/page_header' %>
-     <% # <nav> Page Header navigation  %>
-  <% end %>
-<% #------------------------------------------------------- %>
-<% # Section1: (CSS: doc#main) -Global- %>
-  <% # <main> Page Content  %>
-  <%= render 'layouts/page_main' %>
-    <% #---------------------------------- %>
-    <% # <header> Page Main Content Header  %>
-      <% # <section> Page Main Content messages -Global-  %>
-    <% #---------------------------------- %>
-    <% # <main> Page Main Content Body -Global- %>
-      <% # <header> Page Main Content Body Header -Optional-  %>
-        <% # <nav> Page Main Content navigation  %>
-      <% # <main> Page Main Content Body -Optional- %>
-      <% # <footer> Page Main Content Footer -Optional- %>
-        <% # <nav> Page Main Content navigation  %>
-    <% #---------------------------------- %>
-    <% # <footer> Page Main Content Footer -Optional- %>
-      <% # <nav> Page Main Content navigation  %>
-<% #------------------------------------------------------- %>
-<% # Section2: (CSS: doc#footer) Global %>
-  <% # <footer> Page Footer %>
-  <% if @view.policy(:include, :footer) # Note: policy defined in pages_controller %>
-    <%= render 'layouts/page_footer' %>
-      <% # <nav> Page Footer navigation  %>
-  <% end %>
-<% #------------------------------------------------------- %>
 </body>
 </html>
