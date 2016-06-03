@@ -3,6 +3,7 @@
 <main class="css-page-main" >
   <!-- # == Begin: PAGE MAIN HEADER -global- -->
   <header>
+    <% if @view.policy(:include, :flash_msgs) # Note: policy defined in pages_controller %>
     <!-- # == Begin: PAGE MAIN HEADER messages -global- -->
     <section>
       <div class="container css-flash-messages">
@@ -18,11 +19,13 @@
       </div>
     </section>
     <!-- # == End: PAGE MAIN HEADER messages -global- -->
+    <% end %>
   </header>
   <!-- # == End: PAGE MAIN HEADER -global- -->
 
   <!-- # == Begin: PAGE MAIN BODY -Global- -->
   <main>
+    <% if @view.policy(:include, :header) # Note: policy defined in pages_controller %>
     <!-- # == Begin: PAGE MAIN BODY container - Jumbotron == -->
     <div class="jumbotron">
       <div class="container css-body">
@@ -30,8 +33,13 @@
         <%= yield %>
         <!-- # == End: yield :Page Main Body Content AtLast -Default- == -->
       </div>
-  </div>
-  <!-- # == End: PAGE MAIN BODY container - Jumbotron == -->
+    </div>
+    <!-- # == End: PAGE MAIN BODY container - Jumbotron == -->
+    <% else %>
+      <!-- # == Begin: yield :Page Main Body Content AtLast -Default- == -->
+      <%= yield %>
+      <!-- # == End: yield :Page Main Body Content AtLast -Default- == -->
+    <% end %>
   </main>
   <!-- # == End: PAGE MAIN BODY -Global- -->
 

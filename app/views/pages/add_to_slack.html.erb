@@ -1,14 +1,20 @@
-
+<% if @view.user_signed_in? %>
+  <h1><%= link_to 'Your are signed in. Sign out first.',
+        destroy_user_session_path(@view.current_user),
+        method: :delete,
+        style: 'btn btn-primary color: black; text-decoration: underline; cursor: default;'
+      %>
+  </h1>
+<% else %>
 <div class="container">
 
   <div class="jumbotron text-center">
-    <h1><a href="<%= root_path %>"
+    <h1><a href="<%= admin_path %>"
            style="color: black; text-decoration: none; cursor: default;">
           MiaDo
         </a>
     </h1>
     <%= image_tag 'dog_head_icon.png', class: 'img-rounded img-responsive center-block',
-
         size: '100x100' %>
     <h3>Simple Task Management<br>in Slack</h3>
     <p>
@@ -42,3 +48,4 @@
   </div>
 
 </div>
+<% end %>

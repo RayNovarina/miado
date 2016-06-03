@@ -51,8 +51,11 @@ Rails.application.routes.draw do
   # -------------------------------
   # App:
   # Landing page, About
-  root 'pages#welcome'
-  get  'about', to: 'pages#about'
+  # root 'pages#welcome'
+  # root 'pages#root'
+  root 'pages#add_to_slack'
+  get 'about', to: 'pages#about'
+  get 'admin', to: 'pages#admin'
   get '/add_to_slack', to: 'pages#add_to_slack', as: 'add_to_slack'
   get '/welcome/new', to: 'pages#welcome_new', as: 'welcome_new'
   get '/welcome/add_to_slack_new', to: 'pages#welcome_add_to_slack_new', as: 'welcome_add_to_slack_new'

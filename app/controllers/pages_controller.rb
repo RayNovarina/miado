@@ -2,6 +2,13 @@
 class PagesController < ApplicationController
   before_action :make_view_helper
 
+  def root
+    @view.user = @view.current_user
+  end
+
+  def admin
+  end
+
   def welcome
   end
 
@@ -31,6 +38,13 @@ class PagesController < ApplicationController
   def add_to_slack
   end
 
+  def use_asset_pipeline
+    return true if @view.user_signed_in? && @view.name == 'pages-add_to_slack'
+    return false if @view.name == 'pages-add_to_slack'
+    return false if @view.name == 'pages-welcome_add_to_slack_new'
+    true
+  end
+
   def show_header
     return false if @view.name == 'pages-add_to_slack'
     return false if @view.name == 'pages-welcome_add_to_slack_new'
@@ -38,8 +52,14 @@ class PagesController < ApplicationController
   end
 
   def show_footer
-    # return true unless @view.name == 'pages-add_to_slack'
-    # false
+    return false if @view.name == 'pages-add_to_slack'
+    return false if @view.name == 'pages-welcome_add_to_slack_new'
+    true
+  end
+
+  def show_main
+    return false if @view.name == 'pages-add_to_slack'
+    return false if @view.name == 'pages-welcome_add_to_slack_new'
     true
   end
 
