@@ -1,15 +1,17 @@
 <% if @view.user_signed_in? %>
-  <h1><%= link_to 'Your are signed in. Sign out first.',
+  <h1><%= "You are signed into the MiaDo web app as #{@view.user.name}. Click " %>
+  <%= link_to 'here',
         destroy_user_session_path(@view.current_user),
         method: :delete,
         style: 'btn btn-primary color: black; text-decoration: underline; cursor: default;'
       %>
+  <%= ' to log out of MiaDo. Next, refresh this page or try the add to Slack page again.' %>
   </h1>
 <% else %>
 <div class="container">
 
   <div class="jumbotron text-center">
-    <h1><a href="<%= admin_path %>"
+    <h1><a href="<%= new_user_session_path %>"
            style="color: black; text-decoration: none; cursor: default;">
           MiaDo
         </a>
