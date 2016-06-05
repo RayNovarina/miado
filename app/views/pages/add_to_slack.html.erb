@@ -1,16 +1,17 @@
-<% if @view.user_signed_in? %>
-  <h1><%= "You are signed into the MiaDo web app as #{@view.user.name}. Click " %>
-  <%= link_to 'here',
-        destroy_user_session_path(@view.current_user),
-        method: :delete,
-        style: 'btn btn-primary color: black; text-decoration: underline; cursor: default;'
-      %>
-  <%= ' to log out of MiaDo. Next, refresh this page or try the add to Slack page again.' %>
-  </h1>
-<% else %>
+<% unless @view.user_signed_in? %>
 <div class="container">
+  <div class="navbar" role="navigation">
+    <div class="container">
+      <ul class="nav navbar-nav pull-right" style="font-weight: 900;">
+        <li><a href="#" class="brand"><u>Product</u></a></li>
+        <li><a href="#" class="brand"><u>FAQ</u></a></li>
+        <li><a href="#" class="brand"><u>About</u></a></li>
+        <li><a href="#" class="brand"><u>Contact Us</u></a></li>
+      </ul>
+    </div>
+  </div>
 
-  <div class="jumbotron text-center">
+  <div class="row text-center">
     <h1><a href="<%= new_user_session_path %>"
            style="color: black; text-decoration: none; cursor: default;">
           MiaDo
@@ -18,7 +19,8 @@
     </h1>
     <%= image_tag 'dog_head_icon.png', class: 'img-rounded img-responsive center-block',
         size: '100x100' %>
-    <h3>Simple Task Management<br>in Slack</h3>
+    <h3>Simple Task Management in Slack</h3>
+    <br>
     <p>
       <a href="<%= new_user_registration_path(oauth: 'slack') %>">
         <img alt="Add to Slack" height="60" width="200"
@@ -49,5 +51,81 @@
     </div>
   </div>
 
+  <br>
+  <div class="row" style="background-color: LightCyan; color: Blue">
+    <br>
+    <h4><p class="text-center" style="font-weight: 900;">Miado commands</p></h4>
+  </div>
+  <div class="row" style="background-color: LightCyan; color: Blue">
+    <div class="col-sm-8 col-sm-offset-2 text-left">
+      <strong>/do rev 1 spec @susan /jun15</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Adds "rev 1spec" task to this channel, assigns it to Susan, due date is June 15.
+      <br>
+      <strong>/do update doc for rev 1</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Adds "update doc for rev 1" to this channel and leaves it unassigned.
+      <br>
+      <strong>/do assign 4 @joe</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Assigns "@joe" to task 4 for this channel.
+      <br>
+      <strong>/do done 4</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Marks task 4 as completed.
+      <br>
+      <strong>/do delete 2</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Deletes task number 2 from the list.
+      <br>
+      <strong>/do due 4 /wed</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Sets the task due date to Wednesday for task 4.
+      <br>
+      <strong>/do list</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Lists your ASSIGNED and OPEN tasks for THIS channel.
+      <br>
+      <strong>/do list all</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Lists your ASSIGNED and OPEN tasks for ALL channels.
+      <br>
+      <strong>/do list team</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Lists all TEAM tasks that are OPEN for THIS channel.
+      <br>
+      <strong>/do list team all</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Lists all TEAM tasks that are OPEN for ALL channels.
+      <br>
+      <span class="glyphicon glyphicon-star"></span>
+      Click on your <strong>taskbot</strong> to see all of your up-to-date lists.
+      &nbsp;&nbsp;&nbsp;&nbsp;<strong>[<u>More</u>...]</strong>
+    </div>
+    <br><br>
+  </div>
+
+  <div class="row" style="background-color: Beige; color: grey;">
+    <div class="col-sm-8 col-sm-offset-2">
+      <br>
+      <h4><p class="text-center" style="font-weight: 900;">Have a question?<p><h4>
+      <div class="form-group">
+        <input type="text" class="form-control" style="font-weight: 900;" id="name" placeholder="Name:">
+      </div>
+      <div class="form-group">
+        <input type="email" class="form-control" style="font-weight: 900;" id="email" placeholder="Email:">
+      </div>
+      <div class="form-group">
+        <textarea class="form-control" rows="6" style="font-weight: 900;" id="comment" placeholder="Comment:"></textarea>
+      </div>
+      <button type="submit" class="btn" style="font-weight: 900;">Submit</button>
+    </div>
+    <br><br>
+  </div>
+  <br>
+  <p class="text-center" style="color: grey">
+    Copyright 2016 yaddayadda All Rights Reserved
+  <p>
+
 </div>
+
+<% else %>
+<h1><%= "You are signed into the MiaDo web app as #{@view.user.name}. Click " %>
+<%= link_to 'here',
+      destroy_user_session_path(@view.current_user),
+      method: :delete,
+      style: 'btn btn-primary color: black; text-decoration: underline; cursor: default;'
+    %>
+<%= ' to log out of MiaDo. Next, refresh this page or try the add to Slack page again.' %>
+</h1>
 <% end %>
