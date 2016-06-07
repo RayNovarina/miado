@@ -1,6 +1,6 @@
 <% unless @view.user_signed_in? %>
 
-  <nav class="navbar navbar-default" role="navigation">
+  <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
     <div class="container-fluid">
     <div class="navbar-header">
       <button type="button" class="navbar-toggle"
@@ -12,10 +12,11 @@
     </div>
     <div class="collapse navbar-collapse" id="myNavbar">
       <ul class="nav navbar-nav pull-right" style="font-weight: 900;">
-        <li><a href="#" class="brand"><u>Product</u></a></li>
-        <li><a href="#" class="brand"><u>FAQ</u></a></li>
-        <li><a href="#" class="brand"><u>About</u></a></li>
-        <li><a href="#" class="brand"><u>Contact Us</u></a></li>
+        <li><a href="#home" class="brand"><u>Home</u></a></li>
+        <li><a href="#product" class="brand"><u>Product</u></a></li>
+        <li><a href="/about#faq" class="brand"><u>FAQ</u></a></li>
+        <li><a href="/about#about_me" class="brand"><u>About</u></a></li>
+        <li><a href="#contact_us" class="brand"><u>Contact Us</u></a></li>
       </ul>
     </div>
     </div>
@@ -23,7 +24,7 @@
 
 <div class="container">
 
-  <div class="row text-center">
+  <div id="home" class="row text-center" style="padding-top:40px;">
     <h1><a href="<%= new_user_session_path %>"
            style="color: black; text-decoration: none; cursor: default;">
           MiaDo
@@ -42,7 +43,7 @@
     </p>
   </div>
 
-  <div class="row text-center">
+  <div id="product" class="row text-center" style="padding-top:40px;">
     <div class="col-sm-4">
       <h2>Simple to use</h2>
       <p>Add and assign a task with a due date, all in one quick entry.
@@ -68,7 +69,7 @@
     <br>
     <h4><p class="text-center" style="font-weight: 900;">Miado commands</p></h4>
   </div>
-  <div class="row" style="background-color: LightCyan; color: Blue">
+  <div class="row" style="background-color: LightCyan; color: Blue; padding-bottom: 20px;">
     <div class="col-sm-8 col-sm-offset-2 text-left">
       <strong>/do rev 1 spec @susan /jun15</strong>
       &nbsp;&nbsp;&nbsp;&nbsp;Adds "rev 1spec" task to this channel, assigns it to Susan, due date is June 15.
@@ -104,12 +105,11 @@
       Click on your <strong>taskbot</strong> to see all of your up-to-date lists.
       &nbsp;&nbsp;&nbsp;&nbsp;<strong>[<u>More</u>...]</strong>
     </div>
-    <br><br>
   </div>
 
-  <div class="row" style="background-color: Beige; color: grey;">
+  <div id="contact_us" class="row"
+       style="padding-top:40px; background-color: Beige; color: grey;">
     <div class="col-sm-8 col-sm-offset-2">
-      <br>
       <h4><p class="text-center" style="font-weight: 900;">Have a question?<p><h4>
       <div class="form-group">
         <input type="text" class="form-control" style="font-weight: 900;" id="name" placeholder="Name:">
@@ -125,7 +125,7 @@
     <br><br>
   </div>
   <br>
-  <p class="text-center" style="color: grey">
+  <p class="text-center" style="color: grey; padding-bottom: 234px;">
     Copyright 2016 yaddayadda All Rights Reserved
   <p>
 

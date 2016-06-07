@@ -42,18 +42,21 @@ class PagesController < ApplicationController
     return true if @view.user_signed_in? && @view.name == 'pages-add_to_slack'
     return false if @view.name == 'pages-add_to_slack'
     return false if @view.name == 'pages-welcome_add_to_slack_new'
+    return false if @view.name == 'pages-about'
     true
   end
 
   def show_header
     return false if @view.name == 'pages-add_to_slack'
     return false if @view.name == 'pages-welcome_add_to_slack_new'
+    return false if @view.name == 'pages-about'
     true
   end
 
   def show_footer
     return false if @view.name == 'pages-add_to_slack'
     return false if @view.name == 'pages-welcome_add_to_slack_new'
+    return false if @view.name == 'pages-about'
     true
   end
 

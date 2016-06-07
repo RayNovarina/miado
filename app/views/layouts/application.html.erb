@@ -1,24 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <!-- ==== Begin: HTML HEAD TAG === -->
-  <meta charset="utf-8">
-  <title>MiaDo</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <% if @view.policy(:include, :asset_pipeline) # Note: policy defined in pages_controller %>
+<% if @view.policy(:include, :asset_pipeline) # Note: policy defined in pages_controller %>
+  <head>
+    <!-- ==== Begin: HTML HEAD TAG === -->
+    <meta charset="utf-8">
+    <title>MiaDo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <% # Rails assest pipeline per: http://guides.rubyonrails.org/asset_pipeline.html %>
     <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true %>
     <%= javascript_include_tag 'application', 'data-turbolinks-track' => true %>
-  <% else %>
+    <%= csrf_meta_tags %>
+    <!-- ==== End: HTML HEAD TAG === -->
+  </head>
+  <body class="css-<%= @view.name %>" >
+
+<% else %>
+  <head>
+    <!-- ==== Begin: HTML HEAD TAG === -->
+    <meta charset="utf-8">
+    <title>MiaDo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <!-- Dont use rails asset pipeline because of conflict with bootstrap responsive -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <style>
+      body {
+        position: relative;
+      }
+    </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <%= csrf_meta_tags %>
+    <!-- ==== End: HTML HEAD TAG === -->
+  </head>
+  <body class="css-<%= @view.name %>" data-spy="scroll" data-target=".navbar" data-offset="40">
   <% end %>
-  <%= csrf_meta_tags %>
-  <!-- ==== End: HTML HEAD TAG === -->
-</head>
-<body class="css-<%= @view.name %>" >
 
   <% # ===== MiaDo Page LAYOUT: ====   %>
   <% # Note: default/global content can be override via content_for/yeild hooks %>

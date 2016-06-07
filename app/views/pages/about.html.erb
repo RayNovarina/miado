@@ -1,19 +1,124 @@
-<center><h1>About MiaDo</h1></center>
+<% unless @view.user_signed_in? %>
 
-<div class="row">
-  <div class="col-md-4">
-    <h2>Simple to xxxxx</h2>
-    <p>Just xxxxx.
+  <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle"
+              data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav pull-right" style="font-weight: 900;">
+        <li><a href="/add_to_slack" class="brand"><u>Home</u></a></li>
+        <li><a href="/add_to_slack#product" class="brand"><u>Product</u></a></li>
+        <li><a href="#faq" class="brand"><u>FAQ</u></a></li>
+        <li><a href="#about_me" class="brand"><u>About</u></a></li>
+        <li><a href="/add_to_slack#contact_us" class="brand"><u>Contact Us</u></a></li>
+      </ul>
+    </div>
+    </div>
+  </nav>
+
+<div class="container">
+
+  <div id="" class="row text-center" style="padding-top:40px;">
+    <h1><a href="<%= new_user_session_path %>"
+           style="color: black; text-decoration: none; cursor: default;">
+          MiaDo
+        </a>
+    </h1>
+    <%= image_tag 'dog_head_icon.png', class: 'img-rounded img-responsive center-block',
+        size: '100x100' %>
+    <h3>Simple Task Management in Slack</h3>
+    <br>
+    <p>
+      <a href="<%= new_user_registration_path(oauth: 'slack') %>">
+        <img alt="Add to Slack" height="60" width="200"
+             src="https://platform.slack-edge.com/img/add_to_slack.png"
+             srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" />
+      </a>
     </p>
   </div>
-  <div class="col-md-4">
-    <h2>Simple to yyyyyy</h2>
-      <p>Just yyyyyy.
+
+  <div id="faq" class="row text-center" style="padding-top:40px; font-weight: 900;">
+    <div class="col-sm-12">
+      <h2>Frequently Asked Questions</h2>
+    </div>
+    <div class="col-sm-12">
+      <p>Question one<br>
+         Response
       </p>
-  </div>
-  <div class="col-md-4">
-    <h2>Simple zzzzzz</h2>
-      <p>Just zzzzz.
+    </div>
+    <div class="col-sm-12">
+      <p>Question two<br>
+         Response
       </p>
+    </div><div class="col-sm-12">
+      <p>Question three<br>
+         Response
+      </p>
+    </div><div class="col-sm-12">
+      <p>What's the dog's head about?<br>
+         My dog Mia.
+      </p>
+    </div>
   </div>
+
+  <br>
+  <div class="row" style="background-color: LightCyan; color: Blue">
+    <br>
+    <h4><p class="text-center" style="font-weight: 900;">Additional Miado commands</p></h4>
+  </div>
+  <div class="row" style="background-color: LightCyan; color: Blue; padding-bottom: 40px;">
+    <div class="col-sm-8 col-sm-offset-2 text-left">
+      <strong>/do rev 1 spec @susan /jun15</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Adds "rev 1spec" task to this channel, assigns it to Susan, due date is June 15.
+      <br>
+      <strong>/do update doc for rev 1</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Adds "update doc for rev 1" to this channel and leaves it unassigned.
+      <br>
+      <strong>/do assign 4 @joe</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Assigns "@joe" to task 4 for this channel.
+      <br>
+      <strong>/do done 4</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Marks task 4 as completed.
+      <br>
+      <strong>/do delete 2</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Deletes task number 2 from the list.
+      <br>
+      <span class="glyphicon glyphicon-star"></span>
+      Click on your <strong>taskbot</strong> to see all of your up-to-date lists.
+    </div>
+  </div>
+
+  <div id="about_me" class="row"
+       style="padding-top:40px; padding-bottom: 140px; background-color: Beige; color: grey;">
+    <div class="col-sm-8 col-sm-offset-2">
+      <h4><p class="text-center" style="font-weight: 900;">About Me<p><h4>
+    </div>
+    <img width='80px' height='80px' src='https://cdn-photos.bloc.io/medium/2317655/photo.JPG?1450380571'>
+    <p>I'm Ray Novarina and yada yadda yadda
+      more about me more about me.
+    </p>
+    <br><br>
+  </div>
+  <br>
+  <p class="text-center" style="color: grey; padding-bottom: 180px;">
+    Copyright 2016 yaddayadda All Rights Reserved
+  <p>
+  <br><br><br><br><br>
 </div>
+
+<% else %>
+<h1><%= "You are signed into the MiaDo web app as #{@view.user.name}. Click " %>
+<%= link_to 'here',
+      destroy_user_session_path(@view.current_user),
+      method: :delete,
+      style: 'btn btn-primary color: black; text-decoration: underline; cursor: default;'
+    %>
+<%= ' to log out of MiaDo. Next, refresh this page or try the add to Slack page again.' %>
+</h1>
+<% end %>
