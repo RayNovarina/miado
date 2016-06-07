@@ -23,8 +23,20 @@
     <!-- Dont use rails asset pipeline because of conflict with bootstrap responsive -->
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
     <style>
+      /* Sticky footer and scroll-spy styles */
       body {
         position: relative;
+        min-height: 100%;
+        /* Margin bottom by footer height */
+        margin-bottom: 10px;
+      }
+      .css-page-footer {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        /* Set the fixed height of the footer here */
+        height: 10px;
+        }
       }
     </style>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
