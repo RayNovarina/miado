@@ -102,28 +102,43 @@
       &nbsp;&nbsp;&nbsp;&nbsp;Lists all TEAM tasks that are OPEN for ALL channels.
       <br>
       <span class="glyphicon glyphicon-star"></span>
-      Click on your <strong>taskbot</strong> to see all of your up-to-date lists.
-      &nbsp;&nbsp;&nbsp;&nbsp;<strong>[<u>More</u>...]</strong>
+      <span style="color:grey">
+        <strong>Click on your <span style="color:blue">taskbot</span> to see all of your up-to-date lists.
+        </strong>
+      </span>
+      &nbsp;&nbsp;&nbsp;&nbsp;<strong>[<a href="/about#faq" class="brand"><u>More</u></a>...]</strong>
     </div>
   </div>
 
   <div id="contact_us" class="row"
        style="padding-top:40px; background-color: Beige; color: grey;">
     <div class="col-sm-8 col-sm-offset-2">
-      <h4><p class="text-center" style="font-weight: 900;">Have a question?<p><h4>
-      <div class="form-group">
-        <input type="text" class="form-control" style="font-weight: 900;" id="name" placeholder="Name:">
-      </div>
-      <div class="form-group">
-        <input type="email" class="form-control" style="font-weight: 900;" id="email" placeholder="Email:">
-      </div>
-      <div class="form-group">
-        <textarea class="form-control" rows="6" style="font-weight: 900;" id="comment" placeholder="Comment:"></textarea>
-      </div>
-      <button type="submit" class="btn" style="font-weight: 900;">Submit</button>
+      <form name="comments" role="form" data-toggle="validator" method="post" action="/comments">
+        <h4><p class="text-center" style="font-weight: 900;">Have a question?<p></h4>
+        <br>
+        <div class="form-group">
+          <label class="sr-only" for="name">Name:</label>
+          <input type="text" class="form-control" style="font-weight: 900;" name="name" placeholder="Name:" required>
+        </div>
+        <div class="form-group">
+          <label class="sr-only" for="email">Email address:</label>
+          <input type="email" class="form-control" style="font-weight: 900;" name="email" placeholder="Email:" required>
+        </div>
+        <div class="form-group">
+          <textarea class="form-control" rows="6" style="font-weight: 900;" name="body" placeholder="Comment:" required></textarea>
+        </div>
+        <div class="form-group hidden">
+          <label class="sr-only" for="name">Bot_catcher:</label>
+          <input type="text" class="form-control hidden" name="bot_catcher" placeholder="See no evil, submit no evil.">
+        </div>
+        <div class="form-group">
+          <button type="submit" class="btn" style="font-weight: 900;">Submit</button>
+        </div>
+      </form>
     </div>
     <br><br>
   </div>
+
   <br>
   <p class="css-page-footer text-center" style="color: grey;">
     Copyright 2016 yaddayadda All Rights Reserved

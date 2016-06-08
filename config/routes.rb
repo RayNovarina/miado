@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  get 'comments/create'
+
   resources :omniauth_providers, only: [:index, :show, :destroy]
   #
   # per: https://github.com/plataformatec/devise#getting-started
@@ -45,6 +47,8 @@ Rails.application.routes.draw do
       end
     end
   end
+
+  resources :comments, only: [:create]
 
   get 'messages/index', to: 'messages#index'
 
