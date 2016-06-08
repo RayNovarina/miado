@@ -2,7 +2,7 @@
 class CommentMailer < ApplicationMailer
   default from: 'admin@miado.net'
   default to: 'RNova94037@gmail.com'
-  default to: 'Dawn.Novarina@wemeus.com'
+  default cc: 'Dawn.Novarina@wemeus.com'
 
   def new_comment(submitted_comment)
     @comment = submitted_comment
