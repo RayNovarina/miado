@@ -73,41 +73,49 @@
     <h4><p class="text-center" style="font-weight: 900;">Additional Miado commands</p></h4>
   </div>
   <div class="row" style="background-color: LightCyan; color: Blue; padding-bottom: 40px;">
-    <div class="col-sm-8 col-sm-offset-2 text-left">
-      <strong>/do rev 1 spec @susan /jun15</strong>
-      &nbsp;&nbsp;&nbsp;&nbsp;Adds "rev 1spec" task to this channel, assigns it to Susan, due date is June 15.
+    <div class="col-sm-8 col-sm-offset-2 well text-left">
+      <strong>/do append 3 Contact Jim.</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Adds "Contact Jim." to the end of task 3.
       <br>
-      <strong>/do update doc for rev 1</strong>
-      &nbsp;&nbsp;&nbsp;&nbsp;Adds "update doc for rev 1" to this channel and leaves it unassigned.
+      <strong>/do unassign 4 @joe</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Removes "@joe" from task 4.
       <br>
-      <strong>/do assign 4 @joe</strong>
-      &nbsp;&nbsp;&nbsp;&nbsp;Assigns "@joe" to task 4 for this channel.
+      <strong>/do redo 1 Send out newsletter /fri.</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Deletes task 1, adds new task "Send out newsletter /fri."
       <br>
-      <strong>/do done 4</strong>
-      &nbsp;&nbsp;&nbsp;&nbsp;Marks task 4 as completed.
+      <strong>/do list due</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Lists your ASSIGNED and OPEN tasks with a due date for THIS channel.
       <br>
-      <strong>/do delete 2</strong>
-      &nbsp;&nbsp;&nbsp;&nbsp;Deletes task number 2 from the list.
+      <strong>/do list all</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Lists your ASSIGNED and OPEN tasks for ALL channels.
       <br>
       <span class="glyphicon glyphicon-star"></span>
-      Click on your <strong>taskbot</strong> to see all of your up-to-date lists.
+      Remember, Click on your <strong>taskbot</strong> to see all of your up-to-date lists.
     </div>
   </div>
 
   <div id="about_me" class="row"
-       style="padding-top:40px; padding-bottom: 140px; background-color: Beige; color: grey;">
-    <div class="col-sm-8 col-sm-offset-2">
-      <h4><p class="text-center" style="font-weight: 900;">About Me<p><h4>
+       style="padding-top:40px; padding-bottom: 40px; margin-bottom: 282px; background-color: Beige; color: grey;">
+    <div class="col-sm-8 col-sm-offset-2 well" style="margin-top: 20px; padding:40px;">
+      <div class="media">
+        <div class="media-left">
+          <%= image_tag 'photo-1.jpg', class: 'media-object', size: '140x140', style: 'border: 2px solid brown;' %>
+        </div>
+        <div class="media-body">
+          <h3 class="media-heading" style="font-weight: 900; padding-bottom: 10px;">About Me</h3>
+          Line 1 adfdasf adf asd asdf adf asd fasd fasd fad f sadfad sfd fads fas dfasdf asdf  asdf
+          Line 2 adfadsf ads f df adf adf f adf d fdsaf ad fdfdaf df adf adsfa fdf adfa df fdfadsf
+          Line 1 adfdasf adf asd asdf adf asd fasd fasd fad f sadfad sfd fads fas dfasdf asdf  asdf
+          Line 2 adfadsf ads f df adf adf f adf d fdsaf ad fdfdaf df adf adsfa fdf adfa df fdfadsf
+          Line 1 adfdasf adf asd asdf adf asd fasd fasd fad f sadfad sfd fads fas dfasdf asdf  asdf
+          Line 2 adfadsf ads f df adf adf f adf d fdsaf ad fdfdaf df adf adsfa fdf adfa df fdfadsf
+        </div>
+      </div>
     </div>
-    <img width='80px' height='80px' src='https://cdn-photos.bloc.io/medium/2317655/photo.JPG?1450380571'>
-    <p>I'm Ray Novarina and yada yadda yadda
-      more about me more about me.
-    </p>
-    <br><br>
   </div>
-  <br>
+
   <p class="css-page-footer text-center" style="color: grey;">
-    Copyright 2016 yaddayadda All Rights Reserved
+    Copyright 2016 Ray Novarina All Rights Reserved
   <p>
 </div>
 
