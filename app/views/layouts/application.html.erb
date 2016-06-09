@@ -1,51 +1,82 @@
 <!DOCTYPE html>
-<html>
-<head>
-  <!-- ==== Begin: HTML HEAD TAG === -->
-  <meta charset="utf-8">
-  <title>MiaDo</title>
-  <% # Rails assest pipeline per: http://guides.rubyonrails.org/asset_pipeline.html %>
-  <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true %>
-  <%= javascript_include_tag 'application', 'data-turbolinks-track' => true %>
-  <%= csrf_meta_tags %>
-  <!-- ==== End: HTML HEAD TAG === -->
-</head>
-<body class="css-<%= @view.name %>" >
+<html lang="en">
+<% if @view.policy(:include, :asset_pipeline) # Note: policy defined in pages_controller %>
+  <head>
+    <!-- ==== Begin: HTML HEAD TAG === -->
+    <meta charset="utf-8">
+    <title>MiaDo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <% # Rails assest pipeline per: http://guides.rubyonrails.org/asset_pipeline.html %>
+    <%= stylesheet_link_tag    'application', media: 'all', 'data-turbolinks-track' => true %>
+    <%= javascript_include_tag 'application', 'data-turbolinks-track' => true %>
+    <%= csrf_meta_tags %>
+    <!-- ==== End: HTML HEAD TAG === -->
+  </head>
+  <body class="css-<%= @view.name %>" >
 
+<% else %>
+  <head>
+    <!-- ==== Begin: HTML HEAD TAG === -->
+    <meta charset="utf-8">
+    <title>MiaDo</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Dont use rails asset pipeline because of conflict with bootstrap responsive -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <style>
+      /* Sticky footer and scroll-spy styles */
+      body {
+        position: relative;
+        min-height: 100%;
+        /* Margin bottom by footer height */
+        margin-bottom: 10px;
+      }
+      .css-page-footer {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        /* Set the fixed height of the footer here */
+        height: 10px;
+        }
+      }
+    </style>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.2/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+    <%= csrf_meta_tags %>
+    <!-- ==== End: HTML HEAD TAG === -->
+  </head>
+  <body class="css-<%= @view.name %>" data-spy="scroll" data-target=".navbar" data-offset="40">
+  <% end %>
 
-<% # ===== Blocmarks Page LAYOUT: ====   %>
-<% # Note: default/global content can be override via content_for/yeild hooks %>
-<% #------------------------------------------------------- %>
-<% # Section0: (CSS: doc#header) -Global- %>
-  <% # <header> Page Header  %>
-  <% if @view.policy(:include, :header) # Note: policy defined in pages_controller %>
-    <%= render 'layouts/page_header' %>
-     <% # <nav> Page Header navigation  %>
-  <% end %>
-<% #------------------------------------------------------- %>
-<% # Section1: (CSS: doc#main) -Global- %>
-  <% # <main> Page Content  %>
-  <%= render 'layouts/page_main' %>
-    <% #---------------------------------- %>
-    <% # <header> Page Main Content Header  %>
-      <% # <section> Page Main Content messages -Global-  %>
-    <% #---------------------------------- %>
-    <% # <main> Page Main Content Body -Global- %>
-      <% # <header> Page Main Content Body Header -Optional-  %>
-        <% # <nav> Page Main Content navigation  %>
-      <% # <main> Page Main Content Body -Optional- %>
-      <% # <footer> Page Main Content Footer -Optional- %>
-        <% # <nav> Page Main Content navigation  %>
-    <% #---------------------------------- %>
-    <% # <footer> Page Main Content Footer -Optional- %>
-      <% # <nav> Page Main Content navigation  %>
-<% #------------------------------------------------------- %>
-<% # Section2: (CSS: doc#footer) Global %>
-  <% # <footer> Page Footer %>
-  <% if @view.policy(:include, :footer) # Note: policy defined in pages_controller %>
-    <%= render 'layouts/page_footer' %>
-      <% # <nav> Page Footer navigation  %>
-  <% end %>
-<% #------------------------------------------------------- %>
+  <% # ===== MiaDo Page LAYOUT: ====   %>
+  <% # Note: default/global content can be override via content_for/yeild hooks %>
+  <% #------------------------------------------------------- %>
+  <% # Section0: (CSS: doc#header) -Global- %>
+    <% # <header> Page Header  %>
+    <% if @view.policy(:include, :header) # Note: policy defined in pages_controller %>
+      <%= render 'layouts/page_header' %>
+       <% # <nav> Page Header navigation  %>
+    <% end %>
+
+  <% #------------------------------------------------------- %>
+  <% # Section1: (CSS: doc#main) -Global- %>
+    <% # <main> Page Content  %>
+    <% if @view.policy(:include, :main) # Note: policy defined in pages_controller %>
+      <%= render 'layouts/page_main' %>
+       <% # <main> Page body  %>
+    <% else %>
+      <!-- # == Begin: yield :Page Main Body Content AtLast -Default- == -->
+      <%= yield %>
+      <!-- # == End: yield :Page Main Body Content AtLast -Default- == -->
+    <% end %>
+
+  <% #------------------------------------------------------- %>
+  <% # Section2: (CSS: doc#footer) Global %>
+    <% # <footer> Page Footer %>
+    <% if @view.policy(:include, :footer) # Note: policy defined in pages_controller %>
+      <%= render 'layouts/page_footer' %>
+        <% # <nav> Page Footer navigation  %>
+    <% end %>
+  <% #------------------------------------------------------- %>
+
 </body>
 </html>

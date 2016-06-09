@@ -3,17 +3,38 @@
     <div class="col-md-10 col-md-offset-1">
       <div class="jumbotron">
         <center>
-          <h1>MiaDo</h1>
+          <h1><a href="<%= new_user_session_path %>"
+                 style="color: black; text-decoration: none; cursor: default;">
+            MiaDo
+          </a>
+          </h1>
           <%= image_tag 'dog_head_icon.png', class: 'img-circle',
               style: 'margin-right: 20px;',
               size: '100x100' %>
+              <%team = @view.locals[:team]
+                provider = @view.locals[:provider]
+                bot_name = '/do'
+                if provider.nil?
+                  user_name = 'No Name'
+                  team_name = 'No Name'
+                  slack_url = '#'
+                else
+                  user_name = provider.auth_json['info']['name'].titleize
+                  team_blobs = provider.auth_json['info']['team'].split
+                  team_blobs.delete_at(team_blobs.size - 1) if (team_blobs[team_blobs.size - 1].downcase) == 'team'
+                  team_name = team_blobs.join(' ')
+                  slack_url = team.url unless team.nil?
+                  slack_url = '#' if team.nil?
+                end
+              %>
               <h3>
-                Thanks,&nbsp;<%= "#{@view.locals[:user_name]} for adding #{@view.locals[:bot_name]} to manage" %><br>
-                tasks for your <%= @view.locals[:team_name] %>&nbsp;team!
+                Nice! Thanks for choosing /do to manage<br>tasks for your
+                <%= team_name %> Team,
+                <%= user_name %>.<br>Your Taskbot is waiting for you!
               </h3>
           <br><br>
           <p>
-            <%= link_to 'Continue to Slack', @view.locals[:slack_url], class: 'btn btn-primary btn-lg' %>
+            <%= link_to 'Continue to Slack', slack_url, class: 'btn btn-primary btn-lg' %>
           </p>
           <br>
           <br>

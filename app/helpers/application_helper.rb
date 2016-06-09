@@ -60,9 +60,6 @@ module ApplicationHelper
       @controller.page_back_button_path
     end
 
-    def show_header?
-    end
-
     def policy(arg1, arg2)
       return include_policy(arg2) if arg1 == :include
       true
@@ -73,12 +70,18 @@ module ApplicationHelper
     def include_policy(element)
       if element == :back_button
         !@controller.is_a?(::PagesController)
+      elsif element == :asset_pipeline
+        return true if (defined? @controller.use_asset_pipeline).nil?
+        @controller.use_asset_pipeline
       elsif element == :header
         return true if (defined? @controller.show_header).nil?
         @controller.show_header
       elsif element == :footer
         return true if (defined? @controller.show_footer).nil?
         @controller.show_header
+      elsif element == :main
+        return true if (defined? @controller.show_main).nil?
+        @controller.show_main
       else
         true
       end

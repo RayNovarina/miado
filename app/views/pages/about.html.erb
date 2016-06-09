@@ -1,19 +1,161 @@
-<center><h1>About MiaDo</h1></center>
+<% unless @view.user_signed_in? %>
 
-<div class="row">
-  <div class="col-md-4">
-    <h2>Simple to xxxxx</h2>
-    <p>Just xxxxx.
+  <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle"
+              data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav pull-right" style="font-weight: 900;">
+        <li><a href="/add_to_slack" class="brand"><u>Home</u></a></li>
+        <li><a href="/add_to_slack#product" class="brand"><u>Product</u></a></li>
+        <li><a href="#faq" class="brand"><u>FAQ</u></a></li>
+        <li><a href="#about_me" class="brand"><u>About</u></a></li>
+        <li><a href="/add_to_slack#contact_us" class="brand"><u>Contact Us</u></a></li>
+      </ul>
+    </div>
+    </div>
+  </nav>
+
+<div class="container">
+
+  <div id="" class="row text-center" style="padding-top:40px;">
+    <h1><a href="<%= new_user_session_path %>"
+           style="color: black; text-decoration: none; cursor: default;">
+          MiaDo
+        </a>
+    </h1>
+    <%= image_tag 'dog_head_icon.png', class: 'img-rounded img-responsive center-block',
+        size: '100x100' %>
+    <h3>Simple Task Management in Slack</h3>
+    <br>
+    <p>
+      <a href="<%= new_user_registration_path(oauth: 'slack') %>">
+        <img alt="Add to Slack" height="60" width="200"
+             src="https://platform.slack-edge.com/img/add_to_slack.png"
+             srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" />
+      </a>
     </p>
   </div>
-  <div class="col-md-4">
-    <h2>Simple to yyyyyy</h2>
-      <p>Just yyyyyy.
+
+  <div id="faq" class="row text-center" style="padding-top:40px; font-weight: 900;">
+    <div class="col-sm-12">
+      <h2>Frequently Asked Questions</h2>
+    </div>
+    <div class="col-sm-12">
+      <p>Yet another todo list app. Why would this one be better for me?<br>
+         Response
       </p>
-  </div>
-  <div class="col-md-4">
-    <h2>Simple zzzzzz</h2>
-      <p>Just zzzzz.
+    </div>
+    <div class="col-sm-12">
+      <p>How do i make a private "my todo list"?<br>
+         Miado is for team lists, private lists are not supported.
       </p>
+    </div><div class="col-sm-12">
+      <p>Is the taskbot channel read only or can i do more?<br>
+         Read only. Always your current task list. Perhaps setting a task as
+         completed (via '/do done' command) could be supported in the future.
+      </p>
+    </div><div class="col-sm-12">
+      <p>What's the dog's head about?<br>
+         My dog Mia.
+      </p>
+    </div>
   </div>
+
+  <br>
+  <div class="row" style="background-color: #F3F9FB; color: #0E87FC">
+    <br>
+    <h4><p class="text-center" style="font-weight: 900;">Additional Miado commands</p></h4>
+  </div>
+  <div class="row" style="background-color: #F3F9FB; color: #0E87FC; padding-bottom: 40px;">
+    <div class="col-sm-8 col-sm-offset-2 well text-left"
+         style="background-color: #F3F9FB; box-shadow: 0 2px 2px 0 rgba(0, 0, 255, .14), 0 3px 1px -2px rgba(0, 0, 255, .2), 0 1px 5px 0 rgba(0, 0, 255, .12)">
+      <strong>/do append 3 Contact Jim.</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Adds "Contact Jim." to the end of task 3.
+      <br>
+      <strong>/do unassign 4 @joe</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Removes "@joe" from task 4.
+      <br>
+      <strong>/do redo 1 Send out newsletter /fri.</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Deletes task 1, adds new task "Send out newsletter /fri."
+      <br>
+      <strong>/do list due</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Lists your ASSIGNED and OPEN tasks with a due date for THIS channel.
+      <br>
+      <strong>/do list all</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Lists your ASSIGNED and OPEN tasks for ALL channels.
+      <br>
+      <span class="glyphicon glyphicon-star"></span>
+      <span style="color: #7F7F7F">
+        <strong>Remember, Click on your <span style="color:#0E87FC">taskbot</span> to see all of your up-to-date lists.
+        </strong>
+      </span>
+    </div>
+  </div>
+
+  <div id="about_me" class="row"
+       style="padding-top:40px; padding-bottom: 40px; margin-bottom: 150px; background-color: #FBFBE6; color: #7F7F7F;">
+    <div class="col-sm-8 col-sm-offset-2 well"
+       style="margin-top: 20px; padding:40px; background-color: #FBFBE6; box-shadow: 0 2px 2px 0 rgba(0, 255, 255, .14), 0 3px 1px -2px rgba(0, 255, 255, .2), 0 1px 5px 0 rgba(0, 255, 255, .12)">
+      <div class="media">
+        <div class="media-left">
+          <%= image_tag 'photo-1.jpg', class: 'media-object', size: '140x140', style: 'border: 2px solid brown;' %>
+        </div>
+        <div class="media-body" style="overflow: visible;">
+          <h3 class="media-heading" style="font-weight: 900; padding-bottom: 10px;">About Me</h3>
+          <ul class="nav" style="font-weight: 900;">
+            <li><a href="https://www.linkedin.com/in/raynovarina" class="brand"><u>LinkedIn</u></a></li>
+            <li><a href="https://github.com/RayNovarina/" class="brand"><u>GitHub</u></a></li>
+          </ul>
+        </div>
+          <p style="overflow: visible;">
+            <h4>Hi, i'm Ray and i don't like to promote myself. So, enough about me.</h4>
+            <span class="media-heading" style="font-weight: 900;">About MiaDo:&nbsp;</span>
+              I initially wrote
+              MiaDo as a simple learning exercise for integrating Ruby on Rails and an API. My wife is
+              a marketing consultant and uses Slack to manage communications within small teams. By small,
+              I mean "micro teams" of 2-5 people, mostly startups. A particular problem for her was that
+              people were too busy or unwilling "to learn yet another" task manager. So the idea is that
+              one person is the adult who assigns and manages the tasks and the other team members just
+              need to simply click on the "tasbot" member to see an updated list of what to do. As a
+              person's assigned tasks changes, the tasbot list is redisplayed in its private channel with
+              a message waiting indicator. Always in one place, always up to date. As a
+              programmer, this works for me too. I just want to easily see, via one click or touch,
+              what is currently on my todo list.
+          </p>
+          <p style="overflow: visible;">
+            <span class="media-heading" style="font-weight: 900;">About that name:&nbsp;</span>
+              So, the family dog's name is Mia, i'm Italian so "mia" is meaningful, there's a gazillion
+              "todo" apps out there, the domain name was available, so why not?
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row text-center">
+    <div class="col-sm-12" style="padding-top:60px;" >
+      <p style="color: #7F7F7F;">
+        Copyright 2016 Ray Novarina. All Rights Reserved
+      <p>
+    </div>
+  </div>
+
 </div>
+
+<% else %>
+<h1><%= "You are signed into the MiaDo web app as #{@view.user.name}. Click " %>
+<%= link_to 'here',
+      destroy_user_session_path(@view.current_user),
+      method: :delete,
+      style: 'btn btn-primary color: black; text-decoration: underline; cursor: default;'
+    %>
+<%= ' to log out of MiaDo. Next, refresh this page or try the add to Slack page again.' %>
+</h1>
+<% end %>

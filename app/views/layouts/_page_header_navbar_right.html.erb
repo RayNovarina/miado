@@ -3,8 +3,8 @@
 
     <% if @view.user_signed_in? %>
       <% if @view.current_user.admin? %>
-        <%= render 'layouts/page_header_navbar_admin_picklist' %>
-        <li><%= link_to '|', '' %></li>
+        <% #= render 'layouts/page_header_navbar_admin_picklist' %>
+        <% #<li><%= link_to '|', '' #%#></li>%>
       <% elsif true # policy(Team).index? %>
         <li><%= link_to 'My Teams',
                 user_teams_path(@view.current_user),
@@ -19,10 +19,9 @@
                 <i class="glyphicon glyphicon-cog glyph-1-5x"> </i>&nbsp;<% end %>
       <% end %>
         </li>
-
     <% else %>
-        <li><%= link_to 'Sign In', new_user_session_path %></li>
-        <li><%= link_to '|', '' %></li>
+        <% #<li><%= link_to 'Sign In', new_user_session_path %#></li> %>
+        <% #<li><%= link_to '|', '' %#></li> %>
         <% #<li><%= link_to 'Sign Up', new_user_registration_path %#></li> %>
         <li><%= link_to 'Sign Up', add_to_slack_path %></li>
     <% end %>

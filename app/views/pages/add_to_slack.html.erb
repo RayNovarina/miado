@@ -1,29 +1,174 @@
-<div class="container-fluid css-add-to-slack">
-  <div class="row">
-    <div class="col-md-10 col-md-offset-1">
-      <div class="jumbotron">
-        <center>
-          <h1>MiaDo</h1>
-          <%= image_tag 'dog_head_icon.png', class: 'img-circle',
-              style: 'margin-right: 20px;',
-              size: '100x100' %>
-          <h3>Organize and manage your micro teams.</h3>
-          <h3>To add MiaDo to your Slack account, just click on the button below.</h3>
-          <br><br>
-          <p>
-            <a href="<%= new_user_registration_path(oauth: 'slack') %>">
-              <img alt="Add to Slack" height="40" width="139"
-                   src="https://platform.slack-edge.com/img/add_to_slack.png"
-                   srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" />
-            </a>
-          </p>
-          <br>
-          <h4><%= "#{Team.count} registered active #{'team'.pluralize(Team.count)}!" %></h4>
-          <br>
-          <h5><mark>MiaDo is beta software. Please report bugs to admin@miado.net</mark></h5>
+<% unless @view.user_signed_in? %>
 
-       </center>
-     </div>
-   </div>
+  <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+    <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle"
+              data-toggle="collapse" data-target="#myNavbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+    </div>
+    <div class="collapse navbar-collapse" id="myNavbar">
+      <ul class="nav navbar-nav pull-right" style="font-weight: 900;">
+        <li><a href="#home" class="brand"><u>Home</u></a></li>
+        <li><a href="#product" class="brand"><u>Product</u></a></li>
+        <li><a href="/about#faq" class="brand"><u>FAQ</u></a></li>
+        <li><a href="/about#about_me" class="brand"><u>About</u></a></li>
+        <li><a href="#contact_us" class="brand"><u>Contact Us</u></a></li>
+      </ul>
+    </div>
+    </div>
+  </nav>
+
+<div class="container">
+
+  <div id="home" class="row text-center" style="padding-top:40px;">
+    <h1><a href="<%= new_user_session_path %>"
+           style="color: black; text-decoration: none; cursor: default;">
+          MiaDo
+        </a>
+    </h1>
+    <%= image_tag 'dog_head_icon.png', class: 'img-rounded img-responsive center-block',
+        size: '100x100' %>
+    <h3>Simple Task Management in Slack</h3>
+    <br>
+    <p>
+      <a href="<%= new_user_registration_path(oauth: 'slack') %>">
+        <img alt="Add to Slack" height="60" width="200"
+             src="https://platform.slack-edge.com/img/add_to_slack.png"
+             srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" />
+      </a>
+    </p>
   </div>
+
+  <div id="product" class="row text-center" style="padding-top:40px;">
+    <div class="col-sm-4">
+      <h2>Simple to use</h2>
+      <p>Add and assign a task with a due date, all in one quick entry.
+      </p>
+      <%= image_tag 'miado_entry.png', class: 'img-responsive img-rounded center-block' %>
+    </div>
+    <div class="col-sm-4 .text-center">
+      <h2>Your Taskbot</h2>
+        <p>Alerts you to new assignments
+        </p>
+        <%= image_tag 'direct_message2.png', class: 'img-responsive img-rounded center-block' %>
+    </div>
+    <div class="col-sm-4 .text-center">
+      <h2>Simple to Manage</h2>
+        <p>See tasks for individuals or the whole team, balance workloads
+        </p>
+        <%= image_tag 'miado_list_all.png', class: 'img-responsive img-rounded center-block' %>
+    </div>
+  </div>
+
+  <br>
+  <div class="row" style="background-color: #F3F9FB; color: #0E87FC">
+    <br>
+    <h4><p class="text-center" style="font-weight: 900;">Miado commands</p></h4>
+  </div>
+  <div class="row" style="background-color: #F3F9FB; color: #0E87FC; padding-bottom: 20px;">
+    <div class="col-sm-8 col-sm-offset-2 well text-left"
+         style="background-color: #F3F9FB; box-shadow: 0 2px 2px 0 rgba(0, 0, 255, .14), 0 3px 1px -2px rgba(0, 0, 255, .2), 0 1px 5px 0 rgba(0, 0, 255, .12)">
+      <strong>/do rev 1 spec @susan /jun15</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Adds "rev 1spec" task to this channel, assigns it to Susan, due date is June 15.
+      <br>
+      <strong>/do update doc for rev 1</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Adds "update doc for rev 1" to this channel and leaves it unassigned.
+      <br>
+      <strong>/do assign 4 @joe</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Assigns "@joe" to task 4 for this channel.
+      <br>
+      <strong>/do done 4</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Marks task 4 as completed.
+      <br>
+      <strong>/do delete 2</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Deletes task number 2 from the list.
+      <br>
+      <strong>/do due 4 /wed</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Sets the task due date to Wednesday for task 4.
+      <br>
+      <strong>/do list</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Lists your ASSIGNED and OPEN tasks for THIS channel.
+      <br>
+      <strong>/do list all</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Lists your ASSIGNED and OPEN tasks for ALL channels.
+      <br>
+      <strong>/do list team</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Lists all TEAM tasks that are OPEN for THIS channel.
+      <br>
+      <strong>/do list team all</strong>
+      &nbsp;&nbsp;&nbsp;&nbsp;Lists all TEAM tasks that are OPEN for ALL channels.
+      <br>
+      <span class="glyphicon glyphicon-star"></span>
+      <span style="color: #7F7F7F">
+        <strong>Click on your <span style="color:#0E87FC">taskbot</span> to see all of your up-to-date lists.
+        </strong>
+      </span>
+      &nbsp;&nbsp;&nbsp;&nbsp;<strong>[<a href="/about#faq" class="brand"><u>More</u></a>...]</strong>
+    </div>
+  </div>
+
+  <div id="contact_us" class="row"
+       style="padding-top:40px; padding-bottom: 20px; background-color: #FBFBE6; color: #7F7F7F;">
+    <div class="col-sm-8 col-sm-offset-2 well"
+         style="background-color: #FBFBE6; box-shadow: 0 2px 2px 0 rgba(0, 255, 255, .14), 0 3px 1px -2px rgba(0, 255, 255, .2), 0 1px 5px 0 rgba(0, 255, 255, .12)">
+      <form name="comments" role="form" data-toggle="validator" method="post" action="/comments">
+        <h4><p class="text-center" style="font-weight: 900;">Have a question?<p></h4>
+        <br>
+        <div class="form-group">
+          <label class="sr-only" for="name">Name:</label>
+          <input type="text" class="form-control" style="font-weight: 900;" name="name" placeholder="Name:" required>
+        </div>
+        <div class="form-group">
+          <label class="sr-only" for="email">Email address:</label>
+          <input type="email" class="form-control" style="font-weight: 900;" name="email" placeholder="Email:" required>
+        </div>
+        <div class="form-group">
+          <textarea class="form-control" rows="6" style="font-weight: 900;" name="body" placeholder="Comment:" required></textarea>
+        </div>
+        <div class="form-group hidden">
+          <label class="sr-only" for="name">Bot_catcher:</label>
+          <input type="text" class="form-control hidden" name="bot_catcher" placeholder="See no evil, submit no evil.">
+        </div>
+        <div class="form-group">
+          <button type="submit" class="btn" style="font-weight: 900;">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="row text-center">
+    <div class="col-sm-12" style="padding-top:20px;" >
+      <p>
+        <a href="<%= new_user_registration_path(oauth: 'slack') %>">
+          <img alt="Add to Slack" height="60" width="200"
+               src="https://platform.slack-edge.com/img/add_to_slack.png"
+               srcset="https://platform.slack-edge.com/img/add_to_slack.png 1x, https://platform.slack-edge.com/img/add_to_slack@2x.png 2x" />
+        </a>
+      </p>
+    </div>
+  </div>
+
+  <div class="row text-center">
+    <div class="col-sm-12" style="padding-top:60px;" >
+      <p style="color: #7F7F7F;">
+        Copyright 2016 Ray Novarina. All Rights Reserved
+      <p>
+    </div>
+  </div>
+
 </div>
+
+<% else %>
+<h1><%= "You are signed into the MiaDo web app as #{@view.user.name}. Click " %>
+<%= link_to 'here',
+      destroy_user_session_path(@view.current_user),
+      method: :delete,
+      style: 'btn btn-primary color: black; text-decoration: underline; cursor: default;'
+    %>
+<%= ' to log out of MiaDo. Next, refresh this page or try the add to Slack page again.' %>
+</h1>
+<% end %>

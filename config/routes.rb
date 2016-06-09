@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  get 'comments/create'
+
   resources :omniauth_providers, only: [:index, :show, :destroy]
   #
   # per: https://github.com/plataformatec/devise#getting-started
@@ -46,14 +48,18 @@ Rails.application.routes.draw do
     end
   end
 
+  resources :comments, only: [:create]
+
   get 'messages/index', to: 'messages#index'
 
   # -------------------------------
   # App:
   # Landing page, About
-  root 'pages#welcome'
-  get  'about', to: 'pages#about'
+  # root 'pages#welcome'
+  root 'pages#add_to_slack'
+  get 'about', to: 'pages#about'
   get '/add_to_slack', to: 'pages#add_to_slack', as: 'add_to_slack'
+  get '/welcome', to: 'pages#welcome', as: 'welcome'
   get '/welcome/new', to: 'pages#welcome_new', as: 'welcome_new'
   get '/welcome/add_to_slack_new', to: 'pages#welcome_add_to_slack_new', as: 'welcome_add_to_slack_new'
   get '/welcome/back', to: 'pages#welcome_back', as: 'welcome_back'

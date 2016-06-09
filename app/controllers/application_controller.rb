@@ -52,8 +52,6 @@ class ApplicationController < ActionController::Base
 
   # There exists a similar method for sign in; after_sign_in_path_for
   def after_sign_out_path_for(_resource_or_scope)
-    # require 'pry'
-    # binding.pry
     # Note: at this time: flash[:notice] => "Signed out successfully."
     #                     current_user is nil.
     new_user_session_path # signIn page
