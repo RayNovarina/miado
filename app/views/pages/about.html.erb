@@ -68,12 +68,13 @@
   </div>
 
   <br>
-  <div class="row" style="background-color: LightCyan; color: Blue">
+  <div class="row" style="background-color: #F3F9FB; color: #0E87FC">
     <br>
     <h4><p class="text-center" style="font-weight: 900;">Additional Miado commands</p></h4>
   </div>
-  <div class="row" style="background-color: LightCyan; color: Blue; padding-bottom: 40px;">
-    <div class="col-sm-8 col-sm-offset-2 well text-left">
+  <div class="row" style="background-color: #F3F9FB; color: #0E87FC; padding-bottom: 40px;">
+    <div class="col-sm-8 col-sm-offset-2 well text-left"
+         style="background-color: #F3F9FB; box-shadow: 0 2px 2px 0 rgba(0, 0, 255, .14), 0 3px 1px -2px rgba(0, 0, 255, .2), 0 1px 5px 0 rgba(0, 0, 255, .12)">
       <strong>/do append 3 Contact Jim.</strong>
       &nbsp;&nbsp;&nbsp;&nbsp;Adds "Contact Jim." to the end of task 3.
       <br>
@@ -90,13 +91,17 @@
       &nbsp;&nbsp;&nbsp;&nbsp;Lists your ASSIGNED and OPEN tasks for ALL channels.
       <br>
       <span class="glyphicon glyphicon-star"></span>
-      Remember, Click on your <strong>taskbot</strong> to see all of your up-to-date lists.
+      <span style="color: #7F7F7F">
+        <strong>Remember, Click on your <span style="color:#0E87FC">taskbot</span> to see all of your up-to-date lists.
+        </strong>
+      </span>
     </div>
   </div>
 
   <div id="about_me" class="row"
-       style="padding-top:40px; padding-bottom: 40px; margin-bottom: 282px; background-color: Beige; color: grey;">
-    <div class="col-sm-8 col-sm-offset-2 well" style="margin-top: 20px; padding:40px;">
+       style="padding-top:40px; padding-bottom: 40px; margin-bottom: 150px; background-color: #FBFBE6; color: #7F7F7F;">
+    <div class="col-sm-8 col-sm-offset-2 well"
+       style="margin-top: 20px; padding:40px; background-color: #FBFBE6; box-shadow: 0 2px 2px 0 rgba(0, 255, 255, .14), 0 3px 1px -2px rgba(0, 255, 255, .2), 0 1px 5px 0 rgba(0, 255, 255, .12)">
       <div class="media">
         <div class="media-left">
           <%= image_tag 'photo-1.jpg', class: 'media-object', size: '140x140', style: 'border: 2px solid brown;' %>
@@ -109,7 +114,8 @@
           <h3 class="media-heading" style="font-weight: 900; padding-bottom: 10px;">About Me</h3>
           Hi, i'm Ray and i don't like to promote myself. But enough about me. I initially wrote
           MiaDo as a simple learning exercise for integrating Ruby on Rails and an API. My wife is
-          a biz dev consultant and uses Slack to manage communications within small teams.
+          a marketing consultant and uses Slack to manage communications within small teams. By small,
+          I mean "micro teams" of 2-5 people, mostly startups.
           Line 2 adfadsf ads f df adf adf f adf d fdsaf ad fdfdaf df adf adsfa fdf adfa df fdfadsf
           Line 1 adfdasf adf asd asdf adf asd fasd fasd fad f sadfad sfd fads fas dfasdf asdf  asdf
           Line 2 adfadsf ads f df adf adf f adf d fdsaf ad fdfdaf df adf adsfa fdf adfa df fdfadsf
@@ -120,9 +126,14 @@
     </div>
   </div>
 
-  <p class="css-page-footer text-center" style="color: grey;">
-    Copyright 2016 Ray Novarina. All Rights Reserved
-  <p>
+  <div class="row text-center">
+    <div class="col-sm-12" style="padding-top:60px;" >
+      <p style="color: #7F7F7F;">
+        Copyright 2016 Ray Novarina. All Rights Reserved
+      <p>
+    </div>
+  </div>
+
 </div>
 
 <% else %>
