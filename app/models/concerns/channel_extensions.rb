@@ -96,7 +96,7 @@ module ChannelExtensions
           bot_api_token: team.bot_access_token,
           bot_user_id: team.bot_user_id,
           # Note: members hash created separately via
-          #       Member.update_or_create_all_members_hash when all are known.
+          #       Channel.update_or_create_all_members_hash( when all are known.
           team: team
         )
         bot_dm_channel_id = im[:id] if im[:user] == team.bot_user_id

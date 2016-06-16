@@ -74,6 +74,7 @@ def perform_scans_for_functions(p_hash)
 end
 
 def scan4_taskbot_channel(p_hash)
+  return if p_hash[:ccb].members_hash.nil?
   return if (m_hash = p_hash[:ccb].members_hash[p_hash[:url_params]['user_id']]).nil?
   return if (bot_dm_channel_id = m_hash['bot_dm_channel_id']).nil?
   p_hash[:is_taskbot_channel] = p_hash[:url_params]['channel_id'] == bot_dm_channel_id

@@ -38,16 +38,52 @@ class OmniauthSlackSetup
       #                'search:read,'\
       #                'team:read,'\
       #                'users:read' }
+      # return { scope: 'bot,'\
+      #                'chat:write:bot,'\
+      #                'commands,'\
+      #                'team:read,'\
+      #                'users:read,'\
+      #                'channels:history,'\
+      #                'channels:read,'\
+      #                'im:history,'\
+      #                'im:read'
+      #       }
+      # Scopes and why needed:
+      #    bot: - to be able to get the taskbot's slack user id to use to send
+      #           taskbot msgs to the taskbot channel.
+      #    users:read - to be able to use the users.list api method to verify
+      #                 assigned names.
+      #    chat:write:bot - to be able to use the chat.delete and
+      #                 chat.postMessage api methods to clear taskbot msgs and
+      #                 to post a new one.
+      #    im:read - to be to use the api method im.list to get a list of
+      #              direct message channels to build a members lookup hash.
+      #    im:history - to be able to read the taskbot messages to get the msg
+      #                 id so that it can be deleted.
+      #    channels:read - to be able to use the api method channels.list
+      #    team:read - to get the name of the team installing miaDo.
+      #    commands - to allow teams to install the /do slash command.
+      # API methods used:
+      # 1) in models/concerns.channel_extensions.rb:
+      #      def slack_dm_channels_from_rtm_data
+      #    Slack::Web::Client.web_client.im_list['ims']
+      #    uses token from team.api_token which is the miaDo api token from the
+      #      member installing miaDo. (auth_hash[:auth]['credentials']['token'])
+      # 2) in models/concerns.member_extensions.rb:
+      #      def slack_members_from_rtm_data
+      #    Slack::Web::Client.web_client.im_list['members']
+      #    uses token from team.api_token which is the miaDo api token from the
+      #      member installing miaDo. (auth_hash[:auth]['credentials']['token'])
+
       return { scope: 'bot,'\
                       'chat:write:bot,'\
                       'commands,'\
                       'team:read,'\
                       'users:read,'\
-                      'channels:history,'\
                       'channels:read,'\
-                      'im:history,'\
-                      'im:read'
-             }
+                      'im:read,'\
+                      'im:history'\
+                    }
     end
     return { scope: 'identity.basic' } if query == 'state=sign_in'
     {}
