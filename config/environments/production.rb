@@ -112,5 +112,5 @@ Rails.application.configure do
   # Ref: 2.6 Generating URLs in Action Mailer Views at
   # http://guides.rubyonrails.org/action_mailer_basics.html
   config.action_mailer.default_url_options =
-    { host: 'miado.herokuapp.com' }
+    { host: 'miado.net' }
 end

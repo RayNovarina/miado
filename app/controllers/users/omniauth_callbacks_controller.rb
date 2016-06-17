@@ -31,10 +31,12 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   end
 
   def failure
-    # No HTTP_REFERER was set in the request to this action,
-    # so redirect_to :back could not be called successfully. If this is a test,
-    # make sure to specify request.env["HTTP_REFERER"].
-    redirect_to :back
+    # cancel button clicked.
+      # No HTTP_REFERER was set in the request to this action,
+      # so redirect_to :back could not be called successfully. If this is a test,
+      # make sure to specify request.env["HTTP_REFERER"].
+      # redirect_to :back
+    redirect_to :root
   end
 
   private
@@ -85,6 +87,8 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     @view.provider.uid_email = 'admin@example.com' if @view.provider.name == 'slack'
     @view.user = User.find_or_create_from(:omniauth_provider, @view.provider)
     if @view.provider.name == 'slack'
+      require 'pry'
+      binding.pry
       # Since we have the user waiting for oauth completion and have full
       # access to the slack api, seed our db with all current team data.
       @view.team = Team.create_from(:omniauth_provider, @view.provider)

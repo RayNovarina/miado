@@ -6,13 +6,8 @@
 
 <main class="css-body-main">
   <div class="container">
-    <h2>Team<%= " (id: #{@view.team.id})" %></h2>
-    <table class="table table-bordered table-hover">
-      <tbody>
-        <%= render partial: 'teams/admin_views/index_team',
-                   locals: @view.locals = { user: @view.team.user, team: @view.team }
-        %>
-      </tbody>
-    </table>
-    </div>
+    <%= render partial: 'teams/admin_views/show_team',
+               locals: @view.locals = { team: @view.team }
+    %>
+  </div>
 </main>

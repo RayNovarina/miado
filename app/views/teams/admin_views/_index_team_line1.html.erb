@@ -1,5 +1,5 @@
 <tr>
-  <td><%= link_to @view.locals[:user].name, user_path(@view.locals[:user]) %></td>
+  <td><%= link_to @view.locals[:team].user.name, user_path(@view.locals[:team].user) %></td>
   <td><%= @view.locals[:team].created_at.strftime('%a, %d %b %Y') %></td>
   <td><%= @view.locals[:team].updated_at.strftime('%c') %></td>
   <td><%= @view.locals[:team].api_token %></td>
