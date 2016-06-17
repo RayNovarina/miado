@@ -61,7 +61,6 @@ class OmniauthSlackSetup
       #    im:history - to be able to read the taskbot messages to get the msg
       #                 id so that it can be deleted.
       #    channels:read - to be able to use the api method channels.list
-      #    team:read - to get the name of the team installing miaDo.
       #    commands - to allow teams to install the /do slash command.
       # API methods used:
       # 1) in models/concerns.channel_extensions.rb:
@@ -74,16 +73,22 @@ class OmniauthSlackSetup
       #    Slack::Web::Client.web_client.im_list['members']
       #    uses token from team.api_token which is the miaDo api token from the
       #      member installing miaDo. (auth_hash[:auth]['credentials']['token'])
-
       return { scope: 'bot,'\
                       'chat:write:bot,'\
                       'commands,'\
-                      'team:read,'\
                       'users:read,'\
                       'channels:read,'\
                       'im:read,'\
                       'im:history'\
-                    }
+             }
+      # ',users:read'\
+      # ',im:read'\
+      # ',im:history'\
+      # ',chat:write:bot'\
+      # ',channels:read'\
+      # return { scope: ' commands'\
+      #                ',bot'\
+      #       }
     end
     return { scope: 'identity.basic' } if query == 'state=sign_in'
     {}
