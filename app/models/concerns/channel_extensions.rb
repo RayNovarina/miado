@@ -16,168 +16,143 @@ module ChannelExtensions
   module ClassMethods
     attr_accessor :view
 
-    def find_from_slack(view, slack_user_id, slack_team_id, slack_channel_id)
-      @view ||= view
-      Channel.where(slack_user_id: slack_user_id,
-                    slack_team_id: slack_team_id,
-                    slack_channel_id: slack_channel_id).first
-    end
-=begin
-      Form Params
-      channel_id	C0VNKV7BK
-      channel_name	general
-      command	/do
-      response_url	https://hooks.slack.com/commands/T0VN565N0/36163731489/YAHWUMXlBdviTE1rBILELuFK
-      team_domain	shadowhtracteam
-      team_id	T0VN565N0
-      text	call GoDaddy @susan /fri
-      token	3ZQVG7rk4p7EZZluk1gTH3aN
-      user_id	U0VLZ5P51
-      user_name	ray
-=end
-    def create_from_slack(view, slash_url_params)
-      @view ||= view
-      # we could create channel and copy members_hash from last active channel
-      # for this team. Else we need to mimic an install and create a miado user,
-      # team, members, channels.
-      # team = Team.find_from_slack(:slack,
-      #                            slack_team_id: slash_url_params['team_id'],
-      #                            slack_user_id: slash_url_params['user_id'])
-      # return nil if team.nil?
-      # Get a members lookup hash from another member's channel.
-      other_member_channel =
-        Channel.where(slack_team_id: slash_url_params['team_id']).first
-      return nil if other_member_channel.nil?
-      Channel.create!(
-        slack_channel_name: slash_url_params['channel_name'],
-        slack_channel_id: slash_url_params['channel_id'],
-        slack_user_id: slash_url_params['user_id'],
-        slack_team_id: slash_url_params['team_id'],
-        slack_user_api_token: other_member_channel.slack_user_api_token,
-        bot_api_token: other_member_channel.bot_api_token,
-        bot_user_id: other_member_channel.bot_user_id,
-        members_hash: other_member_channel.members_hash,
-        team: other_member_channel.team
-      )
+    # install_channel = Channel.update_from_or_create_from(source: :omniauth_callback, request: request)
+    # @view.channel   = Channel.find_or_create_from(source: :slack, view: @view, url_params: params)
+    def find_or_create_from(options)
+      return find_or_create_from_slack(options) if options[:source] == :slack
     end
 
-    def create_all_from_slack(view, team)
-      @view ||= view
-      @view.web_client = make_web_client(team.api_token)
-      slack_team_channels = slack_team_channels_from_rtm_data
-      slack_team_channels.each do |team_channel|
-        next if team_channel[:is_archived]
-        Channel.find_or_create_by(
-          archived: team_channel[:is_archived],
-          slack_channel_name: team_channel[:name],
-          slack_channel_id: team_channel[:id],
-          slack_user_id: team.slack_user_id,
-          slack_team_id: team.slack_team_id,
-          slack_user_api_token: team.api_token,
-          bot_api_token: team.bot_access_token,
-          bot_user_id: team.bot_user_id,
-          # Note: members hash created separately via
-          #       Member.update_or_create_all_members_hash when all are known.
-          team: team
-        )
-      end
-      bot_dm_channel_id = nil
-      slack_dm_channels = slack_dm_channels_from_rtm_data
-      slack_dm_channels.each do |im|
-        next if im[:is_user_deleted]
-        Channel.find_or_create_by(
-          deleted: im[:is_user_deleted],
-          dm_user_id: im[:user],
-          slack_channel_name: nil,
-          slack_channel_id: im[:id],
-          slack_user_id: team.slack_user_id,
-          slack_team_id: team.slack_team_id,
-          slack_user_api_token: team.api_token,
-          bot_api_token: team.bot_access_token,
-          bot_user_id: team.bot_user_id,
-          # Note: members hash created separately via
-          #       Channel.update_or_create_all_members_hash( when all are known.
-          team: team
-        )
-        bot_dm_channel_id = im[:id] if im[:user] == team.bot_user_id
-      end
-      bot_dm_channel_id
+    def update_from_or_create_from(options)
+      return update_from_or_create_from_omniauth_callback(options) if options[:source] == :omniauth_callback
     end
 
-    def create_from_slack_url_params(view)
-      @view ||= view
-      url_params = view.url_params
-      Channel.create!(
-        name: url_params[:channel_name],
-        slack_id: url_params[:channel_id],
-        is_im_channel: url_params[:channel_name] == 'directmessage',
-        dm_user_id: nil,
-        team: view.team
-      )
+    def find_from(options)
+      return find_from_slack(options) if options[:source] == :slack
+      return find_from_omniauth_callback(options) if options[:source] == :omniauth_callback
     end
 
-    def all_or_create_all_from_slack(view)
-      @view ||= view
-      return Channel.all if Channel.count > 0
-      create_all_from_slack(@view)
-      Channel.all
-    end
-
-    def update_or_create_all_members_hash(view, slack_team_id)
-      @view ||= view
-      # Build a hash to be used by our slash commands to verify mentioned
-      # members and to lookup api info about em.
-      # We now know the taskbot dm channel id for the installing member.
-      members_hash = {}
-      # Get all installations for this Slack team.
-      Team.where(slack_team_id: slack_team_id).each do |team|
-        # Get member records for all known team members.
-        team.members.each do |member|
-          unless members_hash[member.slack_user_id].nil?
-            # We have already seen this member. Part of another installation for
-            # this team. Skip it unless it installed the bot and has a dm id.
-            next if member.bot_dm_channel_id.nil?
-          end
-          m_hash = {
-            slack_user_name: member.name,
-            slack_real_name: member.real_name,
-            slack_user_id: member.slack_user_id,
-            slack_user_api_token: team.api_token,
-            bot_user_id: team.bot_user_id,
-            # Note: the bot_dm_channel_id is only present on a Member record
-            #       when the member installs the bot. Else it is nil when
-            #       someone else is installing.
-            bot_dm_channel_id: member.bot_dm_channel_id,
-            bot_api_token: team.bot_access_token
-          }
-          members_hash[member.name] = m_hash
-          members_hash[member.slack_user_id] = m_hash
-        end
-      end
-      # Channels for this team gets an updated member lookup hash.
-      Channel.where(slack_team_id: slack_team_id).update_all(members_hash: members_hash)
-      members_hash
+    def create_from(options)
+      return create_from_slack(options) if options[:source] == :slack
+      return create_from_omniauth_callback(options) if options[:source] == :omniauth_callback
     end
 
     private
 
-    def slack_team_channels_from_rtm_data
-      # response is an array of hashes. Each has name and id of a team channel.
-      begin
-        return @view.web_client.channels_list['channels']
-      rescue Slack::Web::Api::Error => e
-        @view.web_client.logger.error e
-        @view.web_client.logger.error "\ne.message: #{e.message}\n" \
-          "@view.team - name: #{@view.team.name}" \
-          "api_token: #{Slack.config.token}\n"
-        @view.exception = e
-        return []
+    def find_or_create_from_slack(options)
+      if (channel = find_from_slack(options)).nil?
+        # Case: This channel has not been accessed before.
+        channel = create_from_slack(options)
       end
+      channel
     end
 
-    def slack_dm_channels_from_rtm_data
+    def update_from_or_create_from_omniauth_callback(options)
+      # Case: We have not authenticated this oauth user before.
+      return create_from_omniauth_callback(options) if (channel = find_from_omniauth_callback(options)).nil?
+      # Case: We are reinstalling. Update auth info.
+      update_channel_auth_info(channel, options)
+      # Return channel with current auth callback info
+      channel
+    end
+
+    def find_from_slack(options)
+      @view ||= options[:view]
+      Channel.where(slack_user_id: options[:slash_url_params]['user_id'],
+                    slack_team_id: options[:slash_url_params]['team_id'],
+                    slack_channel_id: options[:slash_url_params]['channel_id']).first
+    end
+
+    def find_from_omniauth_callback(options)
+      @view ||= options[:view]
+      Channel.where(slack_channel_name: 'installation',
+                    slack_user_id: options[:request].env['omniauth.auth'].uid,
+                    slack_team_id: options[:request].env['omniauth.auth'].info['team_id']).first
+    end
+
+=begin
+  Form Params
+  channel_id	C0VNKV7BK
+  channel_name	general
+  command	/do
+  response_url	https://hooks.slack.com/commands/T0VN565N0/36163731489/YAHWUMXlBdviTE1rBILELuFK
+  team_domain	shadowhtracteam
+  team_id	T0VN565N0
+  text	call GoDaddy @susan /fri
+  token	3ZQVG7rk4p7EZZluk1gTH3aN
+  user_id	U0VLZ5P51
+  user_name	ray
+=end
+    def create_from_slack(options)
+      @view ||= options[:view]
+      # we create channel and copy members_hash from last active channel
+      # for this team.
+      other_member_channel =
+        Channel.where(slack_team_id: options[:slash_url_params]['team_id']).first
+      return nil if other_member_channel.nil?
+      Channel.create!(
+        slack_channel_name: options[:slash_url_params]['channel_name'],
+        slack_channel_id: options[:slash_url_params]['channel_id'],
+        slack_user_id: options[:slash_url_params]['user_id'],
+        slack_team_id: options[:slash_url_params]['team_id'],
+        slack_user_api_token: other_member_channel.slack_user_api_token,
+        bot_api_token: other_member_channel.bot_api_token,
+        bot_user_id: other_member_channel.bot_user_id,
+        members_hash: other_member_channel.members_hash
+      )
+    end
+
+    def create_from_omniauth_callback(options)
+      auth = options[:request].env['omniauth.auth']
+      channel = Channel.new(
+        slack_channel_name: 'installation',
+        slack_channel_id: '',
+        slack_user_id: auth.uid,
+        slack_team_id: auth.info['team_id']
+      )
+      update_channel_auth_info(channel, options)
+      channel
+    end
+
+    def update_channel_auth_info(channel, options)
+      auth = options[:request].env['omniauth.auth']
+      members_hash = {}
+      m_hash = {
+        slack_user_name: auth.info['user'],
+        slack_real_name: auth.info['user'],
+        slack_user_id: auth.uid,
+        slack_user_api_token: auth.credentials['token'],
+        bot_user_id: auth.extra['bot_info']['bot_user_id'],
+        bot_dm_channel_id: find_bot_dm_channel_id(
+          bot_user_id: auth.extra['bot_info']['bot_user_id'],
+          api_token: auth.credentials['token']),
+        bot_msg_id: nil,
+        bot_api_token: auth.extra['bot_info']['bot_access_token']
+      }
+      members_hash[m_hash[:slack_user_name]] = m_hash
+      members_hash[m_hash[:slack_user_id]] = m_hash
+
+      channel.slack_user_api_token = auth.credentials['token']
+      channel.bot_api_token = auth.extra['bot_info']['bot_access_token']
+      channel.bot_user_id = auth.extra['bot_info']['bot_user_id']
+      channel.auth_json = auth
+      channel.auth_params_json = options[:request].env['omniauth.params']
+      channel.members_hash = members_hash
+      channel.save!
+    end
+
+    def find_bot_dm_channel_id(options)
+      slack_dm_channels = slack_dm_channels_from_rtm_data(
+        rtm_api_client: make_web_client(options[:api_token]))
+      slack_dm_channels.each do |im|
+        next if im[:is_user_deleted]
+        return im[:id] if im[:user] == options[:bot_user_id]
+      end
+      nil
+    end
+
+    def slack_dm_channels_from_rtm_data(options)
       # response is an array of hashes. Each has name and id of a team channel.
-      @view.web_client.im_list['ims']
+      options[:rtm_api_client].im_list['ims']
     end
 
     def make_web_client(api_token)

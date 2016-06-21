@@ -6,7 +6,7 @@ end
 
 def new_member_deferred_logic(options)
   Thread.new do
-    update_channel_members_hash(options)
+    update_all_team_members_hash(options)
   end
 end
 
@@ -44,20 +44,16 @@ def send_after_action_deferred_cmds(cmds)
     list_cmds = generate_list_commands(parsed, d_hash)
     chat_msgs = generate_task_list_msgs(parsed, list_cmds)
     chat_msgs.each do |msg|
-      clear_taskbot_msg_channel(api_client: msg[:api_client],
-                                taskbot_username: msg[:taskbot_username],
-                                taskbot_channel_id: msg[:taskbot_channel_id],
-                                member_name: msg[:member_name])
-      send_taskbot_msg(api_client: msg[:api_client],
-                       taskbot_username: msg[:taskbot_username],
-                       taskbot_channel_id: msg[:taskbot_channel_id],
-                       member_name: msg[:member_name],
-                       text: msg[:text],
-                       attachments: msg[:attachments])
-      # update_taskbot_channel(parsed: parsed,
-      #                       taskbot_username: msg[:taskbot_username],
-      #                       taskbot_user_id: msg[:taskbot_user_id],
-      #                       taskbot_channel_id: msg[:taskbot_channel_id])
+      update_taskbot_channel(
+        api_client: msg[:api_client],
+        taskbot_username: msg[:taskbot_username],
+        taskbot_channel_id: msg[:taskbot_channel_id],
+        taskbot_msg_id: msg[:taskbot_msg_id],
+        member_name: msg[:member_name],
+        member_id: msg[:member_id],
+        member_ccb: parsed[:ccb],
+        text: msg[:text],
+        attachments: msg[:attachments])
     end
   end
 end
@@ -94,6 +90,7 @@ def generate_list_commands(parsed, deferred_cmd)
         slack_user_api_token: i_item[:slack_user_api_token],
         taskbot_channel_id: i_item[:taskbot_channel_id],
         taskbot_user_id: i_item[:taskbot_user_id],
+        taskbot_msg_id: i_item[:taskbot_msg_id],
         taskbot_username: 'MiaDo Taskbot'
       }
     # ,
@@ -204,6 +201,7 @@ def build_one_impacted_member(options)
   impacted_member[:slack_user_api_token] = options[:am_hash]['slack_user_api_token']
   impacted_member[:taskbot_channel_id] = options[:am_hash]['bot_dm_channel_id']
   impacted_member[:taskbot_user_id] = options[:am_hash]['bot_user_id']
+  impacted_member[:taskbot_msg_id] = options[:am_hash]['bot_msg_id']
   [impacted_member[:id], impacted_member]
 end
 
@@ -285,7 +283,9 @@ def generate_task_list_msgs(parsed, list_cmds)
                    taskbot_username: cmd_hash[:taskbot_username],
                    taskbot_channel_id: cmd_hash[:taskbot_channel_id],
                    taskbot_user_id: cmd_hash[:taskbot_user_id],
+                   taskbot_msg_id: cmd_hash[:taskbot_msg_id],
                    member_name: cmd_hash[:member_name],
+                   member_id: cmd_hash[:member_id],
                    api_client: make_web_client(cmd_hash[:slack_user_api_token])
                  }
   end
@@ -310,36 +310,111 @@ def clear_taskbot_msg_channel(options)
   err_msg
 end
 
-# Returns: text status msg. 'ok' or err msg.
-def send_taskbot_msg(options)
-  begin
-    api_resp =
-      options[:api_client]
-      .chat_postMessage(as_user: false,
-                        username: options[:taskbot_username],
-                        channel: options[:taskbot_channel_id],
-                        text: options[:text],
-                        attachments: options[:attachments])
-    options[:api_client].logger.error "\nSent taskbot msg to: " \
-      "#{options[:taskbot_username]} at dm_channel: " \
-      "#{options[:taskbot_channel_id]}.  Msg title: #{options[:text]}. " \
-      "For member: #{options[:member_name]}\n"
-    return 'ok' if api_resp.key?('ok')
-    err_msg = 'Error occurred on Slack\'s API:client.im.history'
-    options[:api_client].logger.error(err_msg)
-    return err_msg
-  rescue Slack::Web::Api::Error => e # (not_authed)
-    options[:api_client].logger.error e
-    options[:api_client].logger.error "\ne.message: #{e.message}\n" \
-      "channel_id: #{options[:channel]}  " \
-      "token: #{options[:api_client].token.nil? ? '*EMPTY!*' : options[:api_client].token}\n"
-    return "ERROR: #{e.message}\n" \
+def delete_taskbot_msg(options)
+  api_resp = delete_message_on_channel(
+    api_client: options[:api_client],
+    channel_id: options[:taskbot_channel_id],
+    message: { 'ts' => options[:taskbot_msg_id] })
+  return 'ok' if api_resp.key?('ok')
+  "Error occurred on Slack\'s API:client.chat_delete: #{api_resp[:error]}"
+end
+
+# Returns: slack api response hash.
+def update_taskbot_channel(options)
+  # return send_taskbot_update_msg(options) unless options[:taskbot_msg_id].nil?
+  delete_taskbot_msg(options) unless options[:taskbot_msg_id].nil?
+  api_resp = send_taskbot_msg(options)
+  # Now that we know the taskbot msg id, save it for all members.
+  remember_taskbot_msg_id(api_resp, options)
+  api_resp
+end
+
+# Returns: slack api response hash.
+def remember_taskbot_msg_id(api_resp, options)
+  members_hash = options[:member_ccb].members_hash
+  am_hash = members_hash[options[:member_id]]
+  am_hash['bot_msg_id'] = api_resp['ts']
+  members_hash[options[:member_id]] = am_hash
+  members_hash[options[:member_name]] = am_hash
+  update_all_team_members_hash(
+    members_hash: members_hash,
+    slack_team_id: options[:member_ccb].slack_team_id)
+end
+
+# Returns: slack api response hash.
+def send_taskbot_update_msg(options)
+  api_resp =
+    options[:api_client]
+    .chat_update(
+      ts: options[:taskbot_msg_id],
+      as_user: 'false',
+      channel: options[:taskbot_channel_id],
+      text: options[:text],
+      attachments: options[:attachments].to_json)
+  options[:api_client].logger.error "\nSent taskbot msg UPDATE to: " \
+    "#{options[:taskbot_username]} at dm_channel: " \
+    "#{options[:taskbot_channel_id]}.  Msg title: #{options[:text]}. " \
+    "Message ts Id: #{options[:taskbot_msg_id]}. " \
+    "For member: #{options[:member_name]}\n"
+  return api_resp if api_resp['ok'] == true
+  err_msg = "Error: From update_taskbot_msg(API:client.chat_update) = '#{api_resp['error']}'"
+  options[:api_client].logger.error(err_msg)
+  return api_resp
+rescue Slack::Web::Api::Error => e # (not_authed)
+  if e.message == 'message_not_found'
+    api_resp = send_taskbot_msg(options)
+    remember_taskbot_msg_id(api_resp, options)
+    return api_resp
   end
+  options[:api_client].logger.error e
+  err_msg = "\nFrom update_taskbot_msg(API:client.chat_update) = " \
+    "e.message: #{e.message}\n" \
+    "channel_id: #{options[:channel]}  " \
+    "Message ts Id: #{options[:taskbot_msg_id]}. " \
+    "token: #{options[:api_client].token.nil? ? '*EMPTY!*' : options[:api_client].token}\n"
+  options[:api_client].logger.error(err_msg)
+  return api_resp
+end
+
+# Returns: slack api response hash.
+def send_taskbot_msg(options)
+  api_resp =
+    options[:api_client]
+    .chat_postMessage(
+      as_user: 'false',
+      username: options[:taskbot_username],
+      channel: options[:taskbot_channel_id],
+      text: options[:text],
+      attachments: options[:attachments])
+  options[:api_client].logger.error "\nSent taskbot msg to: " \
+    "#{options[:taskbot_username]} at dm_channel: " \
+    "#{options[:taskbot_channel_id]}.  Msg title: #{options[:text]}. " \
+    "For member: #{options[:member_name]}\n"
+  return api_resp if api_resp['ok'] == true
+  err_msg = "Error: From send_taskbot_msg(API:client.chat_postMessage) = '#{api_resp['error']}'"
+  options[:api_client].logger.error(err_msg)
+  return api_resp
+rescue Slack::Web::Api::Error => e # (not_authed)
+  options[:api_client].logger.error e
+  err_msg = "\nFrom send_taskbot_msg(API:client.chat_postMessage) = " \
+    "e.message: #{e.message}\n" \
+    "channel_id: #{options[:channel]}  " \
+    "token: #{options[:api_client].token.nil? ? '*EMPTY!*' : options[:api_client].token}\n"
+  options[:api_client].logger.error(err_msg)
+  return api_resp
 end
 
 # Inputs: options{ members_hash: hash, slack_team_id: team_id }
 # Update the ccb.members hash for all channels for this team.
-def update_channel_members_hash(options)
+def update_all_team_members_hash(options)
   Channel.where(slack_team_id: options[:slack_team_id])
+         .update_all(members_hash: options[:members_hash])
+end
+
+# Inputs: options{ members_hash, slack_team_id, slack_user_id }
+# Update the ccb.members hash for all channels for this team member.
+def update_one_team_members_hash(options)
+  Channel.where(slack_team_id: options[:slack_team_id],
+                slack_user_id: options[:slack_user_id])
          .update_all(members_hash: options[:members_hash])
 end

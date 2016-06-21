@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160519182343) do
+ActiveRecord::Schema.define(version: 20160618054309) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -34,6 +34,8 @@ ActiveRecord::Schema.define(version: 20160519182343) do
     t.string   "bot_api_token"
     t.jsonb    "members_hash"
     t.string   "bot_user_id"
+    t.jsonb    "auth_json"
+    t.jsonb    "auth_params_json"
   end
 
   add_index "channels", ["team_id"], name: "index_channels_on_team_id", using: :btree

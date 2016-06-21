@@ -149,54 +149,71 @@ def merge_members_hash_from_slack(p_hash, target_name)
     first_m_hash = m_hash[1]
     break
   end
+  experiment = true
+  if experiment
+    # Experiment: just assume name is correct, don't query Slack and require so
+    # many auth scopes, just add to hash.
+    add_new_member(ccb_members_hash, first_m_hash, target_name, target_name,
+                   'id.'.concat(target_name))
+  else
+    add_update_members_from_slack(p_hash, target_name, ccb_members_hash, first_m_hash)
+    slack_members = slack_members_from_rtm_data(api_client: make_web_client(p_hash[:ccb].slack_user_api_token))
+    slack_members.each do |slack_member|
+      # next if slack_member[:name] == 'slackbot' || (slack_member[:deleted] && slack_member[:is_bot])
+      next unless slack_member[:name] == target_name
+      unless ccb_members_hash[slack_member[:id]].nil?
+        # Name change. We have recorded that slack user_id before.
+        update_member_name(ccb_members_hash, target_name)
+        break
+      end
+      # New member has been added. Add em to our members_hash
+      add_new_member(ccb_members_hash, first_m_hash, slack_member[:name],
+                     slack_member[:real_name], slack_member[:id])
+      break
+    end
+  end
+  ccb_members_hash
+end
+
+def add_update_members_from_slack(p_hash, target_name, ccb_members_hash, first_m_hash)
   slack_members = slack_members_from_rtm_data(api_client: make_web_client(p_hash[:ccb].slack_user_api_token))
   slack_members.each do |slack_member|
     # next if slack_member[:name] == 'slackbot' || (slack_member[:deleted] && slack_member[:is_bot])
     next unless slack_member[:name] == target_name
     unless ccb_members_hash[slack_member[:id]].nil?
       # Name change. We have recorded that slack user_id before.
-      old_name = ccb_members_hash[slack_member[:id]]['slack_user_name']
-      ccb_members_hash[slack_member[:id]]['slack_user_name'] = target_name
-      updated_m_hash = ccb_members_hash[slack_member[:id]]
-      ccb_members_hash.delete(old_name)
-      ccb_members_hash[target_name] = updated_m_hash
+      update_member_name(ccb_members_hash, target_name)
       break
     end
     # New member has been added. Add em to our members_hash
-    m_hash = {
-      'slack_user_name' => slack_member[:name],
-      'slack_real_name' => slack_member[:real_name],
-      'slack_user_id' => slack_member[:id],
-      'slack_user_api_token' => first_m_hash['slack_user_api_token'],
-      'bot_user_id' => first_m_hash['bot_user_id'],
-      'bot_dm_channel_id' => nil,
-      'bot_api_token' => first_m_hash['bot_api_token']
-    }
-    ccb_members_hash[slack_member[:name]] = m_hash
-    ccb_members_hash[slack_member[:id]] = m_hash
+    add_new_member(ccb_members_hash, first_m_hash, slack_member[:name],
+                   slack_member[:real_name], slack_member[:id])
     break
-    # user_name: slack_member[:name],
-    # slack_user_id: slack_member[:id],
-    # slack_team_id: slack_member[:team_id],
-    # is_bot: slack_member[:is_bot],
-    # deleted: slack_member[:deleted],
-    # real_name: slack_member[:real_name]
-    # m_hash = {
-    #  slack_user_name: member.name,
-    #  slack_real_name: member.real_name,
-    #  slack_user_id: member.slack_user_id,
-    #  slack_user_api_token: team.api_token,
-    #  bot_user_id: team.bot_user_id,
-    #  # Note: the bot_dm_channel_id is only present on a Member record
-    #  #       when the member installs the bot. Else it is nil when
-    #  #       someone else is installing.
-    #  bot_dm_channel_id: member.bot_dm_channel_id,
-    #  bot_api_token: team.bot_access_token
-    # }
-    # members_hash[member.name] = m_hash
-    # members_hash[member.slack_user_id] = m_hash
   end
-  ccb_members_hash
+end
+
+# New member has been added. Add em to our members_hash
+def add_new_member(ccb_members_hash, first_m_hash, name, real_name, id)
+  m_hash = {
+    'slack_user_name' => name,
+    'slack_real_name' => real_name,
+    'slack_user_id' => id,
+    'slack_user_api_token' => first_m_hash['slack_user_api_token'],
+    'bot_user_id' => first_m_hash['bot_user_id'],
+    'bot_dm_channel_id' => nil,
+    'bot_api_token' => first_m_hash['bot_api_token']
+  }
+  ccb_members_hash[name] = m_hash
+  ccb_members_hash[id] = m_hash
+end
+
+# Name change. We have recorded that slack user_id before.
+def update_member_name(ccb_members_hash, target_name)
+  old_name = ccb_members_hash[slack_member[:id]]['slack_user_name']
+  ccb_members_hash[slack_member[:id]]['slack_user_name'] = target_name
+  updated_m_hash = ccb_members_hash[slack_member[:id]]
+  ccb_members_hash.delete(old_name)
+  ccb_members_hash[target_name] = updated_m_hash
 end
 
 def slack_members_from_rtm_data(options)
