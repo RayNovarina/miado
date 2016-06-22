@@ -32,10 +32,10 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
 
   def failure
     # cancel button clicked.
-      # No HTTP_REFERER was set in the request to this action,
-      # so redirect_to :back could not be called successfully. If this is a test,
-      # make sure to specify request.env["HTTP_REFERER"].
-      # redirect_to :back
+    # No HTTP_REFERER was set in the request to this action,
+    # so redirect_to :back could not be called successfully. If this is a test,
+    # make sure to specify request.env["HTTP_REFERER"].
+    # redirect_to :back
     redirect_to :root
   end
 

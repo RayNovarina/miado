@@ -115,22 +115,7 @@ module ChannelExtensions
 
     def update_channel_auth_info(channel, options)
       auth = options[:request].env['omniauth.auth']
-      members_hash = {}
-      m_hash = {
-        slack_user_name: auth.info['user'],
-        slack_real_name: auth.info['user'],
-        slack_user_id: auth.uid,
-        slack_user_api_token: auth.credentials['token'],
-        bot_user_id: auth.extra['bot_info']['bot_user_id'],
-        bot_dm_channel_id: find_bot_dm_channel_id(
-          bot_user_id: auth.extra['bot_info']['bot_user_id'],
-          api_token: auth.credentials['token']),
-        bot_msg_id: nil,
-        bot_api_token: auth.extra['bot_info']['bot_access_token']
-      }
-      members_hash[m_hash[:slack_user_name]] = m_hash
-      members_hash[m_hash[:slack_user_id]] = m_hash
-
+      members_hash = find_or_create_members_hash_from_omniauth_callback(options)
       channel.slack_user_api_token = auth.credentials['token']
       channel.bot_api_token = auth.extra['bot_info']['bot_access_token']
       channel.bot_user_id = auth.extra['bot_info']['bot_user_id']
@@ -138,6 +123,32 @@ module ChannelExtensions
       channel.auth_params_json = options[:request].env['omniauth.params']
       channel.members_hash = members_hash
       channel.save!
+    end
+
+    def find_or_create_members_hash_from_omniauth_callback(options)
+      auth = options[:request].env['omniauth.auth']
+      other_install_channel =
+        Channel.where(slack_channel_name: 'installation',
+                      slack_team_id: auth.info['team_id'])
+               .where.not(slack_user_id: auth.uid).first
+      members_hash = {} if other_install_channel.nil?
+      members_hash = other_install_channel.members_hash unless other_install_channel.nil?
+      # Delete placeholder id if we made one up when processing a task assignment.
+      members_hash.delete('id.'.concat(auth.info['user']))
+      m_hash = { slack_user_name: auth.info['user'],
+                 slack_real_name: auth.info['user'],
+                 slack_user_id: auth.uid,
+                 slack_user_api_token: auth.credentials['token'],
+                 bot_user_id: auth.extra['bot_info']['bot_user_id'],
+                 bot_dm_channel_id: find_bot_dm_channel_id(
+                   bot_user_id: auth.extra['bot_info']['bot_user_id'],
+                   api_token: auth.credentials['token']),
+                 bot_msg_id: nil,
+                 bot_api_token: auth.extra['bot_info']['bot_access_token']
+                }
+      members_hash[m_hash[:slack_user_name]] = m_hash
+      members_hash[m_hash[:slack_user_id]] = m_hash
+      members_hash
     end
 
     def find_bot_dm_channel_id(options)

@@ -121,6 +121,13 @@ def slack_member_name_from_slack_user_id(parsed, slack_member_user_id)
   # Fixup if called with partial copy of parsed hash.
   ccb = parsed[:ccb] || @view.channel
   return parsed[:url_params][:user_name] if parsed[:url_params][:user_id] == slack_member_user_id
+  if slack_member_user_id.starts_with?('id.')
+    return slack_member_user_id.slice(3, (slack_member_user_id.length - 3))
+  end
+# if (m_hash = ccb.members_hash[slack_member_user_id]).nil?
+#  require 'pry'
+#  binding.pry
+# end
   return '??not recognized' if (m_hash = ccb.members_hash[slack_member_user_id]).nil?
   m_hash['slack_user_name']
 end
