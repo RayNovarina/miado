@@ -88,6 +88,7 @@ def generate_list_commands(parsed, deferred_cmd)
         member_name: i_item[:name],
         member_id: i_item[:id],
         slack_user_api_token: i_item[:slack_user_api_token],
+        bot_api_token: i_item[:bot_api_token],
         taskbot_channel_id: i_item[:taskbot_channel_id],
         taskbot_user_id: i_item[:taskbot_user_id],
         taskbot_msg_id: i_item[:taskbot_msg_id],
@@ -199,6 +200,7 @@ def build_one_impacted_member(options)
       id: options[:am_hash]['slack_user_id'] } unless options.key?(:parsed)
 
   impacted_member[:slack_user_api_token] = options[:am_hash]['slack_user_api_token']
+  impacted_member[:bot_api_token] = options[:am_hash]['bot_api_token']
   impacted_member[:taskbot_channel_id] = options[:am_hash]['bot_dm_channel_id']
   impacted_member[:taskbot_user_id] = options[:am_hash]['bot_user_id']
   impacted_member[:taskbot_msg_id] = options[:am_hash]['bot_msg_id']
@@ -286,7 +288,8 @@ def generate_task_list_msgs(parsed, list_cmds)
                    taskbot_msg_id: cmd_hash[:taskbot_msg_id],
                    member_name: cmd_hash[:member_name],
                    member_id: cmd_hash[:member_id],
-                   api_client: make_web_client(cmd_hash[:slack_user_api_token])
+                   # api_client: make_web_client(cmd_hash[:slack_user_api_token])
+                   api_client: make_web_client(cmd_hash[:bot_api_token])
                  }
   end
   chat_msgs

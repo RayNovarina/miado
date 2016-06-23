@@ -88,10 +88,14 @@ class OmniauthSlackSetup
       # ',im:history'\
       # ',chat:write:bot'\
       # ',channels:read'\
-      return { scope: ' commands'\
-                      ',bot'\
-                      ',im:read'\
-                      ',chat:write:bot'\
+      # Ok for june 20th. dont very member names, get taskbot dm channel id.
+      # return { scope: ' commands'\
+      #                ',bot'\
+      #                ',im:read'\
+      #                ',chat:write:bot'\
+      #       }
+      return { scope: ' commands' \
+                      ',bot' \
              }
     end
     return { scope: 'identity.basic' } if query == 'state=sign_in'

@@ -121,13 +121,6 @@ def slack_member_name_from_slack_user_id(parsed, slack_member_user_id)
   # Fixup if called with partial copy of parsed hash.
   ccb = parsed[:ccb] || @view.channel
   return parsed[:url_params][:user_name] if parsed[:url_params][:user_id] == slack_member_user_id
-  if slack_member_user_id.starts_with?('id.')
-    return slack_member_user_id.slice(3, (slack_member_user_id.length - 3))
-  end
-# if (m_hash = ccb.members_hash[slack_member_user_id]).nil?
-#  require 'pry'
-#  binding.pry
-# end
   return '??not recognized' if (m_hash = ccb.members_hash[slack_member_user_id]).nil?
   m_hash['slack_user_name']
 end
@@ -156,45 +149,24 @@ def merge_members_hash_from_slack(p_hash, target_name)
     first_m_hash = m_hash[1]
     break
   end
-  experiment = true
-  if experiment
-    # Experiment: just assume name is correct, don't query Slack and require so
-    # many auth scopes, just add to hash.
-    add_new_member(ccb_members_hash, first_m_hash, target_name, target_name,
-                   'id.'.concat(target_name))
-  else
-    add_update_members_from_slack(p_hash, target_name, ccb_members_hash, first_m_hash)
-    slack_members = slack_members_from_rtm_data(api_client: make_web_client(p_hash[:ccb].slack_user_api_token))
-    slack_members.each do |slack_member|
-      # next if slack_member[:name] == 'slackbot' || (slack_member[:deleted] && slack_member[:is_bot])
-      next unless slack_member[:name] == target_name
-      unless ccb_members_hash[slack_member[:id]].nil?
-        # Name change. We have recorded that slack user_id before.
-        update_member_name(ccb_members_hash, target_name)
-        break
-      end
-      # New member has been added. Add em to our members_hash
-      add_new_member(ccb_members_hash, first_m_hash, slack_member[:name],
-                     slack_member[:real_name], slack_member[:id])
-      break
-    end
-  end
+  add_update_members_from_rtm_start(p_hash, target_name, ccb_members_hash, first_m_hash)
   ccb_members_hash
 end
 
-def add_update_members_from_slack(p_hash, target_name, ccb_members_hash, first_m_hash)
-  slack_members = slack_members_from_rtm_data(api_client: make_web_client(p_hash[:ccb].slack_user_api_token))
+def add_update_members_from_rtm_start(p_hash, target_name, ccb_members_hash, first_m_hash)
+  rtm_start = start_data_from_rtm_start(p_hash[:ccb].bot_api_token)
+  slack_members = rtm_start['users']
   slack_members.each do |slack_member|
     # next if slack_member[:name] == 'slackbot' || (slack_member[:deleted] && slack_member[:is_bot])
-    next unless slack_member[:name] == target_name
-    unless ccb_members_hash[slack_member[:id]].nil?
+    next unless slack_member['name'] == target_name
+    unless ccb_members_hash[slack_member['id']].nil?
       # Name change. We have recorded that slack user_id before.
-      update_member_name(ccb_members_hash, target_name)
+      update_member_name(ccb_members_hash, target_name, slack_member)
       break
     end
     # New member has been added. Add em to our members_hash
-    add_new_member(ccb_members_hash, first_m_hash, slack_member[:name],
-                   slack_member[:real_name], slack_member[:id])
+    add_new_member(ccb_members_hash, first_m_hash, slack_member['name'],
+                   slack_member['real_name'], slack_member['id'])
     break
   end
 end
@@ -215,22 +187,24 @@ def add_new_member(ccb_members_hash, first_m_hash, name, real_name, id)
 end
 
 # Name change. We have recorded that slack user_id before.
-def update_member_name(ccb_members_hash, target_name)
-  old_name = ccb_members_hash[slack_member[:id]]['slack_user_name']
-  ccb_members_hash[slack_member[:id]]['slack_user_name'] = target_name
-  updated_m_hash = ccb_members_hash[slack_member[:id]]
+def update_member_name(ccb_members_hash, target_name, slack_member)
+  old_name = ccb_members_hash[slack_member['id']]['slack_user_name']
+  ccb_members_hash[slack_member['id']]['slack_user_name'] = target_name
+  updated_m_hash = ccb_members_hash[slack_member['id']]
   ccb_members_hash.delete(old_name)
   ccb_members_hash[target_name] = updated_m_hash
 end
 
-def slack_members_from_rtm_data(options)
-  # response is an array of hashes. Each has name and id of a team member.
-  begin
-    return options[:api_client].users_list['members']
-  rescue Slack::Web::Api::Error => e
-    options[:api_client].logger.error "\nslack_members_from_rtm_data() " \
-      "failed with e.message: #{e.message}\n" \
-      "api_token: #{options[:api_client].token}\n"
-    return []
-  end
+# response is an array of hashes. Team, users, channels, dms.
+def start_data_from_rtm_start(api_token)
+  slack_api('rtm.start', api_token)
+end
+
+def slack_api(method_name, api_token)
+  uri = URI.parse('https://slack.com')
+  http = Net::HTTP.new(uri.host, uri.port)
+  http.use_ssl = true
+  request = Net::HTTP::Get.new("/api/#{method_name}?token=#{api_token}")
+  response = http.request(request)
+  JSON.parse(response.body)
 end
