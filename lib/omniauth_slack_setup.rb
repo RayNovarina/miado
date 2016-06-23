@@ -49,8 +49,9 @@ class OmniauthSlackSetup
       #                'im:read'
       #       }
       # Scopes and why needed:
-      #    bot: - to be able to get the taskbot's slack user id to use to send
-      #           taskbot msgs to the taskbot channel.
+      #    bot: - to be able to get the taskbot's slack user id to use to
+      #           identify the taskbot's dm channel id to be able to send
+      #           taskbot msgs to the taskbot dm channel.
       #    users:read - to be able to use the users.list api method to verify
       #                 assigned names.
       #    chat:write:bot - to be able to use the chat.delete and
@@ -60,7 +61,8 @@ class OmniauthSlackSetup
       #              direct message channels to build a members lookup hash.
       #    im:history - to be able to read the taskbot messages to get the msg
       #                 id so that it can be deleted.
-      #    channels:read - to be able to use the api method channels.list
+      #    channels:read - to be able to use the api method channels.list to
+      #                 build a list of all team channels.
       #    commands - to allow teams to install the /do slash command.
       # API methods used:
       # 1) in models/concerns.channel_extensions.rb:
@@ -73,22 +75,28 @@ class OmniauthSlackSetup
       #    Slack::Web::Client.web_client.im_list['members']
       #    uses token from team.api_token which is the miaDo api token from the
       #      member installing miaDo. (auth_hash[:auth]['credentials']['token'])
-      return { scope: 'bot,'\
-                      'chat:write:bot,'\
-                      'commands,'\
-                      'users:read,'\
-                      'channels:read,'\
-                      'im:read,'\
-                      'im:history'\
-             }
+      # return { scope: 'bot,'\
+      #                'chat:write:bot,'\
+      #                'commands,'\
+      #                'users:read,'\
+      #                'channels:read,'\
+      #                'im:read,'\
+      #                'im:history'\
+      #       }
       # ',users:read'\
       # ',im:read'\
       # ',im:history'\
       # ',chat:write:bot'\
       # ',channels:read'\
+      # Ok for june 20th. dont very member names, get taskbot dm channel id.
       # return { scope: ' commands'\
       #                ',bot'\
+      #                ',im:read'\
+      #                ',chat:write:bot'\
       #       }
+      return { scope: ' commands' \
+                      ',bot' \
+             }
     end
     return { scope: 'identity.basic' } if query == 'state=sign_in'
     {}

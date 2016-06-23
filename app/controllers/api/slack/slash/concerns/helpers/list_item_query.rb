@@ -96,6 +96,11 @@ def list_of_assigned_tasks_for_one_member_in_all_channels(parsed, params)
                    assigned_member_id: parsed[:mentioned_member_id],
                    done: false)
             .reorder('channel_name ASC, created_at ASC')
+    # ListItem.where(team_id: params[:team_id],
+    #               done: false)
+    #        .where("assigned_member_id = '#{parsed[:mentioned_member_id]}' " \
+    #               "OR assigned_member_id = 'id.#{parsed[:mentioned_member_name]}'")
+    #        .reorder('channel_name ASC, created_at ASC')
   elsif parsed[:done_option]
     # done: All which are done.
     ListItem.where(team_id: params[:team_id],

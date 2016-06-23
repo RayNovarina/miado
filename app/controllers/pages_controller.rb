@@ -23,15 +23,16 @@ class PagesController < ApplicationController
     @view.user = @view.current_user
   end
 
-  # NOTE: we can load this page standalone for ui testing. If so, create defaults.
+  # NOTE: we can load this page standalone for ui testing. If so, use defaults.
+  # If loaded as part of install, we get here via:
+  #    Redirected to http://localhost:3000/welcome/add_to_slack_new?install_channel_db_id=1
   def welcome_add_to_slack_new
-    # @view.user = @view.current_user
+    # Note: current_user invalid because no one is logged in for an install.
     @view.user = User.where(email: 'admin@example.com').first
-    @view.team = Team.find_from(:slack_id, [@view.user, params[:team_id]])
-    @view.provider = OmniauthProvider.all.reorder('updated_at DESC').first
+    install_channel = Channel.find(params[:install_channel_db_id]) unless params[:install_channel_db_id].nil?
+    install_channel = nil if params[:install_channel_db_id].nil?
     @view.locals = {
-      team: @view.team,
-      provider: @view.provider
+      install_channel: install_channel
     }
   end
 

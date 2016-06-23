@@ -44,8 +44,6 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
     text, attachments = process_cmd(parsed)
     # after_action_list_context: {} is AFTER action list(mine) or
     # list(team) or list(all)
-    # add_standard_err_help_info(parsed, text)
-    # return slash_response(text, attachments, parsed) unless parsed[:err_msg].empty?
     return [err_resp(params, text, attachments), parsed] unless parsed[:err_msg].empty?
     # Display an updated AFTER ACTION list if useful, i.e. task has been added
     # or deleted.
@@ -81,17 +79,13 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   #   slack_user_id.slack_team_id.slack_channel_id.  A new channel/ccb is
   #   created. We get the members lookup hash from any channel for this team.
   def recover_previous_action_list
-    @view.channel =
-      Channel.find_from_slack(@view, params[:user_id], params[:team_id],
-                              params[:channel_id])
-    @view.channel = Channel.create_from_slack(@view, params) if @view.channel.nil?
-    if @view.channel.nil?
+    if (@view.channel = Channel.find_or_create_from(source: :slack, view: @view, slash_url_params: params)).nil?
       return [nil,
-            "`MiaDo server ERROR: team #{params[:team_domain]}" \
-            "(#{params[:team_id]}) or channel #{params[:channel_name]}" \
-            "(#{params[:channel_id]}) not found for Slack user #{params[:user_id]}." \
-            'MiaDo needs to be installed via add to Slack button ' \
-            'at www.miado.net/add_to_slack`']
+              "`MiaDo server ERROR: team #{params[:team_domain]}" \
+              "(#{params[:team_id]}) or channel #{params[:channel_name]}" \
+              "(#{params[:channel_id]}) not found for Slack user #{params[:user_id]}." \
+              'MiaDo needs to be installed via add to Slack button ' \
+              'at www.miado.net/add_to_slack`']
     end
     [@view.channel, @view.channel.after_action_parse_hash]
   end
