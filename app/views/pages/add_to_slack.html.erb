@@ -72,13 +72,13 @@
   </div>
 
   <br>
-  <div class="row" style="background-color: #F3F9FB; color: #0E87FC">
+  <div class="row" style="background-color: #F3F9FB; color: rgb(31, 143, 249)">
     <br>
     <h4><p class="text-center" style="font-weight: 900;">Miado commands</p></h4>
   </div>
-  <div class="row" style="background-color: #F3F9FB; color: #0E87FC; padding-bottom: 20px;">
+  <div class="row" style="background-color: #F3F9FB; color: rgb(31, 143, 249); padding-bottom: 40px;">
     <div class="col-sm-8 col-sm-offset-2 well text-left"
-         style="background-color: #F3F9FB; box-shadow: 0 2px 2px 0 rgba(0, 0, 255, .14), 0 3px 1px -2px rgba(0, 0, 255, .2), 0 1px 5px 0 rgba(0, 0, 255, .12)">
+         style="background-color: rgb(225, 232, 255); box-shadow: 0 2px 2px 0 rgba(0, 0, 255, .14), 0 3px 1px -2px rgba(0, 0, 255, .2), 0 1px 5px 0 rgba(0, 0, 255, .12)">
       <strong>/do rev 1 spec @susan /jun15</strong>
       &nbsp;&nbsp;&nbsp;&nbsp;Adds "rev 1spec" task to this channel, assigns it to Susan, due date is June 15.
       <br>
@@ -119,29 +119,32 @@
   </div>
 
   <div id="contact_us" class="row"
-       style="padding-top:40px; padding-bottom: 20px; background-color: #FBFBE6; color: #7F7F7F;">
+       style="padding-top:40px; padding-bottom: 20px; background-color: #FBFBE6; color: rgb(203, 155, 54);">
     <div class="col-sm-8 col-sm-offset-2 well"
-         style="background-color: #FBFBE6; box-shadow: 0 2px 2px 0 rgba(0, 255, 255, .14), 0 3px 1px -2px rgba(0, 255, 255, .2), 0 1px 5px 0 rgba(0, 255, 255, .12)">
+         style="background-color: rgb(252, 245, 224); box-shadow: 0 2px 2px 0 rgba(0, 255, 255, .14), 0 3px 1px -2px rgba(0, 255, 255, .2), 0 1px 5px 0 rgba(0, 255, 255, .12)">
       <form name="comments" role="form" data-toggle="validator" method="post" action="/comments">
         <h4><p class="text-center" style="font-weight: 900;">Have a question?<p></h4>
         <br>
         <div class="form-group">
-          <label class="sr-only" for="name">Name:</label>
-          <input type="text" class="form-control" style="font-weight: 900;" name="name" placeholder="Name:" required>
+          <label for="name">Name:</label>
+          <input type="text" class="form-control" style="font-weight: 900;" name="name" required>
         </div>
         <div class="form-group">
-          <label class="sr-only" for="email">Email address:</label>
-          <input type="email" class="form-control" style="font-weight: 900;" name="email" placeholder="Email:" required>
+          <label for="email">Email address:</label>
+          <input type="email" class="form-control" style="font-weight: 900;" name="email" required>
         </div>
         <div class="form-group">
-          <textarea class="form-control" rows="6" style="font-weight: 900;" name="body" placeholder="Comment:" required></textarea>
+          <label for="email">Comment:</label>
+          <textarea class="form-control" rows="6" style="font-weight: 900;" name="body" required></textarea>
         </div>
         <div class="form-group hidden">
           <label class="sr-only" for="name">Bot_catcher:</label>
           <input type="text" class="form-control hidden" name="bot_catcher" placeholder="See no evil, submit no evil.">
         </div>
         <div class="form-group">
-          <button type="submit" class="btn" style="font-weight: 900;">Submit</button>
+          <button type="submit" class="btn"
+                  style="font-weight: 900; background-color: white;"
+          >Submit</button>
         </div>
       </form>
     </div>
