@@ -326,6 +326,7 @@ end
 def update_taskbot_channel(options)
   # return send_taskbot_update_msg(options) unless options[:taskbot_msg_id].nil?
   delete_taskbot_msg(options) unless options[:taskbot_msg_id].nil?
+  # blank_taskbot_msg(options) unless options[:taskbot_msg_id].nil?
   api_resp = send_taskbot_msg(options)
   # Now that we know the taskbot msg id, save it for all members.
   remember_taskbot_msg_id(api_resp, options)
@@ -405,6 +406,18 @@ rescue Slack::Web::Api::Error => e # (not_authed)
     "token: #{options[:api_client].token.nil? ? '*EMPTY!*' : options[:api_client].token}\n"
   options[:api_client].logger.error(err_msg)
   return api_resp
+end
+
+# Returns: slack api response hash.
+def blank_taskbot_msg(options)
+  org_text_arg = options[:text]
+  org_attachments_arg = options[:attachments]
+  options[:text] = ' '
+  options[:attachments] = {}
+  api_resp = send_taskbot_update_msg(options)
+  options[:text] = org_text_arg
+  options[:attachments] = org_attachments_arg
+  api_resp
 end
 
 # Inputs: options{ members_hash: hash, slack_team_id: team_id }
