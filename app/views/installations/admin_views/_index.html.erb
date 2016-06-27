@@ -1,0 +1,33 @@
+<header class="css-body-header">
+  <%= render partial: 'shared/index_page_header',
+             locals: { locals: { title: 'Admin Dashboard - Installations' } }
+  %>
+</header>
+
+<main class="css-body-main">
+  <div class="container">
+    <h2>Installations<%= " (#{locals[:installations].length})" %></h2>
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr>
+          <th>Team Name</th>
+          <th>Installed by</th>
+          <th>Created</th>
+          <th>Updated</th>
+          <th>api auth_token(last 25 digits)</th>
+          <th>bot auth_token(last 25 digits)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% locals[:installations].each do |channel| %>
+          <%= render partial: 'installations/admin_views/index_installation',
+                     locals: { locals: { install_channel: channel,
+                                         auth_info: channel.auth_json['info']
+                                       }
+                             }
+          %>
+        <% end %>
+      </tbody>
+    </table>
+    </div>
+</main>

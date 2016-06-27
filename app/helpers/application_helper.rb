@@ -6,8 +6,9 @@ module ApplicationHelper
   class View
     attr_reader :id, :name, :controller, :model, :url_params
     attr_accessor :locals, :signed_out_user, :users, :user, :teams, :team,
-                  :providers, :provider, :web_client, :rtm_client, :members, :member,
-                  :channels, :channel, :items, :item, :exception
+                  :providers, :provider, :web_client, :rtm_client,
+                  :members, :member, :channels, :channel, :items, :item,
+                  :exception, :installations, :installation
 
     def initialize(controller, model)
       @id = object_id
@@ -16,6 +17,7 @@ module ApplicationHelper
       @controller = controller
       @model = model
       @user = current_user
+      @locals = {}
     end
 
     # If authentication system (i.e. Devise) active.

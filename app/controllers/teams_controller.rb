@@ -10,16 +10,19 @@ class TeamsController < ApplicationController
   # Note: we get here via /teams to display all teams in system (admin link)
   #                    or /user/:user_id/teams for "My Teams" link
   def index
-    @view.teams = @view.url_params.key?('user_id') \
-      ? Team.where('user_id = ?', current_user.id) \
-      : Team.all
+    @view.locals = { user: current_user,
+                     teams: Channel.teams
+                   }
+    # @view.teams = @view.url_params.key?('user_id') \
+    #  ? Team.where('user_id = ?', current_user.id) \
+    #  : Channel.teams
     # authorize @view.teams
     # Response: Controller will forward_to
     #           /views/teams/index.html.erb with @view
   end
 
   def show
-    @view.team = Team.find(params[:id])
+    @view.locals = { team: Channel.find(params[:id]) }
     authorize @view.team
     # Response: Controller will forward_to
     #           /views/teams/show.html.erb with @view

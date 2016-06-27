@@ -1,19 +1,19 @@
 <tr>
-  <td><%= link_to @view.locals[:user].name,
-              user_path(@view.locals[:user]),
-              title: "Signed in via oauth #{@view.locals[:user].omniauth_providers.count} times." %>
+  <td><u><%= link_to locals[:user].name,
+              user_path(locals[:user]),
+              title: "" %></u>
   </td>
-  <td><%= @view.locals[:user].email %></td>
-  <td><%= @view.locals[:user].created_at.strftime("%a, %d %b %Y") %></td>
+  <td><%= locals[:user].email %></td>
+  <td><%= locals[:user].created_at.strftime("%a, %d %b %Y") %></td>
   <% # Fill in variable number of Slack teams and omniauth_providers
   next_idx = 0
-  while next_idx < user.teams.length && next_idx < user.omniauth_providers.length do
+  while next_idx < locals[:teams].length || next_idx < locals[:installations].length do
   %>
-    <%= render partial: 'users/admin_views/index_provider',
-               locals: @view.locals = { provider: user.omniauth_providers[next_idx] }
+    <%= render partial: 'users/admin_views/index_installation',
+               locals: { locals: { installation: locals[:installations][next_idx] } }
     %>
     <%= render partial: 'users/admin_views/index_team',
-               locals: @view.locals = { team: user.teams[next_idx] }
+               locals: { locals: { installation: locals[:installations][next_idx] } }
     %>
     </tr>
     <tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td>

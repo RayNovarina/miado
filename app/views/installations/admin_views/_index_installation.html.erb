@@ -1,0 +1,14 @@
+<tr>
+  <td><u><%= link_to locals[:auth_info]['team'],
+              installation_path(locals[:install_channel]),
+              title: "" %></u>
+  </td>
+  <td><u><%= link_to locals[:auth_info]['user'],
+              installation_path(locals[:install_channel]),
+              title: "" %></u>
+  </td>
+  <td><%= locals[:install_channel].created_at.strftime("%a, %d %b %Y") %></td>
+  <td><%= locals[:install_channel].updated_at.strftime("%c") %></td>
+  <td><%= locals[:install_channel].slack_user_api_token.length > 25 ? locals[:install_channel].slack_user_api_token[-25, 25] : locals[:install_channel].slack_user_api_token %></td>
+  <td><%= locals[:install_channel].bot_api_token.length > 25 ? locals[:install_channel].bot_api_token[-25, 25] : locals[:install_channel].bot_api_token %></td>
+</tr>

@@ -1,16 +1,23 @@
 <header class="css-body-header">
   <%= render partial: 'shared/index_page_header',
-             locals: @view.locals = { title: 'Admin Dashboard - Teams' }
+             locals: { locals: { title: 'Admin Dashboard - Teams' } }
   %>
 </header>
 
 <main class="css-body-main">
   <div class="container">
-    <h2>Teams<%= " (#{@view.teams.length})" %></h2>
+    <h2>Teams<%= " (#{locals[:teams].length})" %></h2>
     <br>
-    <% @view.teams.each do |team| %>
+    <% locals[:teams].each do |channel| %>
       <%= render partial: 'teams/admin_views/show_team',
-                 locals: @view.locals = { team: team }
+                 locals: { locals: { team: channel,
+                                     members: Channel.team_members(channel.slack_team_id),
+                                     channels: Channel.team_channels(channel.slack_team_id),
+                                     lists: Channel.team_lists(channel.slack_team_id),
+                                     auth_info: channel.auth_json['info'],
+                                     auth_extra: channel.auth_json['extra']
+                                   }
+                         }
       %>
     <% end %>
   </div>

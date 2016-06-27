@@ -36,6 +36,50 @@ module ChannelExtensions
       return create_from_omniauth_callback(options) if options[:source] == :omniauth_callback
     end
 
+    # Various methods to support Installations and Team and Members models.
+
+    def installations
+      Channel.where(slack_channel_name: 'installation')
+             .reorder('slack_team_id ASC')
+    end
+
+    def teams
+      Channel.where(slack_channel_name: 'installation')
+             .select("DISTINCT ON(slack_team_id)*")
+             .reorder('slack_team_id ASC')
+    end
+
+    def team_members(slack_team_id = nil)
+      if slack_team_id.nil?
+        install_channels = Channel.teams
+      else
+        install_channels = [Channel.where(slack_channel_name: 'installation')
+                                   .where(slack_team_id: slack_team_id)
+                                   .reorder('slack_team_id ASC').first]
+      end
+      members = []
+      install_channels.each do |install_channel|
+        install_channel.members_hash.each do |key, value|
+          members << value if key.starts_with?('U')
+        end
+      end
+      members
+    end
+
+    def team_channels(slack_team_id = nil)
+      unless slack_team_id.nil?
+        return Channel.where(slack_team_id: slack_team_id)
+                      .where.not(slack_channel_name: 'installation')
+                      .reorder('slack_channel_name ASC')
+      end
+      Channel.where.not(slack_channel_name: 'installation')
+             .reorder('slack_channel_name ASC')
+    end
+
+    def team_lists(slack_team_id)
+      []
+    end
+
     private
 
     def find_or_create_from_slack(options)
