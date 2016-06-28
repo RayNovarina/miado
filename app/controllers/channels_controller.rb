@@ -8,7 +8,9 @@ class ChannelsController < ApplicationController
   #   index, show, new, edit, create, update and destroy.
   #
   def index
-    @view.channels = Channel.all
+    @view.locals = { channels: Channel.team_channels,
+                     teams: Channel.teams
+                   }
     # authorize @view.channels
     # Response: Controller will forward_to
     #           /views/channels/index.html.erb with @view

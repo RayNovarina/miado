@@ -1,8 +1,8 @@
-<% if @view.locals[:team] == nil %>
+<% if locals[:installation] == nil %>
   <td>&nbsp;</td>
 <% else %>
-  <td><%= link_to @view.locals[:team].name,
-              team_path(@view.locals[:team]),
-              title: "Team added #{@view.locals[:team].created_at.strftime("%a, %d %b %Y")}" %>
+  <td><u><%= link_to locals[:installation].auth_json['info']['team'],
+              team_path(locals[:installation]),
+              title: "Team added #{locals[:installation].created_at.strftime("%a, %d %b %Y")}" %></u>
   </td>
 <% end %>

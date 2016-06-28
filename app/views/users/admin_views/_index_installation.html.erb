@@ -1,0 +1,8 @@
+<% if locals[:installation] == nil %>
+  <td>&nbsp;</td>
+<% else %>
+  <td><u><%= link_to locals[:installation].auth_json['info']['user'],
+              installation_path(locals[:installation]),
+              title: "Installation added #{locals[:installation].created_at.strftime("%a, %d %b %Y")}" %></u>
+  </td>
+<% end %>

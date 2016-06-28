@@ -1,21 +1,25 @@
-<h3><%= "Members(#{team.members.size}) for Team #{team.name}(#{team.slack_team_id}) added by #{team.user.name}" %></h3>
-<% unless @view.locals[:team].members.empty? %>
+<h3><%= "Members(#{locals[:members].length}) for Team" %>
+    <u><%= link_to locals[:team].auth_json['info']['team'],
+                   team_path(locals[:team]),
+                   title: "Team added #{locals[:team].created_at.strftime("%a, %d %b %Y")}" %></u>
+    <%= "(#{locals[:team].slack_team_id}) added by #{locals[:team].auth_json['info']['user']}" %>
+</h3>
+<% unless locals[:members].empty? %>
   <table class="table table-bordered table-hover">
     <thead>
       <tr>
         <th>Slack User Name</th>
         <th>Real Name</th>
-        <th>Bot?</th>
-        <th>Deleted?</th>
         <th>Slack User Id</th>
         <th>Added To MiaDo on Date</th>
         <th>Last Updated Date</th>
       </tr>
     </thead>
     <tbody>
-      <% @view.locals[:team].members.each do |member| %>
+      <% locals[:members].each do |member| %>
         <%= render partial: 'members/admin_views/index_member',
-                   locals: @view.locals = { member: member }
+                   locals: { locals: { member: member,
+                                       install_channel: locals[:team] } }
         %>
       <% end %>
     </tbody>

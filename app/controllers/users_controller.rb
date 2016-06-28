@@ -4,11 +4,14 @@ class UsersController < ApplicationController
   before_action :make_view_helper
 
   def index
-    @view.users = User.all
+    @view.locals = { users: User.all,
+                     installations: Channel.installations,
+                     teams: Channel.teams
+                   }
   end
 
   def show
-    @view.user = User.find(params[:id])
+    @view.locals = { user: User.find(params[:id]) }
   end
 
   def settings

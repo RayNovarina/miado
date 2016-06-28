@@ -1,12 +1,12 @@
 <% if @view.admin_user? %>
   <%= render partial: 'teams/admin_views/index',
-             locals: @view.locals = {}
+             locals: { locals: @view.locals }
   %>
 <% else %>
 
 <header class="css-body-header">
   <%= render partial: 'shared/index_page_header',
-             locals: @view.locals = { title: "My Teams (#{@view.teams.length}) for #{@view.user.name}" }
+             locals: { locals: { title: "My Teams (#{@view.locals[:teams].length}) for #{@view.locals[:user].name}" } }
   %>
 </header>
 

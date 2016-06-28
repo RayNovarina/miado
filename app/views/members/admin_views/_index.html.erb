@@ -1,16 +1,17 @@
 <header class="css-body-header">
   <%= render partial: 'shared/index_page_header',
-             locals: @view.locals = { title: 'Admin Dashboard - Members' }
+             locals: { locals: { title: 'Admin Dashboard - Members' } }
   %>
 </header>
 
 <main class="css-body-main">
   <div class="container">
-    <h2><%= "#{Member.count} Members in #{Team.count} Teams"  %></h2>
+    <h2><%= "#{locals[:members].length} Members in #{locals[:teams].length} Teams"  %></h2>
     <hr>
-    <% Team.all.reorder('name ASC').each do |team| %>
+    <% locals[:teams].each do |channel| %>
       <%= render partial: 'members/admin_views/index_team',
-                 locals: @view.locals = { team: team }
+                 locals: { locals: { team: channel,
+                                     members: Channel.team_members(channel.slack_team_id) } }
       %>
     <% end %>
     </div>

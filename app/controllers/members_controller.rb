@@ -9,7 +9,9 @@ class MembersController < ApplicationController
   #
 
   def index
-    @view.members = Member.all
+    @view.locals = { members: Channel.team_members,
+                     teams: Channel.teams
+                   }
     # authorize @view.members
     # Response: Controller will forward_to
     #           /views/members/index.html.erb with @view

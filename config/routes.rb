@@ -1,7 +1,6 @@
 Rails.application.routes.draw do
-  get 'comments/create'
-
-  resources :omniauth_providers, only: [:index, :show, :destroy]
+  # resources :omniauth_providers, only: [:index, :show, :destroy]
+  resources :installations, only: [:index, :show, :destroy]
   #
   # per: https://github.com/plataformatec/devise#getting-started
   #   "you can customize each controller", "Tell the router to use this
@@ -16,9 +15,9 @@ Rails.application.routes.draw do
              }
   get '/auth/slack/setup', to: 'sessions#setup', as: 'oauth_setup'
 
-  resources :users, only: [:index, :show, :destroy] do
-    resources :teams, only: [:index]
-  end
+  resources :users, only: [:index, :show, :destroy]
+
+  # get '/installations', to: 'channels#installations_index', as: 'installations'
 
   resources :teams, only: [:index, :show, :destroy] do
     resources :members, only: [:index]

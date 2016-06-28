@@ -1,5 +1,5 @@
-<h3><%= "Channels(#{team.channels.size}) for Team #{team.name} added by #{team.user.name}" %></h3>
-<% unless @view.locals[:team].channels.empty? %>
+<h3><%= "Active Channels(#{locals[:channels].length}) for Team #{locals[:team].auth_json['info']['team']} added by #{locals[:team].auth_json['info']['user']}" %></h3>
+<% unless locals[:channels].empty? %>
   <table class="table table-bordered table-hover">
     <thead>
       <tr>
@@ -10,13 +10,13 @@
         <th>Deleted</th>
         <th>Added To MiaDo on Date</th>
         <th>Last Updated Date</th>
-        <th>Tasks</th>
+        <th>Task Lists</th>
       </tr>
     </thead>
     <tbody>
-      <% @view.locals[:team].channels.each do |channel| %>
+      <% locals[:channels].each do |channel| %>
         <%= render partial: 'channels/admin_views/index_channel',
-                   locals: @view.locals = { channel: channel }
+                   locals: { locals: { channel: channel } }
         %>
       <% end %>
     </tbody>

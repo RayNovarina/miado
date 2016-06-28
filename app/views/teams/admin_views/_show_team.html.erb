@@ -1,22 +1,27 @@
-<% team = @view.locals[:team] %>
-<h3><%= link_to team.name,
-                team_path(team),
-                title: "Created on #{team.created_at.strftime('%c')}" %></h3>
+<h3><u><%= link_to locals[:auth_info]['team'],
+                team_path(locals[:team]),
+                title: "Created on #{locals[:team].created_at.strftime('%c')}" %></u></h3>
 <table class="table table-bordered table-hover">
   <thead>
     <tr>
       <th>Added By</th>
       <th>Added On</th>
       <th>Updated On</th>
-      <th>Api Token</th>
+      <th>Api Token(last 25 digits)</th>
       <th>Members</th>
-      <th>Channels</th>
+      <th>Active<br>Channels</th>
       <th>Channel Lists</th>
     </tr>
   </thead>
   <tbody>
     <%= render partial: 'teams/admin_views/index_team_line1',
-               locals: @view.locals = { team: team }
+               locals: { locals: { team: locals[:team],
+                                   members: locals[:members],
+                                   channels: locals[:channels],
+                                   lists: locals[:lists],
+                                   auth_info: locals[:auth_info]
+                                 }
+                       }
     %>
   </tbody>
 </table>
@@ -31,7 +36,11 @@
   </thead>
   <tbody>
     <%= render partial: 'teams/admin_views/index_team_line2',
-               locals: @view.locals = { team: team }
+               locals: { locals: { team: locals[:team],
+                                   auth_info: locals[:auth_info],
+                                   auth_extra: locals[:auth_extra]
+                                 }
+                       }
     %>
   </tbody>
 </table>
