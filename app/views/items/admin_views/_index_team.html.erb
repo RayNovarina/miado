@@ -1,24 +1,42 @@
-<% team = @view.locals[:team] %>
-<h3><%= "Task Lists for Channels(#{team.channels.size}) for Team #{team.name} added by #{team.user.name}" %></h3>
-<% unless @view.locals[:team].channels.empty? %>
-  <% parsed = { team_option: true,
-                all_option: true,
-                open_option: true,
-                done_option: true,
-                due: false,
-                err_msg: '',
-                func: :list,
-                url_params: { team_id: @view.locals[:team].slack_team_id },
-                list_scope: :team,
-                channel_scope: :all_channels,
-                mentioned_member_id: nil,
-                assigned_due_date: nil
-              }
-     all_channel_lists_for_this_team = ListItem.query(parsed)
+<%
+current_channel_id = ''
+task_num = 0
+locals[:items].each_with_index do |item, index|
+  unless current_channel_id == item.channel_id
+    unless current_channel_id == '' %>
+         </tbody>
+        </table>
+      <br>
+    <% end %>
+    <% current_channel_id = item.channel_id
+       task_num = 1
+    %>
+    <h3><%= "##{item.channel_name}(#{current_channel_id})" %></h3>
+      <table class="table table-bordered table-hover">
+        <thead>
+          <tr>
+            <th>Task Number</th>
+            <th>Description</th>
+            <th>Assigned To</th>
+            <th>Due Date</th>
+            <th>Open/Done</th>
+            <th>Created Date</th>
+            <th>Last Updated Date</th>
+          </tr>
+        </thead>
+        <tbody>
+  <% end %>
+  <%= render partial: 'items/admin_views/index_item',
+             locals: { locals: { task_num: task_num,
+                                 item: item,
+                                 members_hash: locals[:install_channel].members_hash
+                               }
+                     }
   %>
-  <%= render partial: 'items/admin_views/index_team_lists',
-             locals: @view.locals = { team: team,
-                                      lists: all_channel_lists_for_this_team
-                                    }
-  %>
+  <% task_num += 1 %>
+<% end %>
+<% unless current_channel_id == '' %>
+         </tbody>
+       </table>
+     <br>
 <% end %>

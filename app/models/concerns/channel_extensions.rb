@@ -45,17 +45,17 @@ module ChannelExtensions
 
     def teams
       Channel.where(slack_channel_name: 'installation')
-             .select("DISTINCT ON(slack_team_id)*")
+             .select('DISTINCT ON(slack_team_id)*')
              .reorder('slack_team_id ASC')
     end
 
-    def team_members(slack_team_id = nil)
-      if slack_team_id.nil?
-        install_channels = Channel.teams
-      else
+    def team_members(options = {})
+      if options.key?(:slack_team_id)
         install_channels = [Channel.where(slack_channel_name: 'installation')
-                                   .where(slack_team_id: slack_team_id)
+                                   .where(slack_team_id: options[:slack_team_id])
                                    .reorder('slack_team_id ASC').first]
+      else
+        install_channels = teams
       end
       members = []
       install_channels.each do |install_channel|
@@ -66,9 +66,9 @@ module ChannelExtensions
       members
     end
 
-    def team_channels(slack_team_id = nil)
-      unless slack_team_id.nil?
-        return Channel.where(slack_team_id: slack_team_id)
+    def team_channels(options = {})
+      if options.key?(:slack_team_id)
+        return Channel.where(slack_team_id: options[:slack_team_id])
                       .where.not(slack_channel_name: 'installation')
                       .reorder('slack_channel_name ASC')
       end
@@ -76,8 +76,39 @@ module ChannelExtensions
              .reorder('slack_channel_name ASC')
     end
 
-    def team_lists(slack_team_id)
-      []
+    def team_lists(options = {})
+      if options.key?(:slack_team_id)
+        []
+      else
+        []
+      end
+    end
+
+    def shared_team_channels(options)
+      channels = team_channels(options)
+      shared_channels = []
+      channels.each do |channel|
+        shared_channels << channel unless channel.slack_channel_id.starts_with?('D')
+      end
+      shared_channels
+    end
+
+    def dm_team_channels(options)
+      channels = team_channels(options)
+      dm_channels = []
+      channels.each do |channel|
+        dm_channels << channel if channel.slack_channel_id.starts_with?('D')
+      end
+      dm_channels
+    end
+
+    def bot_team_channels(options)
+      channels = dm_team_channels(options)
+      bot_channels = []
+      channels.each do |channel|
+        bot_channels << channel unless channel.slack_user_id.starts_with?('U')
+      end
+      bot_channels
     end
 
     private

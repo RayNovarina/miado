@@ -1,8 +1,10 @@
-<% item = @view.locals[:item] %>
-<tr>
-  <td><%= @view.locals[:task_num] %></td>
+<% item = locals[:item]
+   assigned_member_name = '' if item.assigned_member_id.nil? || item.assigned_member_id.empty?
+   assigned_member_name = "@#{locals[:members_hash][item.assigned_member_id]['slack_user_name']}" unless  item.assigned_member_id.nil? || item.assigned_member_id.empty?
+%>
+  <td><%= locals[:task_num] %></td>
   <td><%= item.description %></td>
-  <td><%= "#{item.assigned_member_name.nil? || item.assigned_member_name.empty? ? '': "@#{item.assigned_member_name}"}" %></td>
+  <td><%= "#{assigned_member_name}" %></td>
   <td><%= item.assigned_due_date.nil? ? '' : item.assigned_due_date.strftime("%a, %d %b %Y") %></td>
   <td><%= item.done? ? 'done' : 'open' %></td>
   <td><%= item.created_at.strftime("%a, %d %b %Y") %></td>

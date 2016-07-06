@@ -50,6 +50,20 @@ module ListItemExtensions
       ListItem.where(team_id: p_hash[:url_params][:team_id])
               .reorder('channel_name ASC, created_at ASC')
     end
+
+    def items(options = {})
+      if options.key?(:slack_team_id)
+        if options.key?(:slack_channel_id)
+          return ListItem.where(team_id: options[:slack_team_id])
+                         .where(channel_id: options[:slack_channel_id])
+                         .reorder('created_at ASC')
+        end
+        return ListItem.where(team_id: options[:slack_team_id])
+                       .reorder('channel_name ASC, created_at ASC')
+      end
+      ListItem.all
+    end
+    #
   end # module ClassMethods
 
   #

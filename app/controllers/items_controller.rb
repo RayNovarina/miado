@@ -9,6 +9,12 @@ class ItemsController < ApplicationController
   #
   def index
     @view.items = ListItem.all
+    @view.teams = Channel.teams
+    @view.channels = Channel.all
+    @view.locals = { items: @view.items,
+                     teams: @view.teams,
+                     channels: @view.channels
+                   }
     # authorize @view.items
     # Response: Controller will forward_to
     #           /views/items/index.html.erb with @view

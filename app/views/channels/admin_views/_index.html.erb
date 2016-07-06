@@ -6,13 +6,16 @@
 
 <main class="css-body-main">
   <div class="container">
-    <h2><%= "#{locals[:channels].length} Active #{'Channel'.pluralize(locals[:channels].length)} " %>
+    <h2><%= "#{locals[:team_channels].length} Active #{'Channel'.pluralize(locals[:team_channels].length)} " %>
         <%= "in #{locals[:teams].length} #{'Team'.pluralize(locals[:teams].length)}"  %></h2>
     <hr>
     <% locals[:teams].each do |team| %>
       <%= render partial: 'channels/admin_views/index_team',
                  locals: { locals: { team: team,
-                                     channels: Channel.team_channels(team.slack_team_id) } }
+                                     shared_channels: Channel.shared_team_channels(slack_team_id: team.slack_team_id),
+                                     bot_channels: Channel.bot_team_channels(slack_team_id: team.slack_team_id)
+                                   }
+                         }
       %>
     <% end %>
     </div>

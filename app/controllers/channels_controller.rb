@@ -8,7 +8,7 @@ class ChannelsController < ApplicationController
   #   index, show, new, edit, create, update and destroy.
   #
   def index
-    @view.locals = { channels: Channel.team_channels,
+    @view.locals = { team_channels: Channel.team_channels,
                      teams: Channel.teams
                    }
     # authorize @view.channels

@@ -5,5 +5,4 @@
   <td><%= locals[:team].slack_user_api_token.length > 25 ? locals[:team].slack_user_api_token[-25, 25] : locals[:team].slack_user_api_token %></td>
   <td><%= link_to " (#{locals[:members].length})", team_members_path(locals[:team]) %></td>
   <td><%= link_to " (#{locals[:channels].length})", team_channels_path(locals[:team]) %></td>
-  <td><%= link_to " (#{locals[:lists].length})", team_items_path(locals[:team]) %></td>
 </tr>
