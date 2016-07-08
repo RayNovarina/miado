@@ -1,12 +1,13 @@
 <h3><u><%= link_to locals[:auth_info]['team'],
                 team_path(locals[:team]),
-                title: "Created on #{locals[:team].created_at.strftime('%c')}" %></u></h3>
+                title: "Created on #{locals[:team].created_at.strftime('%c')}" %></u>
+<%= " - #{locals[:installations].length} members have installed MiaDo." %></h3>
 <table class="table table-bordered table-hover">
   <thead>
     <tr>
-      <th>Added By</th>
+      <th>First<br>Added By</th>
       <th>Added On</th>
-      <th>Updated On</th>
+      <th>Last Activity</th>
       <th>Api Token(last 25 digits)</th>
       <th>Members</th>
       <th>Active<br>Channels</th>
@@ -17,7 +18,8 @@
                locals: { locals: { team: locals[:team],
                                    members: locals[:members],
                                    channels: locals[:channels],
-                                   auth_info: locals[:auth_info]
+                                   auth_info: locals[:auth_info],
+                                   last_activity: locals[:last_activity]
                                  }
                        }
     %>

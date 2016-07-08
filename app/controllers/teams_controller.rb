@@ -11,7 +11,8 @@ class TeamsController < ApplicationController
   #                    or /user/:user_id/teams for "My Teams" link
   def index
     @view.locals = { user: current_user,
-                     teams: Channel.teams
+                     teams: Channel.teams,
+                     installations: Channel.installations
                    }
     # @view.teams = @view.url_params.key?('user_id') \
     #  ? Team.where('user_id = ?', current_user.id) \

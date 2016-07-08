@@ -1,7 +1,7 @@
 <tr>
   <td><%= locals[:channel].slack_channel_name %></td>
   <td><%= locals[:channel].slack_channel_id %></td>
-  <td><%= locals[:channel].dm_user_id %></td>
+  <td><%= locals[:channel].members_hash[ locals[:channel].slack_user_id ]['slack_user_name'] %></td>
   <td><%= locals[:channel].archived %></td>
   <td><%= locals[:channel].deleted %></td>
   <td><%= locals[:channel].created_at.strftime("%c") %></td>

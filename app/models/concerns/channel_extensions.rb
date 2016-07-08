@@ -38,7 +38,18 @@ module ChannelExtensions
 
     # Various methods to support Installations and Team and Members models.
 
-    def installations
+    def installations(options = {})
+      if options.key?(:slack_user_id)
+        return Channel.where(slack_channel_name: 'installation')
+                      .where(slack_team_id: options[:slack_team_id])
+                      .where(slack_user_id: options[:slack_user_id])
+                      .reorder('slack_team_id ASC')
+      end
+      if options.key?(:slack_team_id)
+        return Channel.where(slack_channel_name: 'installation')
+                      .where(slack_team_id: options[:slack_team_id])
+                      .reorder('slack_team_id ASC')
+      end
       Channel.where(slack_channel_name: 'installation')
              .reorder('slack_team_id ASC')
     end
@@ -50,13 +61,8 @@ module ChannelExtensions
     end
 
     def team_members(options = {})
-      if options.key?(:slack_team_id)
-        install_channels = [Channel.where(slack_channel_name: 'installation')
-                                   .where(slack_team_id: options[:slack_team_id])
-                                   .reorder('slack_team_id ASC').first]
-      else
-        install_channels = teams
-      end
+      install_channels = [installations(options).first] if options.key?(:slack_team_id)
+      install_channels = teams unless options.key?(:slack_team_id)
       members = []
       install_channels.each do |install_channel|
         install_channel.members_hash.each do |key, value|
@@ -109,6 +115,23 @@ module ChannelExtensions
         bot_channels << channel unless channel.slack_user_id.starts_with?('U')
       end
       bot_channels
+    end
+
+    def last_activity(options = {})
+      # if options.key?(:slack_user_id)
+      #  return Channel.where(slack_team_id: options[:slack_team_id])
+      #                .where(updated_by_slack_user_id: options[:slack_user_id])
+      #                .reorder('updated_at ASC').last.updated_at
+      # end
+      if options.key?(:slack_team_id)
+        last_active = Channel.where(slack_team_id: options[:slack_team_id])
+                             .reorder('updated_at ASC').last
+      end
+      if options.key?(:user)
+        last_active = Channel.all.reorder('updated_at ASC').last
+      end
+      return last_active.updated_at unless last_active.nil?
+      nil
     end
 
     private

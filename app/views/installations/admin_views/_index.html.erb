@@ -13,7 +13,7 @@
           <th>Team Name</th>
           <th>Installed by</th>
           <th>Created</th>
-          <th>Updated</th>
+          <th>Last Activity</th>
           <th>api auth_token(last 25 digits)</th>
           <th>bot auth_token(last 25 digits)</th>
         </tr>
@@ -22,7 +22,8 @@
         <% locals[:installations].each do |channel| %>
           <%= render partial: 'installations/admin_views/index_installation',
                      locals: { locals: { install_channel: channel,
-                                         auth_info: channel.auth_json['info']
+                                         auth_info: channel.auth_json['info'],
+                                         last_activity: Channel.last_activity(slack_team_id: channel.slack_team_id)
                                        }
                              }
           %>

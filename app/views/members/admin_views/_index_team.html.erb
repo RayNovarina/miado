@@ -2,7 +2,7 @@
     <u><%= link_to locals[:team].auth_json['info']['team'],
                    team_path(locals[:team]),
                    title: "Team added #{locals[:team].created_at.strftime("%a, %d %b %Y")}" %></u>
-    <%= "(#{locals[:team].slack_team_id}) added by #{locals[:team].auth_json['info']['user']}" %>
+    <%= "(#{locals[:team].slack_team_id})" %>
 </h3>
 <% unless locals[:members].empty? %>
   <table class="table table-bordered table-hover">
@@ -11,15 +11,22 @@
         <th>Slack User Name</th>
         <th>Real Name</th>
         <th>Slack User Id</th>
-        <th>Added To MiaDo on Date</th>
-        <th>Last Updated Date</th>
+        <th>Installed MiaDo on Date</th>
+        <th>Last Created Task Date</th>
       </tr>
     </thead>
     <tbody>
       <% locals[:members].each do |member| %>
         <%= render partial: 'members/admin_views/index_member',
                    locals: { locals: { member: member,
-                                       install_channel: locals[:team] } }
+                                       install_channel: Channel.installations(slack_team_id: locals[:team].slack_team_id,
+                                                                              slack_user_id: member['slack_user_id']
+                                                                             ).first,
+                                       last_activity: ListItem.last_activity(slack_team_id: locals[:team].slack_team_id,
+                                                                             slack_user_id: member['slack_user_id']
+                                                                            )
+                                     }
+                           }
         %>
       <% end %>
     </tbody>

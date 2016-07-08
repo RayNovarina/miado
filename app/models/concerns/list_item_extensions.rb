@@ -63,6 +63,16 @@ module ListItemExtensions
       end
       ListItem.all
     end
+
+    def last_activity(options = {})
+      if options.key?(:slack_user_id)
+        last_active = ListItem.where(team_id: options[:slack_team_id])
+                              .where(slack_user_id: options[:slack_user_id])
+                              .reorder('updated_at ASC').last
+      end
+      return last_active.updated_at unless last_active.nil?
+      nil
+    end
     #
   end # module ClassMethods
 

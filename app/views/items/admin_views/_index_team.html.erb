@@ -1,42 +1,53 @@
+<% if locals[:items].length == 0 %>
+  <h3><u><%= link_to locals[:auth_info]['team'],
+                  team_path(locals[:install_channel]),
+                  title: "Created on #{locals[:install_channel].created_at.strftime('%c')}" %>
+      </u> - no active channels.
+  </h3>
+<% else %>
 <%
-current_channel_id = ''
-task_num = 0
-locals[:items].each_with_index do |item, index|
-  unless current_channel_id == item.channel_id
-    unless current_channel_id == '' %>
-         </tbody>
-        </table>
-      <br>
+  current_channel_id = ''
+  task_num = 0
+  locals[:items].each_with_index do |item, index|
+    unless current_channel_id == item.channel_id
+      unless current_channel_id == '' %>
+           </tbody>
+          </table>
+        <br>
+      <% end %>
+      <% current_channel_id = item.channel_id
+         task_num = 1
+      %>
+      <h3><u><%= link_to locals[:auth_info]['team'],
+                      team_path(locals[:install_channel]),
+                      title: "Created on #{locals[:install_channel].created_at.strftime('%c')}" %></u>
+        <%= "Channel: ##{item.channel_name}(#{current_channel_id})" %></h3>
+        <table class="table table-bordered table-hover">
+          <thead>
+            <tr>
+              <th>Task Number</th>
+              <th>Description</th>
+              <th>Assigned To</th>
+              <th>Due Date</th>
+              <th>Open/Done</th>
+              <th>Created Date</th>
+              <th>Last Updated Date</th>
+            </tr>
+          </thead>
+          <tbody>
     <% end %>
-    <% current_channel_id = item.channel_id
-       task_num = 1
+    <%= render partial: 'items/admin_views/index_item',
+               locals: { locals: { task_num: task_num,
+                                   item: item,
+                                   members_hash: locals[:install_channel].members_hash
+                                 }
+                       }
     %>
-    <h3><%= "##{item.channel_name}(#{current_channel_id})" %></h3>
-      <table class="table table-bordered table-hover">
-        <thead>
-          <tr>
-            <th>Task Number</th>
-            <th>Description</th>
-            <th>Assigned To</th>
-            <th>Due Date</th>
-            <th>Open/Done</th>
-            <th>Created Date</th>
-            <th>Last Updated Date</th>
-          </tr>
-        </thead>
-        <tbody>
+    <% task_num += 1 %>
   <% end %>
-  <%= render partial: 'items/admin_views/index_item',
-             locals: { locals: { task_num: task_num,
-                                 item: item,
-                                 members_hash: locals[:install_channel].members_hash
-                               }
-                     }
-  %>
-  <% task_num += 1 %>
-<% end %>
-<% unless current_channel_id == '' %>
-         </tbody>
-       </table>
-     <br>
+  <% unless current_channel_id == '' %>
+           </tbody>
+         </table>
+       <br>
+  <% end %>
 <% end %>

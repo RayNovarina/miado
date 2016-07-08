@@ -3,6 +3,6 @@
 <% else %>
   <td><u><%= link_to locals[:installation].auth_json['info']['user'],
               installation_path(locals[:installation]),
-              title: "Installation added #{locals[:installation].created_at.strftime("%a, %d %b %Y")}" %></u>
+              title: "Installation added #{locals[:installation].created_at.strftime("%c")}" %></u>
   </td>
 <% end %>
