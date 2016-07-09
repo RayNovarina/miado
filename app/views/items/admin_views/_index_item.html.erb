@@ -1,12 +1,24 @@
 <% item = locals[:item]
    assigned_member_name = '' if item.assigned_member_id.nil? || item.assigned_member_id.empty?
-   assigned_member_name = "@#{locals[:members_hash][item.assigned_member_id]['slack_user_name']}" unless  item.assigned_member_id.nil? || item.assigned_member_id.empty?
+   assigned_member_name = "@#{locals[:members_hash][item.assigned_member_id]['slack_user_name']}" unless item.assigned_member_id.nil? || item.assigned_member_id.empty?
+   created_by = item.slack_user_name
+   updated_by_date = "@#{item.updated_at.strftime('%c')}"
+   unless item.updated_by_slack_user_id.nil?
+     updated_by = "@#{locals[:members_hash][item.updated_by_slack_user_id]['slack_user_name']}"
+   else
+     if item.updated_at == item.created_at
+       updated_by = '*not updated*'
+       updated_by_date = ''
+     else
+       updated_by = '*unknown*'
+     end
+   end
 %>
   <td><%= locals[:task_num] %></td>
-  <td><%= item.description %></td>
+  <td><%= item.description %><br><br><%= "[#{item.debug_trace}]" %></td>
   <td><%= "#{assigned_member_name}" %></td>
   <td><%= item.assigned_due_date.nil? ? '' : item.assigned_due_date.strftime("%a, %d %b %Y") %></td>
   <td><%= item.done? ? 'done' : 'open' %></td>
-  <td><%= item.created_at.strftime("%a, %d %b %Y") %></td>
-  <td><%= item.updated_at.strftime("%a, %d %b %Y") %></td>
+  <td><%= created_by %><br>@<%= item.created_at.strftime('%c') %></td>
+  <td><%= updated_by %><br><%= updated_by_date %></td>
 </tr>

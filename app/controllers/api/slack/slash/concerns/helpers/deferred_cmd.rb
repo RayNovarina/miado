@@ -53,7 +53,9 @@ def send_after_action_deferred_cmds(cmds)
         member_id: msg[:member_id],
         member_ccb: parsed[:ccb],
         text: msg[:text],
-        attachments: msg[:attachments])
+        attachments: msg[:attachments],
+        p_hash: d_hash[:p_hash]
+      )
     end
   end
 end
@@ -330,6 +332,7 @@ def update_taskbot_channel(options)
   api_resp = send_taskbot_msg(options)
   # Now that we know the taskbot msg id, save it for all members.
   remember_taskbot_msg_id(api_resp, options)
+  update_ccb_channel(options)
   api_resp
 end
 
@@ -343,6 +346,12 @@ def remember_taskbot_msg_id(api_resp, options)
   update_all_team_members_hash(
     members_hash: members_hash,
     slack_team_id: options[:member_ccb].slack_team_id)
+end
+
+def update_ccb_channel(options)
+  @view.channel.taskbot_msg_from_slack_id = options[:p_hash][:url_params]['user_id']
+  @view.channel.taskbot_msg_date = DateTime.current
+  @view.channel.save
 end
 
 # Returns: slack api response hash.

@@ -7,11 +7,9 @@
       <tr>
         <th>Name</th>
         <th>Slack Chan Id</th>
-        <th>Created by</th>
-        <th>Archived?</th>
-        <th>Deleted</th>
-        <th>Added To MiaDo on Date</th>
-        <th>Last Updated Date</th>
+        <th>Created by<br>@Date</th>
+        <th>Last Task by<br>@Date<br>(now: <%= "#{DateTime.current.strftime('%a, %b %d %H:%M:%S %Y')}" %>)</th>
+        <th>Last Taskbot Msg by<br>@Date</th>
         <th>Tasks</th>
       </tr>
     </thead>
@@ -20,7 +18,9 @@
         <%= render partial: 'channels/admin_views/index_shared_channel',
                    locals: { locals: { channel: channel,
                                        items: ListItem.items(slack_team_id: channel.slack_team_id,
-                                                             slack_channel_id: channel.slack_channel_id)
+                                                             slack_channel_id: channel.slack_channel_id),
+                                       last_item: ListItem.last_active(slack_team_id: channel.slack_team_id,
+                                                                       slack_channel_id: channel.slack_channel_id)
                                      }
                            }
         %>

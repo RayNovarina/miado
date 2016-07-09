@@ -11,32 +11,32 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160622031103) do
+ActiveRecord::Schema.define(version: 20160709021551) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "hstore"
 
   create_table "channels", force: :cascade do |t|
-    t.datetime "created_at",                              null: false
-    t.datetime "updated_at",                              null: false
+    t.datetime "created_at",                                null: false
+    t.datetime "updated_at",                                null: false
     t.integer  "team_id"
     t.hstore   "after_action_parse_hash"
-    t.string   "dm_user_id"
-    t.boolean  "archived",                default: false
-    t.boolean  "deleted",                 default: false
+    t.boolean  "archived",                  default: false
+    t.boolean  "deleted",                   default: false
     t.string   "slack_channel_name"
     t.string   "slack_channel_id"
     t.string   "slack_user_id"
     t.string   "slack_team_id"
     t.string   "slack_user_api_token"
-    t.string   "bot_dm_channel_id"
     t.string   "bot_api_token"
     t.jsonb    "members_hash"
     t.string   "bot_user_id"
     t.jsonb    "auth_json"
     t.jsonb    "auth_params_json"
     t.jsonb    "rtm_start_json"
+    t.string   "taskbot_msg_from_slack_id"
+    t.datetime "taskbot_msg_date"
   end
 
   add_index "channels", ["team_id"], name: "index_channels_on_team_id", using: :btree
@@ -59,6 +59,7 @@ ActiveRecord::Schema.define(version: 20160622031103) do
     t.datetime "assigned_due_date"
     t.string   "debug_trace"
     t.boolean  "done"
+    t.string   "updated_by_slack_user_id"
   end
 
   add_index "list_items", ["member_id"], name: "index_list_items_on_member_id", using: :btree
