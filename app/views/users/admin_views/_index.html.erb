@@ -5,9 +5,6 @@
 </header>
 
 <%
-#locals[:teamsx] = Channel.where(slack_channel_name: 'installation').select("DISTINCT ON(slack_team_id)*").reorder('slack_team_id ASC')
-#teams = locals[:teams]
-#num_teams = teams.size
 first_id = locals[:teams][0].id
 %>
 <main class="css-body-main">

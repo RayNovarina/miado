@@ -6,7 +6,7 @@
 
 <main class="css-body-main">
   <div class="container">
-    <h2>Installations<%= " (#{locals[:installations].length})" %></h2>
+    <h2>Installations<%= " (#{locals[:installations].length}) of #{locals[:bot_info][:name]} into (#{locals[:teams].length}) " %>teams</h2>
     <table class="table table-bordered table-hover">
       <thead>
         <tr>

@@ -134,6 +134,40 @@ module ChannelExtensions
       nil
     end
 
+    def bot_info(options)
+      b_hash = { name: '*no bot*', id: nil, user_id: nil, access_token: nil }
+      if options.key?(:installations)
+        return b_hash if options[:installations].empty? || options[:installations][0].bot_user_id.nil?
+        install_channel = options[:installations][options[:installations].length-1]
+      elsif options.key?(:slack_team_id)
+        install_channel = installations(options)
+      end
+      b_hash[:user_id] = install_channel.auth_json['extra']['bot_info']['bot_user_id']
+      b_hash[:access_token] = install_channel.bot_api_token
+      # bot_id = nil
+      # install_channel.rtm_start_json['users'].each do |user|
+      #  next unless user['id'] == bot_user_id
+      #  bot_id = user['profile']['bot_id']
+      #  break
+      # end
+      b_hash[:id] =
+        install_channel.rtm_start_json['users']
+        .map { |user| user['id'] == b_hash[:user_id] ? user['profile']['bot_id'] : nil }
+        .compact[0]
+      return b_hash if b_hash[:id].nil?
+      # bot_name = nil
+      # install_channel.rtm_start_json['bots'].each do |bot|
+      #  next unless bot['id'] == bot_id
+      #  bot_name = bot['name']
+      #  break
+      # end
+      b_hash[:name] =
+        install_channel.rtm_start_json['bots']
+        .map { |bot| bot['id'] == b_hash[:id] ? bot['name'] : nil }
+        .compact[0]
+      b_hash
+    end
+
     private
 
     def find_or_create_from_slack(options)
