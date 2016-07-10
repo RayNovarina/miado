@@ -332,12 +332,12 @@ def update_taskbot_channel(options)
   api_resp = send_taskbot_msg(options)
   # Now that we know the taskbot msg id, save it for all members.
   remember_taskbot_msg_id(api_resp, options)
-  update_ccb_channel(options)
+  update_ccb_channel(api_resp, options)
   api_resp
 end
 
-# Returns: slack api response hash.
 def remember_taskbot_msg_id(api_resp, options)
+  return unless api_resp['ok'] == true
   members_hash = options[:member_ccb].members_hash
   am_hash = members_hash[options[:member_id]]
   am_hash['bot_msg_id'] = api_resp['ts']
@@ -348,8 +348,9 @@ def remember_taskbot_msg_id(api_resp, options)
     slack_team_id: options[:member_ccb].slack_team_id)
 end
 
-def update_ccb_channel(options)
-  @view.channel.taskbot_msg_from_slack_id = options[:p_hash][:url_params]['user_id']
+def update_ccb_channel(api_resp, options)
+  @view.channel.taskbot_msg_from_slack_id = options[:p_hash][:url_params]['user_id'] if api_resp['ok'] == true
+  @view.channel.taskbot_msg_from_slack_id = "*failed*: #{api_resp['error']}" unless api_resp['ok'] == true
   @view.channel.taskbot_msg_date = DateTime.current
   @view.channel.save
 end
@@ -414,7 +415,7 @@ rescue Slack::Web::Api::Error => e # (not_authed)
     "channel_id: #{options[:channel]}  " \
     "token: #{options[:api_client].token.nil? ? '*EMPTY!*' : options[:api_client].token}\n"
   options[:api_client].logger.error(err_msg)
-  return api_resp
+  return { 'ok' => false, 'error' => err_msg }
 end
 
 # Returns: slack api response hash.
