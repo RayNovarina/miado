@@ -27,10 +27,25 @@
                 end
               %>
               <h3>
-                Nice! Thanks for choosing /do to manage<br>tasks for your
+                Nice! Thanks for choosing /do to manage tasks for your<br>
                 <%= team_name %> Team,
-                <%= user_name %>.<br>Your Taskbot is waiting for you!
+                <%= user_name %>.
               </h3>
+              <div style="display: inline-block;">
+                <h4>Get started with /do by going to your Slack team (click below)...<br></h4>
+                <ol class="text-justify" style="padding-left: 1.2em;">
+                  <li>Enter "/do help" in any channel for the commands to add,<br>
+                      modify, complete and view tasks.
+                  </li>
+                  <li>Add new task or update existing ones.<br>
+                  </li>
+                  <li>At anytime, click on your Taskbot to see your current task list.
+                  </li>
+                  <li>Each team member has their own Taskbot and task list.
+              </ol>
+              <a href="/about#faq" style="color: black;"><u>More questions? See FAQ</u></a>
+            </div>
+
           <br><br>
           <p>
             <%= link_to 'Continue to Slack', slack_url, class: 'btn btn-primary btn-lg' %>
@@ -38,7 +53,7 @@
           <br>
           <br>
           <h5>MiaDo is beta software, so please let us know
-            <a href="/add_to_slack#contact_us"><u>here</u></a> 
+            <a href="/add_to_slack#contact_us"><u>here</u></a>
             if you see any problems!</h5>
 
        </center>
