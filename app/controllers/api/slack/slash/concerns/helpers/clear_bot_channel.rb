@@ -39,9 +39,13 @@ def delete_message_on_channel(options)
     # No response is a good response
     return options[:api_client].chat_delete(channel: options[:channel_id], ts: options[:message]['ts'])
   rescue Slack::Web::Api::Error => e # (cant_delete_message)
-    options[:api_client].logger.error "\ne.message: #{e.message}\n" \
-      "channel_id: #{options[:channel_id]}  " \
-      "message timestamp id: #{options[:message]['ts']}\n"
+    options[:api_client].logger.error e
+    err_msg = "\nFrom delete_message_on_channel(API:client.chat_delete) = " \
+      "e.message: #{e.message}\n" \
+      "channel_id: #{options[:channel]}  " \
+      "message timestamp id: #{options[:message]['ts']}\n" \
+      "token: #{options[:api_client].token.nil? ? '*EMPTY!*' : options[:api_client].token}\n"
+    options[:api_client].logger.error(err_msg)
     return { exception: e }
   end
 end
@@ -55,9 +59,11 @@ def web_api_history(api_client, type, options)
       return api_client.im_history(options)
     rescue Slack::Web::Api::Error => e # (not_authed)
       api_client.logger.error e
-      api_client.logger.error "\ne.message: #{e.message}\n" \
+      err_msg = "\nFrom web_api_history(API:client.im_history) = " \
+        "e.message: #{e.message}\n" \
         "channel_id: #{options[:channel]}  " \
         "token: #{api_client.token.nil? ? '*EMPTY!*' : api_client.token}\n"
+      api_client.logger.error(err_msg)
       return { exception: e }
     end
   when :group

@@ -96,6 +96,8 @@ class OmniauthSlackSetup
       #       }
       return { scope: ' commands' \
                       ',bot' \
+                      ',im:history'\
+                      ',chat:write:bot'\
              }
     end
     return { scope: 'identity.basic' } if query == 'state=sign_in'
