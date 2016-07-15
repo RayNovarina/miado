@@ -1,7 +1,7 @@
 def after_action_deferred_logic(def_cmds)
-  # Thread.new do
+  Thread.new do
     send_after_action_deferred_cmds(def_cmds)
-  # end
+  end
 end
 
 def new_member_deferred_logic(options)

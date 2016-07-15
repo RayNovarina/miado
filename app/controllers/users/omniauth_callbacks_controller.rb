@@ -80,17 +80,17 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       install_channel = Channel.update_from_or_create_from(source: :omniauth_callback, request: request)
       @view.channel = install_channel
       # Now that member has a taskbot installed, send it an updated list.
-      # p_hash = make_parse_hash
-      # p_hash[:func] = :add
-      # p_hash[:assigned_member_id] = install_channel.slack_user_id
-      # p_hash[:assigned_member_name] = install_channel.auth_json['info']['user']
-      # p_hash[:ccb] = install_channel
-      # p_hash[:ccb].members_hash = install_channel.members_hash
-      # p_hash[:url_params] = params
-      # p_hash[:url_params][:team_id] = install_channel.slack_team_id
-      # def_cmds = generate_after_action_cmds(parsed_hash: p_hash)
+      p_hash = make_parse_hash
+      p_hash[:func] = :add
+      p_hash[:assigned_member_id] = install_channel.slack_user_id
+      p_hash[:assigned_member_name] = install_channel.auth_json['info']['user']
+      p_hash[:ccb] = install_channel
+      p_hash[:ccb].members_hash = install_channel.members_hash
+      p_hash[:url_params] = params
+      p_hash[:url_params][:team_id] = install_channel.slack_team_id
+      def_cmds = generate_after_action_cmds(parsed_hash: p_hash)
       # NOTE: a new Thread is generated to run these deferred commands.
-      # after_action_deferred_logic(def_cmds)
+      after_action_deferred_logic(def_cmds)
     end
   end
 
