@@ -24,6 +24,7 @@ def append_one(parsed)
   item = ListItem.find(parsed[:list][parsed[:task_num] - 1])
   # Rebuild command string starting after the task num.
   item.description += ' '.concat(parsed[:cmd_splits][1..-1].join(' '))
+  item.updated_by_slack_user_id = parsed[:url_params]['user_id']
   return "Task #{parsed[:task_num]} appended." if item.save
   parsed[:err_msg] = 'Error: There was an error appending this Task.'
 end

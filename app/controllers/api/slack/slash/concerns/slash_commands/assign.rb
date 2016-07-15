@@ -36,6 +36,7 @@ def assign_one(parsed)
   prev_assigned_member_name =
     slack_member_name_from_slack_user_id(parsed, item.assigned_member_id) unless item.assigned_member_id.nil?
   item.assigned_member_id = parsed[:assigned_member_id]
+  item.updated_by_slack_user_id = parsed[:url_params]['user_id']
   if item.save
     task_owner = parsed[:list_owner]
     task_owner = 'your' if parsed[:list_owner] == :mine

@@ -6,14 +6,14 @@
 
 <main class="css-body-main">
   <div class="container">
-    <h2>Installations<%= " (#{locals[:installations].length})" %></h2>
+    <h2>Installations<%= " (#{locals[:installations].length}) of #{locals[:bot_info][:name]} into (#{locals[:teams].length}) " %>teams</h2>
     <table class="table table-bordered table-hover">
       <thead>
         <tr>
           <th>Team Name</th>
           <th>Installed by</th>
           <th>Created</th>
-          <th>Updated</th>
+          <th>Last Activity<br>(now: <%= "#{DateTime.current.strftime('%a, %b %d %H:%M:%S %Y')}" %>)</th>
           <th>api auth_token(last 25 digits)</th>
           <th>bot auth_token(last 25 digits)</th>
         </tr>
@@ -22,7 +22,8 @@
         <% locals[:installations].each do |channel| %>
           <%= render partial: 'installations/admin_views/index_installation',
                      locals: { locals: { install_channel: channel,
-                                         auth_info: channel.auth_json['info']
+                                         auth_info: channel.auth_json['info'],
+                                         last_activity: Channel.last_activity(slack_team_id: channel.slack_team_id)
                                        }
                              }
           %>

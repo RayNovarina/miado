@@ -2,7 +2,10 @@ class InstallationsController < ApplicationController
   before_action :make_view_helper
 
   def index
-    @view.locals = { installations: Channel.installations }
+    @view.locals = { installations: Channel.installations,
+                     teams: Channel.teams,
+                     bot_info: Channel.bot_info(installations: Channel.installations)
+                   }
   end
 
   def show

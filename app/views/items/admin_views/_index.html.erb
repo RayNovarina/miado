@@ -1,16 +1,20 @@
 <header class="css-body-header">
   <%= render partial: 'shared/index_page_header',
-             locals: @view.locals = { title: 'Admin Dashboard - Channel Task Lists' }
+             locals: { locals: { title: 'Admin Dashboard - Channel Task Lists' } }
   %>
 </header>
 
 <main class="css-body-main">
   <div class="container">
-    <h2><%= "#{ListItem.count} Task Lists in #{Channel.count} Channels in #{Team.count} Teams"  %></h2>
+    <h2><%= "#{locals[:items].length} Tasks in #{locals[:channels].length} Channels in #{locals[:teams].length} Teams"  %></h2>
     <hr>
-    <% Team.all.reorder('name ASC').each do |team| %>
+    <% locals[:teams].each do |install_channel| %>
       <%= render partial: 'items/admin_views/index_team',
-                 locals: @view.locals = { team: team }
+                 locals: { locals: { install_channel: install_channel,
+                                     auth_info: install_channel.auth_json['info'],
+                                     items: ListItem.items(slack_team_id: install_channel.slack_team_id)
+                                   }
+                         }
       %>
     <% end %>
     </div>

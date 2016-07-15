@@ -21,6 +21,7 @@ def due_one(parsed)
   return if task_num_invalid?(parsed)
   item = ListItem.find(parsed[:list][parsed[:task_num] - 1])
   item.assigned_due_date = parsed[:due_date]
+  item.updated_by_slack_user_id = parsed[:url_params]['user_id']
   if item.save
     return "Task #{parsed[:task_num]} " \
            "#{item.assigned_member_id.nil? ? '' : "for @#{slack_member_name_from_slack_user_id(parsed, item.assigned_member_id)}"} " \

@@ -1,0 +1,32 @@
+<% channel = locals[:channel]
+   items = locals[:items]
+   last_item = locals[:last_item]
+   created_by = channel.members_hash[ channel.slack_user_id ]['slack_user_name']
+
+   unless last_item.nil?
+     last_task_by = "#{channel.members_hash[last_item.updated_by_slack_user_id]['slack_user_name']}" unless last_item.updated_by_slack_user_id.nil?
+     last_task_by = "#{channel.members_hash[last_item.slack_user_id]['slack_user_name']}" if last_item.updated_by_slack_user_id.nil?
+     last_task_by_date = "@#{locals[:last_item].updated_at.strftime('%c')}"
+   else
+     last_task_by = '*none*'
+     last_task_by_date = ''
+   end
+
+   if channel.taskbot_msg_from_slack_id.nil?
+     last_taskbot_msg_by = '*none*'
+   elsif channel.taskbot_msg_from_slack_id.starts_with?('*failed')
+     last_taskbot_msg_by = channel.taskbot_msg_from_slack_id
+   else
+     last_taskbot_msg_by = "#{channel.members_hash[channel.taskbot_msg_from_slack_id]['slack_user_name']}" unless channel.taskbot_msg_from_slack_id.nil?
+   end
+   last_taskbot_msg_timedate = "@#{channel.taskbot_msg_date.strftime('%a, %b %d %Y %H:%M:%S')}" unless channel.taskbot_msg_date.nil?
+   last_taskbot_msg_timedate = '' if channel.taskbot_msg_date.nil?
+%>
+<tr>
+  <td><%= channel.slack_channel_name %></td>
+  <td><%= channel.slack_channel_id %></td>
+  <td><%= created_by %><br>@<%= channel.created_at.strftime('%c') %></td>
+  <td><%= last_task_by %><br><%= last_task_by_date %></td>
+  <td><%= last_taskbot_msg_by %><br><%= last_taskbot_msg_timedate %>
+  <td><%= locals[:items].length %></td>
+</tr>

@@ -2,6 +2,6 @@
   <td><%= "@#{locals[:member]['slack_user_name']}" %></td>
   <td><%= locals[:member]['slack_real_name'] %></td>
   <td><%= locals[:member]['slack_user_id'] %></td>
-  <td><%= locals[:install_channel].created_at.strftime("%a, %d %b %Y") %></td>
-  <td><%= locals[:install_channel].updated_at.strftime("%c") %></td>
+  <td><%= "#{locals[:install_channel].nil? ? '*not installed*' : locals[:install_channel].created_at.strftime('%c')}" %></td>
+  <td><%= "#{locals[:last_activity].nil? ? '*none*' :locals[:last_activity].strftime('%c')}" %></td>
 </tr>

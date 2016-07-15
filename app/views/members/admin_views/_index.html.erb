@@ -11,7 +11,9 @@
     <% locals[:teams].each do |channel| %>
       <%= render partial: 'members/admin_views/index_team',
                  locals: { locals: { team: channel,
-                                     members: Channel.team_members(channel.slack_team_id) } }
+                                     members: Channel.team_members(slack_team_id: channel.slack_team_id)
+                                   }
+                         }
       %>
     <% end %>
     </div>

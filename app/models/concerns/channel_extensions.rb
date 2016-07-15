@@ -38,25 +38,31 @@ module ChannelExtensions
 
     # Various methods to support Installations and Team and Members models.
 
-    def installations
+    def installations(options = {})
+      if options.key?(:slack_user_id)
+        return Channel.where(slack_channel_name: 'installation')
+                      .where(slack_team_id: options[:slack_team_id])
+                      .where(slack_user_id: options[:slack_user_id])
+                      .reorder('slack_team_id ASC')
+      end
+      if options.key?(:slack_team_id)
+        return Channel.where(slack_channel_name: 'installation')
+                      .where(slack_team_id: options[:slack_team_id])
+                      .reorder('slack_team_id ASC')
+      end
       Channel.where(slack_channel_name: 'installation')
              .reorder('slack_team_id ASC')
     end
 
     def teams
       Channel.where(slack_channel_name: 'installation')
-             .select("DISTINCT ON(slack_team_id)*")
+             .select('DISTINCT ON(slack_team_id)*')
              .reorder('slack_team_id ASC')
     end
 
-    def team_members(slack_team_id = nil)
-      if slack_team_id.nil?
-        install_channels = Channel.teams
-      else
-        install_channels = [Channel.where(slack_channel_name: 'installation')
-                                   .where(slack_team_id: slack_team_id)
-                                   .reorder('slack_team_id ASC').first]
-      end
+    def team_members(options = {})
+      install_channels = [installations(options).first] if options.key?(:slack_team_id)
+      install_channels = teams unless options.key?(:slack_team_id)
       members = []
       install_channels.each do |install_channel|
         install_channel.members_hash.each do |key, value|
@@ -66,9 +72,9 @@ module ChannelExtensions
       members
     end
 
-    def team_channels(slack_team_id = nil)
-      unless slack_team_id.nil?
-        return Channel.where(slack_team_id: slack_team_id)
+    def team_channels(options = {})
+      if options.key?(:slack_team_id)
+        return Channel.where(slack_team_id: options[:slack_team_id])
                       .where.not(slack_channel_name: 'installation')
                       .reorder('slack_channel_name ASC')
       end
@@ -76,8 +82,90 @@ module ChannelExtensions
              .reorder('slack_channel_name ASC')
     end
 
-    def team_lists(slack_team_id)
-      []
+    def team_lists(options = {})
+      if options.key?(:slack_team_id)
+        []
+      else
+        []
+      end
+    end
+
+    def shared_team_channels(options)
+      channels = team_channels(options)
+      shared_channels = []
+      channels.each do |channel|
+        shared_channels << channel unless channel.slack_channel_id.starts_with?('D')
+      end
+      shared_channels
+    end
+
+    def dm_team_channels(options)
+      channels = team_channels(options)
+      dm_channels = []
+      channels.each do |channel|
+        dm_channels << channel if channel.slack_channel_id.starts_with?('D')
+      end
+      dm_channels
+    end
+
+    def bot_team_channels(options)
+      channels = dm_team_channels(options)
+      bot_channels = []
+      channels.each do |channel|
+        bot_channels << channel unless channel.slack_user_id.starts_with?('U')
+      end
+      bot_channels
+    end
+
+    def last_activity(options = {})
+      # if options.key?(:slack_user_id)
+      #  return Channel.where(slack_team_id: options[:slack_team_id])
+      #                .where(updated_by_slack_user_id: options[:slack_user_id])
+      #                .reorder('updated_at ASC').last.updated_at
+      # end
+      if options.key?(:slack_team_id)
+        last_active = Channel.where(slack_team_id: options[:slack_team_id])
+                             .reorder('updated_at ASC').last
+      end
+      if options.key?(:user)
+        last_active = Channel.all.reorder('updated_at ASC').last
+      end
+      return last_active.updated_at unless last_active.nil?
+      nil
+    end
+
+    def bot_info(options)
+      b_hash = { name: '*no bot*', id: nil, user_id: nil, access_token: nil }
+      if options.key?(:installations)
+        return b_hash if options[:installations].empty? || options[:installations][0].bot_user_id.nil?
+        install_channel = options[:installations][options[:installations].length-1]
+      elsif options.key?(:slack_team_id)
+        install_channel = installations(options)
+      end
+      b_hash[:user_id] = install_channel.auth_json['extra']['bot_info']['bot_user_id']
+      b_hash[:access_token] = install_channel.bot_api_token
+      # bot_id = nil
+      # install_channel.rtm_start_json['users'].each do |user|
+      #  next unless user['id'] == bot_user_id
+      #  bot_id = user['profile']['bot_id']
+      #  break
+      # end
+      b_hash[:id] =
+        install_channel.rtm_start_json['users']
+        .map { |user| user['id'] == b_hash[:user_id] ? user['profile']['bot_id'] : nil }
+        .compact[0]
+      return b_hash if b_hash[:id].nil?
+      # bot_name = nil
+      # install_channel.rtm_start_json['bots'].each do |bot|
+      #  next unless bot['id'] == bot_id
+      #  bot_name = bot['name']
+      #  break
+      # end
+      b_hash[:name] =
+        install_channel.rtm_start_json['bots']
+        .map { |bot| bot['id'] == b_hash[:id] ? bot['name'] : nil }
+        .compact[0]
+      b_hash
     end
 
     private
