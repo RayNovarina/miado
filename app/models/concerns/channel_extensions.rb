@@ -263,8 +263,6 @@ module ChannelExtensions
     # Returns: nothing. Db is updated.
     # Update fields changed by reinstall for all team channels for this user.
     def update_channel_reinstall_info(install_channel, options)
-      require 'pry'
-      binding.pry
       auth = options[:request].env['omniauth.auth']
       # slack_user_id: auth.uid,
       # slack_team_id: auth.info['team_id']
