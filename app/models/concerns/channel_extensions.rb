@@ -178,13 +178,15 @@ module ChannelExtensions
       channel
     end
 
+    # Return install channel with current auth callback info
     def update_from_or_create_from_omniauth_callback(options)
       # Case: We have not authenticated this oauth user before.
-      return create_from_omniauth_callback(options) if (channel = find_from_omniauth_callback(options)).nil?
+      return create_from_omniauth_callback(options) if (install_channel = find_from_omniauth_callback(options)).nil?
       # Case: We are reinstalling. Update auth info.
-      update_channel_auth_info(channel, options)
-      # Return channel with current auth callback info
-      channel
+      update_channel_auth_info(install_channel, options)
+      # Update fields changed by reinstall for all team channels for this user.
+      update_channel_reinstall_info(install_channel, options)
+      install_channel
     end
 
     def find_from_slack(options)
@@ -256,6 +258,21 @@ module ChannelExtensions
       channel.members_hash = members_hash
       channel.rtm_start_json = rtm_start_json
       channel.save!
+    end
+
+    # Returns: nothing. Db is updated.
+    # Update fields changed by reinstall for all team channels for this user.
+    def update_channel_reinstall_info(install_channel, options)
+      require 'pry'
+      binding.pry
+      auth = options[:request].env['omniauth.auth']
+      # slack_user_id: auth.uid,
+      # slack_team_id: auth.info['team_id']
+      Channel.where(slack_user_id: auth.uid)
+             .where(slack_team_id: auth.info['team_id'])
+             .update_all(slack_user_api_token: install_channel.slack_user_api_token,
+                         bot_api_token: install_channel.bot_api_token,
+                         bot_user_id: install_channel.bot_user_id)
     end
 
     # Returns: [members_hash, rtm_start]
