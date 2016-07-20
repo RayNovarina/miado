@@ -12,7 +12,7 @@
       <%= render partial: 'items/admin_views/index_team',
                  locals: { locals: { install_channel: install_channel,
                                      auth_info: install_channel.auth_json['info'],
-                                     items: ListItem.items(slack_team_id: install_channel.slack_team_id)
+                                     items: ListItem.items(slack_team_id: install_channel.slack_team_id),
                                    }
                          }
       %>

@@ -4,8 +4,8 @@
               title: "" %></u>
   </td>
   <td><%= locals[:user].email %></td>
-  <td><%= locals[:user].created_at.strftime("%c") %></td>
-  <td><%= locals[:last_activity].nil? ? '' :locals[:last_activity].strftime("%c") %></td>
+  <td><%= locals[:user].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %></td>
+  <td><%= locals[:last_activity].nil? ? '' :locals[:last_activity].in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %></td>
   <% # Fill in variable number of Slack teams and omniauth_providers
   next_idx = 0
   while next_idx < locals[:teams].length || next_idx < locals[:installations].length do

@@ -8,7 +8,7 @@
         <th>Name</th>
         <th>Slack Chan Id</th>
         <th>Created by<br>@Date</th>
-        <th>Last Task by<br>@Date<br>(now: <%= "#{DateTime.current.strftime('%a, %b %d %H:%M:%S %Y')}" %>)</th>
+        <th>Last Task by<br>@Date(now)<br>(<%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>)</th>
         <th>Last Taskbot Msg by<br>@Date</th>
         <th>Tasks</th>
       </tr>

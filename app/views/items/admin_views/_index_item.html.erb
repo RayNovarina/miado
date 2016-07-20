@@ -2,7 +2,7 @@
    assigned_member_name = '' if item.assigned_member_id.nil? || item.assigned_member_id.empty?
    assigned_member_name = "@#{locals[:members_hash][item.assigned_member_id]['slack_user_name']}" unless item.assigned_member_id.nil? || item.assigned_member_id.empty?
    created_by = item.slack_user_name
-   updated_by_date = "@#{item.updated_at.strftime('%c')}"
+   updated_by_date = "@#{item.updated_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')}"
    unless item.updated_by_slack_user_id.nil?
      updated_by = "@#{locals[:members_hash][item.updated_by_slack_user_id]['slack_user_name']}"
    else
@@ -13,12 +13,14 @@
        updated_by = '*unknown*'
      end
    end
+   updated_by = "[#{updated_by}]" if locals[:is_last_updated_item]
+   updated_by_class = locals[:is_last_updated_item] ? 'alert-info' : ''
 %>
   <td><%= locals[:task_num] %></td>
   <td><%= item.description %><br><br><%= "[#{item.debug_trace}]" %></td>
   <td><%= "#{assigned_member_name}" %></td>
-  <td><%= item.assigned_due_date.nil? ? '' : item.assigned_due_date.strftime("%a, %d %b %Y") %></td>
+  <td><%= item.assigned_due_date.nil? ? '' : item.assigned_due_date.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %></td>
   <td><%= item.done? ? 'done' : 'open' %></td>
-  <td><%= created_by %><br>@<%= item.created_at.strftime('%c') %></td>
-  <td><%= updated_by %><br><%= updated_by_date %></td>
+  <td><%= created_by %><br>@<%= item.created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %></td>
+  <td><span class="<%= updated_by_class %>"><%= updated_by %></span><br><%= updated_by_date %></td>
 </tr>

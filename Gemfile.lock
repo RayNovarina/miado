@@ -130,6 +130,8 @@ GEM
     listen (3.0.6)
       rb-fsevent (>= 0.9.3)
       rb-inotify (>= 0.9.7)
+    local_time (1.0.3)
+      coffee-rails
     loofah (2.0.3)
       nokogiri (>= 1.5.9)
     lumberjack (1.0.10)
@@ -317,6 +319,7 @@ DEPENDENCIES
   guard-rspec
   jquery-rails
   jquery-turbolinks
+  local_time
   omniauth-github
   omniauth-google-oauth2
   omniauth-slack!

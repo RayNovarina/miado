@@ -7,7 +7,7 @@
     <tr>
       <th>First<br>Added By</th>
       <th>Added On</th>
-      <th>Last Activity<br>(now: <%= "#{DateTime.current.strftime('%a, %b %d %H:%M:%S %Y')}" %>)</th>
+      <th>Last Activity (now)<br>(<%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>)</th>
       <th>Api Token(last 25 digits)</th>
       <th>Members</th>
       <th>Active<br>Channels</th>
