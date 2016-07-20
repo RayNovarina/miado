@@ -261,16 +261,29 @@ module ChannelExtensions
     end
 
     # Returns: nothing. Db is updated.
-    # Update fields changed by reinstall for all team channels for this user.
+    # Update fields changed by reinstall for all team channels.
+=begin
+    {"dawndn"=>
+    {"bot_msg_id"=>"1467131715.000005",
+     "bot_user_id"=>"U1BAYPNAH",
+     "bot_api_token"=>"xoxb-45372804357-1ERJ1TLnNqymm8G2DdGr9BmJ",
+     "slack_user_id"=>"U02GW9E04",
+     "slack_real_name"=>"Dawn  DeBruyn",
+     "slack_user_name"=>"dawndn",
+     "bot_dm_channel_id"=>"D1B9J8PCK",
+     "slack_user_api_token"=>"xoxp-2574213018-2574320004-53530428656-3054888f5e"},
+=end
     def update_channel_reinstall_info(install_channel, options)
       auth = options[:request].env['omniauth.auth']
-      # slack_user_id: auth.uid,
-      # slack_team_id: auth.info['team_id']
+      # First update reinstall info for the user.
       Channel.where(slack_user_id: auth.uid)
              .where(slack_team_id: auth.info['team_id'])
              .update_all(slack_user_api_token: install_channel.slack_user_api_token,
                          bot_api_token: install_channel.bot_api_token,
                          bot_user_id: install_channel.bot_user_id)
+      # Next update reinstall info for all team members.
+      Channel.where(slack_team_id: auth.info['team_id'])
+             .update_all(members_hash: install_channel.members_hash)
     end
 
     # Returns: [members_hash, rtm_start]
@@ -281,16 +294,17 @@ module ChannelExtensions
         Channel.where(slack_channel_name: 'installation',
                       slack_team_id: auth.info['team_id'])
                .where.not(slack_user_id: auth.uid).first
-      return build_new_members_hash_from_rtm_start(auth: auth, rtm_start: rtm_start) if other_install_channel.nil?
+      return create_members_hash_from_rtm_start(auth: auth, rtm_start: rtm_start) if other_install_channel.nil?
       members_hash = other_install_channel.members_hash
-      update_members_hash_from_rtm_start(members_hash: members_hash, auth: auth,
+      update_members_hash_for_reinstall_from_rtm_start(members_hash: members_hash, auth: auth,
                                          rtm_start: rtm_start)
       # update_members_hash_from_omniauth_callback(members_hash: members_hash,
       #                                           auth: auth)
     end
 
+    # Member is reinstalling MiaDo. tokens need to be updated in the members_hash.
     # Returns: [members_hash, rtm_start]
-    def update_members_hash_from_rtm_start(options)
+    def update_members_hash_for_reinstall_from_rtm_start(options)
       auth = options[:auth]
       members_hash = options[:members_hash]
       rtm_start = options[:rtm_start]
@@ -331,7 +345,7 @@ module ChannelExtensions
     end
 
     # Returns: [members_hash, rtm_start]
-    def build_new_members_hash_from_rtm_start(options)
+    def create_members_hash_from_rtm_start(options)
       auth = options[:auth]
       members_hash = {}
       rtm_start = options[:rtm_start]
@@ -345,9 +359,9 @@ module ChannelExtensions
           name: slack_member['name'],
           real_name: slack_member['real_name'],
           id: slack_member['id'],
-          api_token: auth.credentials['token'],
-          bot_user_id: auth.extra['bot_info']['bot_user_id'],
-          bot_api_token: auth.extra['bot_info']['bot_access_token']
+          api_token: slack_member['id'] == auth.uid ? auth.credentials['token'] : nil,
+          bot_user_id: slack_member['id'] == auth.uid ? auth.extra['bot_info']['bot_user_id'] : nil,
+          bot_api_token: slack_member['id'] == auth.uid ? auth.extra['bot_info']['bot_access_token'] : nil
         )
       end
       [members_hash, rtm_start]
