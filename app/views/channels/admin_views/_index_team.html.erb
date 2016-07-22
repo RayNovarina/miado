@@ -1,15 +1,15 @@
-<% active_channels = locals[:shared_channels].length + locals[:bot_channels].length %>
+<% active_channels = locals[:shared_channels].length %>
 <h3><%= "Active Channels(#{active_channels}) for Team #{locals[:team].auth_json['info']['team']}" %></h3>
 <% unless active_channels == 0 %>
   <table class="table table-bordered table-hover">
     <span style="font-size: 1.2em;"><%= "Shared Channels(#{locals[:shared_channels].length})" %></span>
     <thead>
       <tr>
-        <th>Name</th>
+        <th>Name - Creator</th>
         <th>Slack Chan Id</th>
-        <th>Created by<br>@Date</th>
-        <th>Last Task by<br>@Date(now)<br>(<%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>)</th>
-        <th>Last Taskbot Msg by<br>@Date</th>
+        <th>Created Date</th>
+        <th>Last Task Activity type<br>@Date(now)<br>(<%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>)</th>
+        <th>Last Taskbot Msg to<br>@Date</th>
         <th>Tasks</th>
       </tr>
     </thead>
@@ -29,25 +29,20 @@
   </table>
 
   <table class="table table-bordered table-hover">
-    <span style="font-size: 1.2em;"><%= "Bot Channels(#{locals[:bot_channels].length})" %></span>
+    <span style="font-size: 1.2em;">Last Activity</span>
     <thead>
       <tr>
-        <th>Name</th>
-        <th>Slack Chan Id</th>
-        <th>Dm User Id</th>
-        <th>Archived?</th>
-        <th>Deleted</th>
-        <th>Added To MiaDo on Date</th>
-        <th>Last Updated Date</th>
-        <th>Tasks</th>
+        <th>Name - Creator</th>
+        <th>Task Activity type<br>@Date(now)<br>(<%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>)</th>
+        <th>Description</th>
       </tr>
     </thead>
     <tbody>
-      <% locals[:bot_channels].each do |channel| %>
-        <%= render partial: 'channels/admin_views/index_shared_channel',
+      <% locals[:shared_channels].each do |channel| %>
+        <%= render partial: 'channels/admin_views/index_channel_recent_activity',
                    locals: { locals: { channel: channel,
-                                       items: ListItem.items(slack_team_id: channel.slack_team_id,
-                                                             slack_channel_id: channel.slack_channel_id)
+                                       last_item: ListItem.last_active(slack_team_id: channel.slack_team_id,
+                                                                       slack_channel_id: channel.slack_channel_id)
                                      }
                            }
         %>

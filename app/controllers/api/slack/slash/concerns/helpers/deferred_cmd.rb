@@ -357,8 +357,8 @@ rescue Slack::Web::Api::Error => e # (not_authed)
 end
 
 def update_ccb_channel(api_resp, options)
-  @view.channel.taskbot_msg_from_slack_id = options[:p_hash][:url_params]['user_id'] if api_resp['ok'] == true
-  @view.channel.taskbot_msg_from_slack_id = "*failed*: #{api_resp['error']}" unless api_resp['ok'] == true
+  @view.channel.taskbot_msg_to_slack_id = options[:member_id] if api_resp['ok'] == true
+  @view.channel.taskbot_msg_to_slack_id = "*failed*: #{api_resp['error']}" unless api_resp['ok'] == true
   @view.channel.taskbot_msg_date = DateTime.current
   @view.channel.save
 end

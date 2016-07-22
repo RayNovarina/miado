@@ -251,7 +251,9 @@ module ChannelExtensions
         slack_channel_name: 'installation',
         slack_channel_id: '',
         slack_user_id: auth.uid,
-        slack_team_id: auth.info['team_id']
+        slack_team_id: auth.info['team_id'],
+        last_activity_type: 'installation',
+        last_activity_date: DateTime.current
       )
       update_channel_auth_info(channel, options)
       channel
@@ -278,7 +280,9 @@ module ChannelExtensions
              .where(slack_team_id: options[:install_channel].slack_team_id)
              .update_all(slack_user_api_token: options[:install_channel].slack_user_api_token,
                          bot_api_token: options[:install_channel].bot_api_token,
-                         bot_user_id: options[:install_channel].bot_user_id)
+                         bot_user_id: options[:install_channel].bot_user_id,
+                         last_activity_type: 'reinstallation',
+                         last_activity_date: DateTime.current)
     end
 
     # update install/reinstall info for all team members.

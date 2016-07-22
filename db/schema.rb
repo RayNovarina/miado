@@ -11,19 +11,17 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160709021551) do
+ActiveRecord::Schema.define(version: 20160721235418) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "hstore"
 
   create_table "channels", force: :cascade do |t|
-    t.datetime "created_at",                                null: false
-    t.datetime "updated_at",                                null: false
+    t.datetime "created_at",              null: false
+    t.datetime "updated_at",              null: false
     t.integer  "team_id"
     t.hstore   "after_action_parse_hash"
-    t.boolean  "archived",                  default: false
-    t.boolean  "deleted",                   default: false
     t.string   "slack_channel_name"
     t.string   "slack_channel_id"
     t.string   "slack_user_id"
@@ -35,8 +33,11 @@ ActiveRecord::Schema.define(version: 20160709021551) do
     t.jsonb    "auth_json"
     t.jsonb    "auth_params_json"
     t.jsonb    "rtm_start_json"
-    t.string   "taskbot_msg_from_slack_id"
     t.datetime "taskbot_msg_date"
+    t.datetime "reinstalled_at"
+    t.string   "taskbot_msg_to_slack_id"
+    t.string   "last_activity_type"
+    t.datetime "last_activity_date"
   end
 
   add_index "channels", ["team_id"], name: "index_channels_on_team_id", using: :btree
