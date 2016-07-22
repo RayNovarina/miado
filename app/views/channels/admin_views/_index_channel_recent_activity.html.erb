@@ -1,5 +1,7 @@
 <% channel = locals[:channel]
-   if channel.last_activity_type.starts_with?('slash_command')
+   if channel.last_activity_type.nil?
+     description = '*unknown*'
+   elsif channel.last_activity_type.starts_with?('slash_command')
      if channel.last_activity_type == 'slash_command - help'
        description = channel.last_activity_type
      elsif channel.last_activity_type == 'slash_command - list'
