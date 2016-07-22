@@ -1,7 +1,9 @@
 <tr>
   <td><u><%= link_to locals[:auth_info]['team'],
               installation_path(locals[:install_channel]),
-              title: "" %></u>
+              title: "" %>
+      </u>
+      <br>(<%= locals[:install_channel].id %>)
   </td>
   <td><u><%= link_to locals[:auth_info]['user'],
               installation_path(locals[:install_channel]),

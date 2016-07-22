@@ -41,6 +41,8 @@
       <% locals[:shared_channels].each do |channel| %>
         <%= render partial: 'channels/admin_views/index_channel_recent_activity',
                    locals: { locals: { channel: channel,
+                                       items: ListItem.items(slack_team_id: channel.slack_team_id,
+                                                             slack_channel_id: channel.slack_channel_id),
                                        last_item: ListItem.last_active(slack_team_id: channel.slack_team_id,
                                                                        slack_channel_id: channel.slack_channel_id)
                                      }
