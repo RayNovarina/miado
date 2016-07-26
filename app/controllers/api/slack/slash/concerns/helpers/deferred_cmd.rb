@@ -299,22 +299,76 @@ end
 
 # Returns: slack api response hash.
 def update_taskbot_channel(options)
-  # return send_taskbot_update_msg(options) unless options[:taskbot_msg_id].nil?
+  # Flow 1: Deletes all msgs in bot dm channel.
+  #         requires im_history, chat:write:bot scopes.
+  # update_via_im_history(options)
+
+  # Flow 2: Deletes all msgs in bot dm channel.
+  #         requires chat:write:bot scope.
+  update_via_rtm_data(options)
+
+  # Flow 3: No msg delete, Update the single bot dm msg in place.
+  #         requires chat:write:bot scope.
+  # update_via_update_msg(options)
+
+  # Flow 4: misc experiments.
+  # update_experiments(options)
+end
+
+# Flow 1: Deletes all msgs in bot dm channel.
+#         requires im_history, chat:write:bot scopes.
+def update_via_im_history(options)
+  options[:message_source] = :im_history
   clear_taskbot_msg_channel(options)
-  # delete_taskbot_msg(options) unless options[:taskbot_msg_id].nil?
-  # blank_taskbot_msg(options) unless options[:taskbot_msg_id].nil?
   api_resp = send_taskbot_msg(options)
-  # Now that we know the taskbot msg id, save it for all members.
-  # remember_taskbot_msg_id(api_resp, options)
   update_ccb_channel(api_resp, options)
   api_resp
+end
+
+# Flow 2: Deletes all msgs in bot dm channel.
+#         requires chat:write:bot scope.
+def update_via_rtm_data(options)
+  options[:message_source] = :rtm_data
+  options[:bot_api_token] = options[:p_hash][:ccb].bot_api_token
+  clear_taskbot_msg_channel(options)
+  api_resp = send_taskbot_msg(options)
+  update_ccb_channel(api_resp, options)
+  api_resp
+end
+
+# Flow 3: No msg delete, Update the single bot dm msg in place.
+#         requires chat:write:bot scope.
+def update_via_update_msg(options)
+  api_resp = send_taskbot_msg(options) if options[:taskbot_msg_id].nil?
+  api_resp = send_taskbot_update_msg(options) unless options[:taskbot_msg_id].nil?
+  # Now that we know the taskbot msg id, save it for all members.
+  # NOTE!! probably flawed logic because ccb for this user will have the msg
+  # id in members_hash of one or more other members. Other member can then send
+  # a taskbot msg to the same Other member but have nil in their ccb. MsgId
+  # needs to propagate to all other members, also on reinstall.
+  remember_taskbot_msg_id(api_resp, options)
+  update_ccb_channel(api_resp, options)
+  api_resp
+end
+
+# Flow 4: misc experiments.
+def update_experiments(options)
+  # delete_taskbot_msg(options) unless options[:taskbot_msg_id].nil?
+  # blank_taskbot_msg(options) unless options[:taskbot_msg_id].nil?
+  # api_resp = send_taskbot_msg(options)
+  # Now that we know the taskbot msg id, save it for all members.
+  # remember_taskbot_msg_id(api_resp, options)
+  # update_ccb_channel(api_resp, options)
+  # api_resp
 end
 
 # Returns: text status msg. 'ok' or err msg.
 def clear_taskbot_msg_channel(options)
   api_resp =
-    clear_channel_msgs(type: :direct,
+    clear_channel_msgs(message_source: options[:message_source],
+                       type: :direct,
                        api_client: options[:api_client],
+                       bot_api_token: options[:bot_api_token],
                        channel_id: options[:taskbot_channel_id],
                        time_range: { start_ts: 0, end_ts: 0 },
                        exclude_bot_msgs: false)
@@ -322,7 +376,7 @@ def clear_taskbot_msg_channel(options)
        "#{options[:taskbot_username]} at dm_channel: " \
        "#{options[:taskbot_channel_id]}. " \
        "For member: #{options[:member_name]}\n"
-  return 'ok' if api_resp == 'ok'
+  return 'ok' if api_resp[:resp] == 'ok'
   err_msg = "ERROR: clear_taskbot_msgs failed with '#{api_resp}"
   options[:api_client].logger.error(err_msg)
   err_msg
@@ -357,10 +411,10 @@ rescue Slack::Web::Api::Error => e # (not_authed)
 end
 
 def update_ccb_channel(api_resp, options)
-  @view.channel.taskbot_msg_to_slack_id = options[:member_id] if api_resp['ok'] == true
-  @view.channel.taskbot_msg_to_slack_id = "*failed*: #{api_resp['error']}" unless api_resp['ok'] == true
-  @view.channel.taskbot_msg_date = DateTime.current
-  @view.channel.save
+  options[:p_hash][:ccb].taskbot_msg_to_slack_id = options[:member_id] if api_resp['ok'] == true
+  options[:p_hash][:ccb].taskbot_msg_to_slack_id = "*failed*: #{api_resp['error']}" unless api_resp['ok'] == true
+  options[:p_hash][:ccb].taskbot_msg_date = DateTime.current
+  options[:p_hash][:ccb].save
 end
 
 def remember_taskbot_msg_id(api_resp, options)

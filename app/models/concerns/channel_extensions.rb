@@ -168,6 +168,20 @@ module ChannelExtensions
       b_hash
     end
 
+    # response is an array of hashes. Team, users, channels, dms.
+    def start_data_from_rtm_start(api_token)
+      slack_api('rtm.start', api_token)
+    end
+
+    def slack_api(method_name, api_token)
+      uri = URI.parse('https://slack.com')
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      request = Net::HTTP::Get.new("/api/#{method_name}?token=#{api_token}")
+      response = http.request(request)
+      JSON.parse(response.body)
+    end
+
     private
 
     def find_or_create_from_slack(options)
@@ -428,20 +442,6 @@ module ChannelExtensions
         return im if im['user'] == options[:bot_channel_slack_user_id]
       end
       nil
-    end
-
-    # response is an array of hashes. Team, users, channels, dms.
-    def start_data_from_rtm_start(api_token)
-      slack_api('rtm.start', api_token)
-    end
-
-    def slack_api(method_name, api_token)
-      uri = URI.parse('https://slack.com')
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      request = Net::HTTP::Get.new("/api/#{method_name}?token=#{api_token}")
-      response = http.request(request)
-      JSON.parse(response.body)
     end
 
 =begin
