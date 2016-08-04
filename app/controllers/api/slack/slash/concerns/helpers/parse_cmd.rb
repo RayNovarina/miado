@@ -16,9 +16,8 @@ user_name	ray
 
 def parse_slash_cmd(params, ccb, previous_action_parse_hash)
   p_hash = new_parse_hash(params, ccb, previous_action_parse_hash)
-  scan4_taskbot_channel(p_hash)
-  scan4_command_func(p_hash) unless p_hash[:is_taskbot_channel]
-  scan4_taskbot_cmd_func(p_hash) if p_hash[:is_taskbot_channel]
+  scan4_command_func(p_hash) unless ccb.is_taskbot
+  scan4_taskbot_cmd_func(p_hash) if ccb.is_taskbot
   return p_hash unless p_hash[:err_msg].empty?
   perform_scans_for_functions(p_hash)
   p_hash
@@ -71,13 +70,6 @@ def perform_scans_for_functions(p_hash)
     p_hash[:requires_mentioned_member] = true
     scan4_mentioned_member(p_hash)
   end
-end
-
-def scan4_taskbot_channel(p_hash)
-  return if p_hash[:ccb].members_hash.nil?
-  return if (m_hash = p_hash[:ccb].members_hash[p_hash[:url_params]['user_id']]).nil?
-  return if (bot_dm_channel_id = m_hash['bot_dm_channel_id']).nil?
-  p_hash[:is_taskbot_channel] = p_hash[:url_params]['channel_id'] == bot_dm_channel_id
 end
 
 # Note: what looks like a command may actually be an added task, i.e.
@@ -138,13 +130,6 @@ def adjust_cmd_options_for_add_cmd(p_hash)
   num_options += 1 unless p_hash[:mentioned_member_id].nil?
   p_hash[:func] = :add if p_hash[:cmd_splits].length > num_options
 end
-
-# Trim off the leading command func, scope and options. Remainder is what
-# most of our following parse logic cares about.
-# def rebuild_remaining_command_line(p_hash)
-#  p_hash[:command] =
-#    p_hash[:cmd_splits][p_hash[:next_cmd_split_to_parse]..-1].join(' ')
-# end
 
 # Case: 'delete 4', 'delete team', 'assign 3 @tony'
 def scan4_task_num(p_hash)

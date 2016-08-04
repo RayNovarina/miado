@@ -13,8 +13,9 @@ def clear_channel_msgs(options)
     exclude_pinned_msgs: false }
   has_more = true
   while has_more
-    api_resp = messages_via_im_history(api_options) unless options[:message_source] == :rtm_data
+    api_resp = messages_via_im_history(api_options) if options[:message_source] == :im_history
     api_resp = messages_via_rtm_start(api_options) if options[:message_source] == :rtm_data
+    api_resp = messages_via_taskbot_channel(api_options) if options[:message_source] == :taskbot_channel
     return { resp: 'Error occurred on Slack\'s API:client.im.history' } unless api_resp.key?('ok')
     return { resp: 'ok' } if (api_options[:messages] = api_resp['messages']).length == 0
     has_more = api_resp.key?('has_more') ? api_resp['has_more'] : false
@@ -100,5 +101,13 @@ def messages_via_rtm_start(options)
   { 'ok' => true,
     'has_more' => false,
     'messages' => messages
+  }
+end
+
+# Returns: { resp: 'ok' or err_msg, messages: [] }
+def messages_via_taskbot_channel(options)
+  { 'ok' => true,
+    'has_more' => false,
+    'messages' => options[:taskbot_channel].slack_messages
   }
 end

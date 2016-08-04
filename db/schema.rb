@@ -11,17 +11,16 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20160721235418) do
+ActiveRecord::Schema.define(version: 20160804064948) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
   enable_extension "hstore"
 
   create_table "channels", force: :cascade do |t|
-    t.datetime "created_at",              null: false
-    t.datetime "updated_at",              null: false
+    t.datetime "created_at",                              null: false
+    t.datetime "updated_at",                              null: false
     t.integer  "team_id"
-    t.hstore   "after_action_parse_hash"
     t.string   "slack_channel_name"
     t.string   "slack_channel_id"
     t.string   "slack_user_id"
@@ -38,9 +37,27 @@ ActiveRecord::Schema.define(version: 20160721235418) do
     t.string   "taskbot_msg_to_slack_id"
     t.string   "last_activity_type"
     t.datetime "last_activity_date"
+    t.jsonb    "slack_messages"
+    t.boolean  "is_taskbot",              default: false
+    t.jsonb    "after_action_parse_hash"
   end
 
   add_index "channels", ["team_id"], name: "index_channels_on_team_id", using: :btree
+
+  create_table "installations", force: :cascade do |t|
+    t.datetime "created_at",           null: false
+    t.datetime "updated_at",           null: false
+    t.string   "slack_user_id"
+    t.string   "slack_team_id"
+    t.string   "slack_user_api_token"
+    t.string   "bot_api_token"
+    t.string   "bot_user_id"
+    t.string   "last_activity_type"
+    t.datetime "last_activity_date"
+    t.jsonb    "rtm_start_json"
+    t.jsonb    "auth_json"
+    t.jsonb    "auth_params_json"
+  end
 
   create_table "list_items", force: :cascade do |t|
     t.string   "description"
@@ -66,20 +83,23 @@ ActiveRecord::Schema.define(version: 20160721235418) do
   add_index "list_items", ["member_id"], name: "index_list_items_on_member_id", using: :btree
 
   create_table "members", force: :cascade do |t|
-    t.string   "name"
-    t.datetime "created_at",                        null: false
-    t.datetime "updated_at",                        null: false
+    t.datetime "created_at",           null: false
+    t.datetime "updated_at",           null: false
     t.string   "slack_user_id"
     t.integer  "team_id"
-    t.string   "real_name"
-    t.integer  "channel_id"
-    t.boolean  "is_bot",            default: false
-    t.boolean  "deleted",           default: false
     t.string   "slack_team_id"
+    t.string   "slack_user_name"
+    t.string   "slack_user_real_name"
+    t.string   "slack_team_name"
+    t.string   "slack_user_api_token"
+    t.string   "bot_api_token"
+    t.string   "bot_user_id"
     t.string   "bot_dm_channel_id"
+    t.string   "last_activity_type"
+    t.datetime "last_activity_date"
+    t.jsonb    "bot_msgs_json"
   end
 
-  add_index "members", ["channel_id"], name: "index_members_on_channel_id", using: :btree
   add_index "members", ["team_id"], name: "index_members_on_team_id", using: :btree
 
   create_table "omniauth_providers", force: :cascade do |t|
@@ -144,7 +164,6 @@ ActiveRecord::Schema.define(version: 20160721235418) do
 
   add_foreign_key "channels", "teams"
   add_foreign_key "list_items", "members"
-  add_foreign_key "members", "channels"
   add_foreign_key "members", "teams"
   add_foreign_key "omniauth_providers", "users"
   add_foreign_key "teams", "users"

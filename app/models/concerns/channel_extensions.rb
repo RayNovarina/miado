@@ -36,6 +36,31 @@ module ChannelExtensions
       return create_from_omniauth_callback(options) if options[:source] == :omniauth_callback
     end
 
+    def find_or_create_taskbot_channel(options)
+      return find_or_create_taskbot_channel_from_slack(options) if options[:source] == :slack
+    end
+
+    def find_taskbot_channel_from_slack(options)
+      Channel.where(is_taskbot_channel: true,
+                    slack_team_id: options[:slack_team_id],
+                    slack_user_id: options[:slack_user_id]).first
+    end
+
+    def create_taskbot_channel_from_slack(options)
+      install_channel = installations(options).first
+      m_hash = install_channel.members_hash[options[:slack_user_id]]
+      Channel.create!(
+        is_taskbot_channel: true,
+        slack_channel_name: "taskbot_channel_for_@#{m_hash['name']}",
+        slack_channel_id: m_hash[:bot_dm_channel_id],
+        slack_user_id: options[:slack_user_id],
+        slack_team_id: options[:slack_team_id],
+        slack_user_api_token: install_channel.slack_user_api_token,
+        bot_api_token: install_channel.bot_api_token,
+        bot_user_id: install_channel.bot_user_id
+      )
+    end
+
     # Various methods to support Installations and Team and Members models.
 
     def installations(options = {})
@@ -184,12 +209,21 @@ module ChannelExtensions
 
     private
 
+    # Returns: Channel record.
     def find_or_create_from_slack(options)
-      if (channel = find_from_slack(options)).nil?
+      if (channel = find_from_slack(options).first).nil?
         # Case: This channel has not been accessed before.
         channel = create_from_slack(options)
       end
       channel
+    end
+
+    def find_or_create_taskbot_channel_from_slack(options)
+      if (taskbot_channel = find_taskbot_channel_from_slack(options)).nil?
+        # Case: This channel has not been accessed before.
+        taskbot_channel = create_taskbot_channel_from_slack(options)
+      end
+      taskbot_channel
     end
 
     # Return: install channel with current auth callback info.
@@ -205,7 +239,7 @@ module ChannelExtensions
 
     def create_or_update_install_channel(options)
       # Case: We have not authenticated this oauth user before.
-      return create_from_omniauth_callback(options) if (install_channel = find_from_omniauth_callback(options)).nil?
+      return create_install_channel_from_omniauth_callback(options) if (install_channel = find_from_omniauth_callback(options)).nil?
       # Case: We are reinstalling. Update auth info.
       update_channel_auth_info(install_channel, options)
       # Update fields changed by reinstall for all team channels for this user.
@@ -217,14 +251,14 @@ module ChannelExtensions
       @view ||= options[:view]
       Channel.where(slack_user_id: options[:slash_url_params]['user_id'],
                     slack_team_id: options[:slash_url_params]['team_id'],
-                    slack_channel_id: options[:slash_url_params]['channel_id']).first
+                    slack_channel_id: options[:slash_url_params]['channel_id'])
     end
 
     def find_from_omniauth_callback(options)
       @view ||= options[:view]
       Channel.where(slack_channel_name: 'installation',
                     slack_user_id: options[:request].env['omniauth.auth'].uid,
-                    slack_team_id: options[:request].env['omniauth.auth'].info['team_id']).first
+                    slack_team_id: options[:request].env['omniauth.auth'].info['team_id'])
     end
 
 =begin
@@ -242,24 +276,26 @@ module ChannelExtensions
 =end
     def create_from_slack(options)
       @view ||= options[:view]
-      # we create channel and copy members_hash from last active channel
-      # for this team.
-      other_member_channel =
-        Channel.where(slack_team_id: options[:slash_url_params]['team_id']).first
-      return nil if other_member_channel.nil?
-      Channel.create!(
+      channel = Channel.new(
         slack_channel_name: options[:slash_url_params]['channel_name'],
         slack_channel_id: options[:slash_url_params]['channel_id'],
         slack_user_id: options[:slash_url_params]['user_id'],
         slack_team_id: options[:slash_url_params]['team_id'],
-        slack_user_api_token: other_member_channel.slack_user_api_token,
-        bot_api_token: other_member_channel.bot_api_token,
-        bot_user_id: other_member_channel.bot_user_id,
-        members_hash: other_member_channel.members_hash
       )
+      # If available, add info from a installation record for this user.
+      # return channel if (installation = Installation.find_from(
+      #  source: :slack,
+      #  slack_team_id: options[:slash_url_params]['team_id'],
+      #  slack_user_id: options[:slash_url_params]['user_id']
+      # )).nil?
+      # channel.slack_user_api_token = installation.slack_user_api_token
+      # channel.bot_api_token = installation.bot_api_token
+      # channel.bot_user_id = installation.bot_user_id
+      # channel.save!
+      channel
     end
 
-    def create_from_omniauth_callback(options)
+    def create_install_channel_from_omniauth_callback(options)
       auth = options[:request].env['omniauth.auth']
       channel = Channel.new(
         slack_channel_name: 'installation',
@@ -309,14 +345,15 @@ module ChannelExtensions
     def find_or_create_members_hash_from_omniauth_callback(options)
       auth = options[:request].env['omniauth.auth']
       rtm_start = start_data_from_rtm_start(auth.extra['bot_info']['bot_access_token'])
-      other_install_channel =
-        Channel.where(slack_channel_name: 'installation',
-                      slack_team_id: auth.info['team_id'])
-               .where.not(slack_user_id: auth.uid).first
-      return create_members_hash_from_rtm_start(auth: auth, rtm_start: rtm_start) if other_install_channel.nil?
-      members_hash = other_install_channel.members_hash
-      update_members_hash_for_reinstall_from_rtm_start(members_hash: members_hash, auth: auth,
-                                         rtm_start: rtm_start)
+      create_members_hash_from_rtm_start(auth: auth, rtm_start: rtm_start)
+      # other_install_channel =
+      #  Channel.where(slack_channel_name: 'installation',
+      #                slack_team_id: auth.info['team_id'])
+      #         .where.not(slack_user_id: auth.uid).first
+      # return create_members_hash_from_rtm_start(auth: auth, rtm_start: rtm_start) if other_install_channel.nil?
+      # members_hash = other_install_channel.members_hash
+      # update_members_hash_for_reinstall_from_rtm_start(members_hash: members_hash, auth: auth,
+      #                                   rtm_start: rtm_start)
       # update_members_hash_from_omniauth_callback(members_hash: members_hash,
       #                                           auth: auth)
     end
@@ -333,11 +370,7 @@ module ChannelExtensions
         rtm_start: rtm_start,
         name: auth.info['user'],
         real_name: auth.info['user'],
-        id: auth.uid,
-        bot_channel_slack_user_id: auth.uid,
-        api_token: auth.credentials['token'],
-        bot_user_id: auth.extra['bot_info']['bot_user_id'],
-        bot_api_token: auth.extra['bot_info']['bot_access_token']
+        id: auth.uid
       )
       [members_hash, rtm_start]
     end
@@ -347,18 +380,14 @@ module ChannelExtensions
         { slack_user_name: options[:name],
           slack_real_name: options[:real_name],
           slack_user_id: options[:id],
-          slack_user_api_token: options[:api_token],
-          bot_user_id: options[:bot_user_id],
-          bot_api_token: options[:bot_api_token],
-          bot_dm_channel_id: nil,
-          bot_msg_id: nil
+          bot_dm_channel_id: nil
         }
       unless (im = find_bot_dm_channel_from_rtm_start(
-                     bot_channel_slack_user_id: options[:bot_channel_slack_user_id],
-                     rtm_start: options[:rtm_start])).nil?
+        bot_channel_slack_user_id: options[:bot_channel_slack_user_id],
+        rtm_start: options[:rtm_start])).nil?
         m_hash[:bot_dm_channel_id] = im['id']
-        m_hash[:bot_msg_id] = nil if im['latest'].nil?
-        m_hash[:bot_msg_id] = im['latest']['ts'] unless im['latest'].nil?
+        # m_hash[:bot_msg_id] = nil if im['latest'].nil?
+        # m_hash[:bot_msg_id] = im['latest']['ts'] unless im['latest'].nil?
       end
       options[:members_hash][m_hash[:slack_user_name]] = m_hash
       options[:members_hash][m_hash[:slack_user_id]] = m_hash
@@ -366,7 +395,7 @@ module ChannelExtensions
 
     # Returns: [members_hash, rtm_start]
     def create_members_hash_from_rtm_start(options)
-      auth = options[:auth]
+      # auth = options[:auth]
       members_hash = {}
       rtm_start = options[:rtm_start]
       slack_members = rtm_start['users']
@@ -381,10 +410,10 @@ module ChannelExtensions
           id: slack_member['id'],
           # Set bot channel id only for installing member. Block taskbot msgs
           # from others till they install miado.
-          bot_channel_slack_user_id: slack_member['id'] == auth.uid ? slack_member['id'] : nil,
-          api_token: slack_member['id'] == auth.uid ? auth.credentials['token'] : nil,
-          bot_user_id: slack_member['id'] == auth.uid ? auth.extra['bot_info']['bot_user_id'] : nil,
-          bot_api_token: slack_member['id'] == auth.uid ? auth.extra['bot_info']['bot_access_token'] : nil
+          # bot_channel_slack_user_id: slack_member['id'] == auth.uid ? slack_member['id'] : nil,
+          # api_token: slack_member['id'] == auth.uid ? auth.credentials['token'] : nil,
+          # bot_user_id: slack_member['id'] == auth.uid ? auth.extra['bot_info']['bot_user_id'] : nil,
+          # bot_api_token: slack_member['id'] == auth.uid ? auth.extra['bot_info']['bot_access_token'] : nil
         )
       end
       [members_hash, rtm_start]

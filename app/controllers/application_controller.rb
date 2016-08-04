@@ -83,12 +83,12 @@ class ApplicationController < ActionController::Base
 
   def omniauth_landing_page
     # Got here via oauth callback after sign_up or sign_in.
-    auth_action = @view.channel.auth_params_json['state']
+    auth_action = @view.installation.auth_params_json['state']
     if auth_action == 'sign_up'
       # return welcome_add_to_slack_new_path if @view.provider.name == 'slack'
-      if @view.channel.auth_json['provider'] == 'slack'
+      if @view.installation.auth_json['provider'] == 'slack'
         return welcome_add_to_slack_new_path(
-          install_channel_db_id: @view.channel.id)
+          installation_db_id: @view.installation.id)
       end
       welcome_new_path
     else # auth_action == 'sign_in'

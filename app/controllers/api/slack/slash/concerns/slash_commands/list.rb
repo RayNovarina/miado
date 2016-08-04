@@ -20,8 +20,10 @@ def prepend_text_to_list_command(parsed, prepend_text)
   list_text, list_attachments =
     format_display_list(
       parsed,
-      parsed[:previous_action_list_context],
+      parsed[:previous_action_list_context].empty? ? parsed[:after_action_list_context] : parsed[:previous_action_list_context],
       list_from_list_of_ids(parsed, parsed[:after_action_list_context][:list]))
+  # note: err is that parsed[:previous_action_list_context] is nil after
+  # rake db:reset and then /raydo $new general task1 for ray @me
   combined_text =
     prepend_text.concat('   Updated list as follows: ').concat(list_text)
   [combined_text, list_attachments]

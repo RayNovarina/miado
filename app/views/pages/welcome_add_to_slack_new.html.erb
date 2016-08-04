@@ -12,18 +12,18 @@
               style: 'margin-right: 20px;',
               size: '100x100' %>
               <%
-                install_channel = @view.locals[:install_channel]
+                installation = @view.locals[:installation]
                 bot_name = '/do'
-                if install_channel.nil?
+                if installation.nil?
                   user_name = 'No Name'
                   team_name = 'No Name'
                   slack_url = '#'
                 else
-                  user_name = install_channel.auth_json['info']['user'].titleize
-                  team_blobs = install_channel.auth_json['info']['team'].split
+                  user_name = installation.auth_json['info']['user'].titleize
+                  team_blobs = installation.auth_json['info']['team'].split
                   team_blobs.delete_at(team_blobs.size - 1) if (team_blobs[team_blobs.size - 1].downcase) == 'team'
                   team_name = team_blobs.join(' ')
-                  slack_url = install_channel.auth_json['extra']['raw_info']['url']
+                  slack_url = installation.auth_json['extra']['raw_info']['url']
                 end
               %>
               <h3>
