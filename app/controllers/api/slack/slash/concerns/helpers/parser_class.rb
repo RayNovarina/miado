@@ -23,6 +23,7 @@ def make_parse_hash
     done_option: false,
     err_msg: '',
     ccb: nil,
+    mcb: nil,
     previous_action_list_context: {},
     # For current action
     list_scope: nil,
@@ -92,6 +93,7 @@ def save_after_action_list_context(parsed, context, list_ids = nil)
   # Trim what we store to db, store, restore it.
   parsed[:url_params] = {}
   parsed[:ccb] = nil
+  parsed[:mcb] = nil
   @view.channel.after_action_parse_hash = parsed
   @view.channel.last_activity_type = "slash_command - #{parsed[:func]}"
   @view.channel.last_activity_date = DateTime.current

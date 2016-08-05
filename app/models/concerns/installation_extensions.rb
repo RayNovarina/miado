@@ -16,6 +16,49 @@ module InstallationExtensions
   module ClassMethods
     attr_accessor :view
 
+    #======================
+    # class ConvertProvidersToInstallations < ActiveRecord::Migration
+    #  class OmniauthProvider < ActiveRecord::Base
+    #  end
+    #
+    def up
+      Installation.destroy_all
+      Channel.installations.each do |install_channel|
+        # def create_from_omniauth_callback(options)
+        auth = install_channel.auth_json
+        installation = Installation.new(
+          slack_user_id: auth['uid'],
+          slack_team_id: auth['info']['team_id'])
+        # update_auth_info(installation: installation, type: 'installation', request: options[:request])
+        # def update_auth_info(options)
+        installation.update(
+          slack_user_api_token: auth['credentials']['token'],
+          bot_api_token: auth['extra']['bot_info']['bot_access_token'],
+          bot_user_id: auth['extra']['bot_info']['bot_user_id'],
+          auth_json: auth,
+          auth_params_json: install_channel.auth_params_json,
+          rtm_start_json: install_channel.rtm_start_json,
+          last_activity_type: 'installation',
+          last_activity_date: DateTime.current)
+        installation.rtm_start_json['users'].each do |slack_member|
+          next if slack_member['name'] == 'slackbot' || slack_member['deleted'] || slack_member['is_bot']
+          Member.find_or_create_from(
+            source: :rtm_data,
+            installation_slack_user_id: installation.slack_user_id,
+            slack_user_name: slack_member['name'],
+            slack_team_id: installation.slack_team_id
+          )
+        end
+      end
+      Channel.installations.destroy_all
+      Channel.update_all(slack_user_api_token: nil,
+                         bot_api_token: nil,
+                         members_hash: nil,
+                         bot_user_id: nil)
+    end
+    # end
+    #=====================
+
     def update_from_or_create_from(options)
       return update_from_or_create_from_omniauth_callback(options) if options[:source] == :omniauth_callback
     end
@@ -60,6 +103,8 @@ module InstallationExtensions
     end
 
     def create_from_omniauth_callback(options)
+      require 'pry'
+      binding.pry
       auth = options[:request].env['omniauth.auth']
       installation = Installation.new(
         slack_user_id: auth.uid,

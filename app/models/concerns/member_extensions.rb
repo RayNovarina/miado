@@ -44,7 +44,9 @@ module MemberExtensions
     end
 
     def find_or_create_from_installation(options)
-      member = find_from_slack(options)
+      member = find_from_slack(
+        slack_user_id: options[:installation].slack_user_id,
+        slack_team_id: options[:installation].slack_team_id)
       return member unless member.nil?
       create_from_installation(options)
     end
@@ -55,9 +57,9 @@ module MemberExtensions
         slack_user_id: options[:installation].slack_user_id,
         slack_team_id: options[:installation].slack_team_id)).nil?
       # Update fields changed by reinstall for all team members of this user.
-      update_auth_info(member: member, type: 'reinstallation',
-                       auth_json: options[:installation].auth_json,
-                       rtm_start: options[:installation].rtm_start_json)
+      update_or_create_install_info(member: member, type: 'reinstallation',
+                                    auth_json: options[:installation].auth_json,
+                                    rtm_start: options[:installation].rtm_start_json)
       member
     end
 
@@ -92,8 +94,8 @@ module MemberExtensions
         slack_team_name: auth_json['info']['team'],
         slack_user_name: auth_json['info']['name'].nil? ? auth_json['info']['user'] : auth_json['info']['name'],
         slack_user_real_name: user['profile']['real_name'])
-      update_auth_info(member: member, type: 'installation',
-                       auth_json: auth_json, rtm_start: rtm_start)
+      update_or_create_install_info(member: member, type: 'installation',
+                                    auth_json: auth_json, rtm_start: rtm_start)
     end
 
 =begin
@@ -151,21 +153,42 @@ member = Member.find_or_create_from(
       )
       if member.slack_user_id == installation.slack_user_id
         # We are making a member record for someone who has installed app.
-        update_auth_info(member: member, type: 'created via lookup',
-                         auth_json: auth_json, rtm_start: rtm_start)
+        update_or_create_install_info(member: member, type: 'created via lookup',
+                                      auth_json: auth_json, rtm_start: rtm_start)
       end
       member
     end
 
-    def update_auth_info(options)
+    def update_or_create_install_info(options)
       options[:member].update(
         slack_user_api_token: options[:auth_json]['credentials']['token'],
         bot_api_token: options[:auth_json]['extra']['bot_info']['bot_access_token'],
         bot_user_id: options[:auth_json]['extra']['bot_info']['bot_user_id'],
         bot_dm_channel_id: find_bot_dm_channel_id_from_rtm_start(
           slack_user_id: options[:member].slack_user_id, rtm_start: options[:rtm_start]),
+        bot_msgs_json: bot_msgs_from_rtm_start(
+          slack_user_id: options[:member].slack_user_id, rtm_start: options[:rtm_start]),
         last_activity_type: options[:type],
         last_activity_date: DateTime.current)
+    end
+
+    def bot_msgs_from_rtm_start(options)
+      msgs = []
+      options[:rtm_start]['ims'].each do |im|
+        next if im[:is_user_deleted]
+        next unless im['user'] == options[:slack_user_id]
+        next unless im.key?('latest')
+        next if im['latest'].nil?
+        msgs << {
+          'text' => im['latest']['text'],
+          'username' => im['latest']['username'],
+          'bot_id' => im['latest']['bot_id'],
+          'type' => im['latest']['type'],
+          'subtype' => im['latest']['subtype'],
+          'ts' => im['latest']['ts']
+        }
+      end
+      msgs
     end
 
     def slack_user_from_rtm_start(options)
