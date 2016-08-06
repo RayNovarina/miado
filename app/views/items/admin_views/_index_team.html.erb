@@ -1,7 +1,7 @@
 <% if locals[:items].length == 0 %>
   <h3><u><%= link_to locals[:auth_info]['team'],
-                  team_path(locals[:install_channel]),
-                  title: "Created on #{locals[:install_channel].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')}" %>
+                  team_path(locals[:installation]),
+                  title: "Created on #{locals[:installation].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')}" %>
       </u> - no active channels.
   </h3>
 <% else %>
@@ -25,8 +25,8 @@
          end
       %>
       <h3><u><%= link_to locals[:auth_info]['team'],
-                      team_path(locals[:install_channel]),
-                      title: "Created on #{locals[:install_channel].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')}" %></u>
+                      team_path(locals[:installation]),
+                      title: "Created on #{locals[:installation].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')}" %></u>
         <%= "Channel: ##{item.channel_name}(#{current_channel_id})" %></h3>
         <table class="table table-bordered table-hover">
           <thead>
@@ -48,7 +48,6 @@
     <%= render partial: 'items/admin_views/index_item',
                locals: { locals: { task_num: task_num,
                                    item: item,
-                                   members_hash: locals[:install_channel].members_hash,
                                    is_last_updated_item: item.updated_at == most_recent_task.updated_at
                                  }
                        }

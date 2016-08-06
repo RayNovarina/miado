@@ -9,8 +9,8 @@ class MembersController < ApplicationController
   #
 
   def index
-    @view.locals = { members: Channel.team_members,
-                     teams: Channel.teams
+    @view.locals = { members: Member.team_members,
+                     teams: Installation.teams
                    }
     # authorize @view.members
     # Response: Controller will forward_to

@@ -72,6 +72,26 @@ module InstallationExtensions
       return create_from_omniauth_callback(options) if options[:source] == :omniauth_callback
     end
 
+    # Various methods to support Installations and Team and Members models.
+
+    def installations(options = {})
+      if options.key?(:slack_user_id)
+        return Installation.where(slack_team_id: options[:slack_team_id],
+                                  slack_user_id: options[:slack_user_id])
+                           .reorder('slack_team_id ASC')
+      end
+      if options.key?(:slack_team_id)
+        return Installation.where(slack_team_id: options[:slack_team_id])
+                           .reorder('slack_team_id ASC')
+      end
+      Installation.all.reorder('slack_team_id ASC')
+    end
+
+    def teams
+      Installation.select('DISTINCT ON(slack_team_id)*')
+                  .reorder('slack_team_id ASC')
+    end
+
     private
 
     def find_from_omniauth_callback(options)

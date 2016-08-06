@@ -33,6 +33,21 @@ module MemberExtensions
       return create_from_rtm_data(options) if options[:source] == :rtm_data
     end
 
+    # Various methods to support Installations and Team and Members models.
+
+    def team_members(options = {})
+      # Case: specified member for specified team, i.e. @dawn on MiaDo Team.
+      return Member.where(slack_user_id: options[:slack_user_id],
+                          slack_team_id: options[:slack_team_id]
+                         ) if options.key?(:slack_user_id) && options.key?(:slack_team_id)
+      # Case: all members for specified team, i.e. MiaDo Team.
+      return Member.where(slack_team_id: options[:slack_team_id])
+                   .reorder('slack_user_name ASC'
+                           ) if options.key?(:slack_team_id)
+      # Case: all member records.
+      Member.all.reorder('slack_team_id ASC, slack_user_name ASC')
+    end
+
     private
 
     def find_or_create_from_rtm_data(options)

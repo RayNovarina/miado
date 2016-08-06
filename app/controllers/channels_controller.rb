@@ -9,7 +9,7 @@ class ChannelsController < ApplicationController
   #
   def index
     @view.locals = { team_channels: Channel.team_channels,
-                     teams: Channel.teams
+                     teams: Installation.teams
                    }
     # authorize @view.channels
     # Response: Controller will forward_to

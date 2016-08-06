@@ -8,10 +8,10 @@
   <div class="container">
     <h2><%= "#{locals[:members].length} Members in #{locals[:teams].length} Teams"  %></h2>
     <hr>
-    <% locals[:teams].each do |channel| %>
+    <% locals[:teams].each do |installation| %>
       <%= render partial: 'members/admin_views/index_team',
-                 locals: { locals: { team: channel,
-                                     members: Channel.team_members(slack_team_id: channel.slack_team_id)
+                 locals: { locals: { team: installation,
+                                     members: Member.team_members(slack_team_id: installation.slack_team_id)
                                    }
                          }
       %>

@@ -11,8 +11,8 @@ class TeamsController < ApplicationController
   #                    or /user/:user_id/teams for "My Teams" link
   def index
     @view.locals = { user: current_user,
-                     teams: Channel.teams,
-                     installations: Channel.installations
+                     teams: Installation.teams,
+                     installations: Installation.installations
                    }
     # @view.teams = @view.url_params.key?('user_id') \
     #  ? Team.where('user_id = ?', current_user.id) \
@@ -23,7 +23,7 @@ class TeamsController < ApplicationController
   end
 
   def show
-    @view.locals = { team: Channel.find(params[:id]) }
+    @view.locals = { team: Installation.find(params[:id]) }
     authorize @view.team
     # Response: Controller will forward_to
     #           /views/teams/show.html.erb with @view
@@ -40,7 +40,7 @@ class TeamsController < ApplicationController
 
   def destroy
     # Note: should tell slack to remove app from team?
-    @view.team = Team.find(params[:id])
+    @view.team = Installation.find(params[:id])
     authorize @view.team
     # Response: redirect to or forward_to to a view.
     if @view.team.destroy
@@ -56,6 +56,6 @@ class TeamsController < ApplicationController
   private
 
   def make_view_helper
-    @view = ApplicationHelper::View.new(self, Team.new)
+    @view = ApplicationHelper::View.new(self, Installation.new)
   end
 end

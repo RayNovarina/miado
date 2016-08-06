@@ -8,16 +8,17 @@
   <div class="container">
     <h2>Teams<%= " (#{locals[:teams].length}) whose members have installed MiaDo #{locals[:installations].length} times." %></h2>
     <br>
-    <% locals[:teams].each do |channel| %>
+    <% locals[:teams].each do |installation| %>
       <%= render partial: 'teams/admin_views/show_team',
-                 locals: { locals: { team: channel,
-                                     members: Channel.team_members(slack_team_id: channel.slack_team_id),
-                                     channels: Channel.team_channels(slack_team_id: channel.slack_team_id),
-                                     lists: Channel.team_lists(slack_team_id: channel.slack_team_id),
-                                     installations: Channel.installations(slack_team_id: channel.slack_team_id),
-                                     auth_info: channel.auth_json['info'],
-                                     auth_extra: channel.auth_json['extra'],
-                                     last_activity: Channel.last_activity(slack_team_id: channel.slack_team_id)
+                 locals: { locals: { team: installation,
+                                     members: Member.team_members(slack_user_id: installation.slack_user_id,
+                                                                  slack_team_id: installation.slack_team_id),
+                                     channels: Channel.team_channels(slack_team_id: installation.slack_team_id),
+                                     lists: Channel.team_lists(slack_team_id: installation.slack_team_id),
+                                     installations: Installation.installations(slack_team_id: installation.slack_team_id),
+                                     auth_info: installation.auth_json['info'],
+                                     auth_extra: installation.auth_json['extra'],
+                                     last_activity: Channel.last_activity(slack_team_id: installation.slack_team_id)
                                    }
                          }
       %>
