@@ -13,7 +13,7 @@
           <th>Name</th>
           <th>Email</th>
           <th>SignUp Date</th>
-          <th>Last Activity<br>(now: <%= "#{DateTime.current.strftime('%a, %b %d %H:%M:%S %Y')}" %>)</th>
+          <th>Last Activity (now)<br>(<%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>)</th>
           <th><u><%= link_to 'Installations', installations_path %></u><%= " (#{locals[:installations].length}) by" %></th>
           <th><u><%= link_to 'Teams', teams_path %></u><%= " (#{locals[:teams].length})" %></th>
         </tr>

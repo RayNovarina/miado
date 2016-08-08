@@ -87,6 +87,12 @@ gem 'slack-ruby-client'
 # HTTP lib per: https://github.com/jnunemaker/httparty
 # gem install httparty
 #
+#----------------------------------------------------
+# Local Time is a Rails engine with helpers and JavaScript for displaying times
+# and dates to users in their local time.
+# per: https://github.com/basecamp/local_time
+gem 'local_time'
+#-----------------------------------------------------
 #
 #============== DEVELOPMENT only GEMS =================
 group :development do

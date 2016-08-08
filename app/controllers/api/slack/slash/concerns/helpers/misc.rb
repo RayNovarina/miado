@@ -154,7 +154,7 @@ def merge_members_hash_from_slack(p_hash, target_name)
 end
 
 def add_update_members_from_rtm_start(p_hash, target_name, ccb_members_hash, first_m_hash)
-  rtm_start = start_data_from_rtm_start(p_hash[:ccb].bot_api_token)
+  rtm_start = lib_start_data_from_rtm_start(p_hash[:ccb].bot_api_token)
   slack_members = rtm_start['users']
   slack_members.each do |slack_member|
     # next if slack_member[:name] == 'slackbot' || (slack_member[:deleted] && slack_member[:is_bot])
@@ -196,11 +196,11 @@ def update_member_name(ccb_members_hash, target_name, slack_member)
 end
 
 # response is an array of hashes. Team, users, channels, dms.
-def start_data_from_rtm_start(api_token)
-  slack_api('rtm.start', api_token)
+def lib_start_data_from_rtm_start(api_token)
+  lib_slack_api('rtm.start', api_token)
 end
 
-def slack_api(method_name, api_token)
+def lib_slack_api(method_name, api_token)
   uri = URI.parse('https://slack.com')
   http = Net::HTTP.new(uri.host, uri.port)
   http.use_ssl = true

@@ -168,6 +168,20 @@ module ChannelExtensions
       b_hash
     end
 
+    # response is an array of hashes. Team, users, channels, dms.
+    def start_data_from_rtm_start(api_token)
+      slack_api('rtm.start', api_token)
+    end
+
+    def slack_api(method_name, api_token)
+      uri = URI.parse('https://slack.com')
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      request = Net::HTTP::Get.new("/api/#{method_name}?token=#{api_token}")
+      response = http.request(request)
+      JSON.parse(response.body)
+    end
+
     private
 
     def find_or_create_from_slack(options)
@@ -178,13 +192,25 @@ module ChannelExtensions
       channel
     end
 
+    # Return: install channel with current auth callback info.
+    #         If needed, all team members channels are updated with new install
+    #         info.
     def update_from_or_create_from_omniauth_callback(options)
+      install_channel = create_or_update_install_channel(options)
+      update_members_hash_for_all_team_members(
+        slack_team_id: install_channel.slack_team_id,
+        members_hash: install_channel.members_hash)
+      install_channel
+    end
+
+    def create_or_update_install_channel(options)
       # Case: We have not authenticated this oauth user before.
-      return create_from_omniauth_callback(options) if (channel = find_from_omniauth_callback(options)).nil?
+      return create_from_omniauth_callback(options) if (install_channel = find_from_omniauth_callback(options)).nil?
       # Case: We are reinstalling. Update auth info.
-      update_channel_auth_info(channel, options)
-      # Return channel with current auth callback info
-      channel
+      update_channel_auth_info(install_channel, options)
+      # Update fields changed by reinstall for all team channels for this user.
+      update_channel_reinstall_info(install_channel: install_channel)
+      install_channel
     end
 
     def find_from_slack(options)
@@ -239,7 +265,9 @@ module ChannelExtensions
         slack_channel_name: 'installation',
         slack_channel_id: '',
         slack_user_id: auth.uid,
-        slack_team_id: auth.info['team_id']
+        slack_team_id: auth.info['team_id'],
+        last_activity_type: 'installation',
+        last_activity_date: DateTime.current
       )
       update_channel_auth_info(channel, options)
       channel
@@ -258,6 +286,25 @@ module ChannelExtensions
       channel.save!
     end
 
+    # Returns: nothing. Db is updated.
+    # Update fields changed by reinstall for just the team channels for the
+    # installing member.
+    def update_channel_reinstall_info(options)
+      Channel.where(slack_user_id: options[:install_channel].slack_user_id)
+             .where(slack_team_id: options[:install_channel].slack_team_id)
+             .update_all(slack_user_api_token: options[:install_channel].slack_user_api_token,
+                         bot_api_token: options[:install_channel].bot_api_token,
+                         bot_user_id: options[:install_channel].bot_user_id,
+                         last_activity_type: 'reinstallation',
+                         last_activity_date: DateTime.current)
+    end
+
+    # update install/reinstall info for all team members.
+    def update_members_hash_for_all_team_members(options)
+      Channel.where(slack_team_id: options[:slack_team_id])
+             .update_all(members_hash: options[:members_hash])
+    end
+
     # Returns: [members_hash, rtm_start]
     def find_or_create_members_hash_from_omniauth_callback(options)
       auth = options[:request].env['omniauth.auth']
@@ -266,26 +313,28 @@ module ChannelExtensions
         Channel.where(slack_channel_name: 'installation',
                       slack_team_id: auth.info['team_id'])
                .where.not(slack_user_id: auth.uid).first
-      return build_new_members_hash_from_rtm_start(auth: auth, rtm_start: rtm_start) if other_install_channel.nil?
+      return create_members_hash_from_rtm_start(auth: auth, rtm_start: rtm_start) if other_install_channel.nil?
       members_hash = other_install_channel.members_hash
-      update_members_hash_from_rtm_start(members_hash: members_hash, auth: auth,
+      update_members_hash_for_reinstall_from_rtm_start(members_hash: members_hash, auth: auth,
                                          rtm_start: rtm_start)
       # update_members_hash_from_omniauth_callback(members_hash: members_hash,
       #                                           auth: auth)
     end
 
+    # Member is reinstalling MiaDo. tokens need to be updated in the members_hash.
     # Returns: [members_hash, rtm_start]
-    def update_members_hash_from_rtm_start(options)
+    def update_members_hash_for_reinstall_from_rtm_start(options)
       auth = options[:auth]
       members_hash = options[:members_hash]
       rtm_start = options[:rtm_start]
-      # Add installing member's info to existing team lookup hash.
+      # Replace installing member's updated info in existing team lookup hash.
       add_new_member_to_hash(
         members_hash: members_hash,
         rtm_start: rtm_start,
         name: auth.info['user'],
         real_name: auth.info['user'],
         id: auth.uid,
+        bot_channel_slack_user_id: auth.uid,
         api_token: auth.credentials['token'],
         bot_user_id: auth.extra['bot_info']['bot_user_id'],
         bot_api_token: auth.extra['bot_info']['bot_access_token']
@@ -305,7 +354,7 @@ module ChannelExtensions
           bot_msg_id: nil
         }
       unless (im = find_bot_dm_channel_from_rtm_start(
-                     slack_user_id: options[:id],
+                     bot_channel_slack_user_id: options[:bot_channel_slack_user_id],
                      rtm_start: options[:rtm_start])).nil?
         m_hash[:bot_dm_channel_id] = im['id']
         m_hash[:bot_msg_id] = nil if im['latest'].nil?
@@ -316,7 +365,7 @@ module ChannelExtensions
     end
 
     # Returns: [members_hash, rtm_start]
-    def build_new_members_hash_from_rtm_start(options)
+    def create_members_hash_from_rtm_start(options)
       auth = options[:auth]
       members_hash = {}
       rtm_start = options[:rtm_start]
@@ -330,9 +379,12 @@ module ChannelExtensions
           name: slack_member['name'],
           real_name: slack_member['real_name'],
           id: slack_member['id'],
-          api_token: auth.credentials['token'],
-          bot_user_id: auth.extra['bot_info']['bot_user_id'],
-          bot_api_token: auth.extra['bot_info']['bot_access_token']
+          # Set bot channel id only for installing member. Block taskbot msgs
+          # from others till they install miado.
+          bot_channel_slack_user_id: slack_member['id'] == auth.uid ? slack_member['id'] : nil,
+          api_token: slack_member['id'] == auth.uid ? auth.credentials['token'] : nil,
+          bot_user_id: slack_member['id'] == auth.uid ? auth.extra['bot_info']['bot_user_id'] : nil,
+          bot_api_token: slack_member['id'] == auth.uid ? auth.extra['bot_info']['bot_access_token'] : nil
         )
       end
       [members_hash, rtm_start]
@@ -378,27 +430,18 @@ module ChannelExtensions
                 "is_open": true
             },
 =end
+    # Note: This code is based on the observation of rtm_start data returned
+    # when using a bot api token from the miado installer. In that case, the
+    # im channels seem to be team bot channels and a matching user_id would be
+    # the taskbot channel even if miado is not installed by that user.
     def find_bot_dm_channel_from_rtm_start(options)
+      return nil if options[:bot_channel_slack_user_id].nil?
       slack_dm_channels = options[:rtm_start]['ims']
       slack_dm_channels.each do |im|
         next if im[:is_user_deleted]
-        return im if im['user'] == options[:slack_user_id]
+        return im if im['user'] == options[:bot_channel_slack_user_id]
       end
       nil
-    end
-
-    # response is an array of hashes. Team, users, channels, dms.
-    def start_data_from_rtm_start(api_token)
-      slack_api('rtm.start', api_token)
-    end
-
-    def slack_api(method_name, api_token)
-      uri = URI.parse('https://slack.com')
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      request = Net::HTTP::Get.new("/api/#{method_name}?token=#{api_token}")
-      response = http.request(request)
-      JSON.parse(response.body)
     end
 
 =begin

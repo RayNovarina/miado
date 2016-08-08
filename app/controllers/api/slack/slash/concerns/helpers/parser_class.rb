@@ -62,7 +62,7 @@ def context_from_ccb_hash(_p_hash, previous_action_parse_hash)
   # embedded array properly.
   ids_array = value_array(context_s.slice(context_s.index('=>') + 2, context_s.index(']') - context_s.index('=>') - 1))
   # Skip the first hash item of '[....],'
-  context_s_splits = context_s.slice(context_s.index(']') + 3, context_s.length - context_s.index(']') - 4).split(', ')
+  context_s_splits = context_s.slice(context_s.index(']') + 3, context_s.length - context_s.index(']') - 4).split(', :')
   { list: ids_array,
     list_scope: hash_value(context_s_splits[0]),
     channel_scope: hash_value(context_s_splits[1]),
@@ -99,6 +99,8 @@ def save_after_action_list_context(parsed, context, list_ids = nil)
   parsed[:url_params] = {}
   parsed[:ccb] = nil
   @view.channel.after_action_parse_hash = parsed
+  @view.channel.last_activity_type = "slash_command - #{parsed[:func]}"
+  @view.channel.last_activity_date = DateTime.current
   ok = @view.channel.save
   parsed[:url_params] = params
   parsed[:ccb] = @view.channel

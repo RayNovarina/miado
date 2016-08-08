@@ -13,7 +13,6 @@
       <%= render partial: 'channels/admin_views/index_team',
                  locals: { locals: { team: team,
                                      shared_channels: Channel.shared_team_channels(slack_team_id: team.slack_team_id),
-                                     bot_channels: Channel.bot_team_channels(slack_team_id: team.slack_team_id)
                                    }
                          }
       %>

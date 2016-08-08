@@ -35,5 +35,8 @@ SLASH_CMD_HLP_TEXT =
 
 # Returns: [text, attachments]
 def help_command(_parsed)
+  @view.channel.last_activity_type = 'slash_command - help'
+  @view.channel.last_activity_date = DateTime.current
+  @view.channel.save
   [SLASH_CMD_HLP_TEXT, nil]
 end
