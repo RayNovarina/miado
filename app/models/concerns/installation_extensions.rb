@@ -15,7 +15,7 @@ module InstallationExtensions
   # User.find_by_email(email).authenticate(password).
   module ClassMethods
     attr_accessor :view
-
+=begin
     #======================
     # class ConvertProvidersToInstallations < ActiveRecord::Migration
     #  class OmniauthProvider < ActiveRecord::Base
@@ -58,7 +58,7 @@ module InstallationExtensions
     end
     # end
     #=====================
-
+=end
     def update_from_or_create_from(options)
       return update_from_or_create_from_omniauth_callback(options) if options[:source] == :omniauth_callback
     end
