@@ -5,8 +5,8 @@ class UsersController < ApplicationController
 
   def index
     @view.locals = { users: User.all,
-                     installations: Channel.installations,
-                     teams: Channel.teams
+                     installations: Installation.installations,
+                     teams: Installation.teams
                    }
   end
 

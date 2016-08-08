@@ -50,25 +50,6 @@ def debug_headers(parsed)
   cmd_info.concat(slack_info).concat(parse_trace_info).concat(query_info)
 end
 
-def hash_value(s)
-  return nil if s.nil?
-  value_s = s.slice(s.index('=>') + 2, s.length - 1)
-  return nil if value_s == 'nil'
-  return value_s.slice(1..-1).to_sym if value_s.starts_with?(':')
-  return value_s.slice(1, value_s.length - 2) if value_s.starts_with?('"')
-  return true if value_s == 'true'
-  return false if value_s == 'false'
-  return value_array(value_s) if value_s.starts_with?('[')
-  value_s
-end
-
-def value_array(s)
-  # ASSUME array of ints for now. i.e. s.slice(0).is_numeric
-  return [] if s == '[]'
-  # Example is: "[1, 2, 3, 4, 9, 10, 11]"
-  s.slice(1, s.length - 2).split(',').map(&:to_i)
-end
-
 # Returns: true/false
 def task_num_invalid?(parsed)
   task_num_out_of_range?(parsed)
@@ -109,95 +90,39 @@ def make_web_client(api_token)
   Slack::Web::Client.new
 end
 
+# Returns: slack user id (or nil if name not found),
+#          slack user name
 def slack_member_from_name(parsed, name)
-  # Fixup if called with partial copy of parsed hash.
-  ccb = parsed[:ccb] || @view.channel
-  return [parsed[:url_params][:user_id], parsed[:url_params][:user_name]] if name == 'me' || name == parsed[:url_params][:user_name]
-  return [nil, name] if (m_hash = ccb.members_hash[name]).nil?
-  [m_hash['slack_user_id'], name]
+  name = parsed[:url_params][:user_name] if name == 'me'
+  return [nil, name] if (
+    member = Member.find_from(source: :slack,
+                              slack_user_name: name,
+                              slack_team_id: parsed[:url_params][:team_id]
+                             )).nil?
+  [member.slack_user_id, name]
 end
 
-def slack_member_name_from_slack_user_id(parsed, slack_member_user_id)
-  # Fixup if called with partial copy of parsed hash.
-  ccb = parsed[:ccb] || @view.channel
-  return parsed[:url_params][:user_name] if parsed[:url_params][:user_id] == slack_member_user_id
-  return '??not recognized' if (m_hash = ccb.members_hash[slack_member_user_id]).nil?
-  m_hash['slack_user_name']
+def slack_member_name_from_slack_user_id(parsed, id)
+  return '??not recognized' if (
+    member = Member.find_from(source: :slack,
+                              slack_user_id: id,
+                              slack_team_id: parsed[:url_params][:team_id]
+                             )).nil?
+  member.slack_user_name
 end
 
 # Returns: [member_slack_id, member_name]
 # Note: could be a new member or a name change(but same slack_user_id)
-def mentioned_member_not_found(p_hash, name)
-  updated_members_hash = merge_members_hash_from_slack(p_hash, name)
-  return [nil, name] if updated_members_hash[name].nil?
-  # New team member added or name change.
-  p_hash[:ccb].members_hash = updated_members_hash
-  # Channels for this team gets an updated member lookup hash.
-  # Note: a new Thread is generated to run these deferred commands.
-  new_member_deferred_logic(members_hash: updated_members_hash,
-                            slack_team_id: p_hash[:ccb].slack_team_id)
-  [updated_members_hash[name]['slack_user_id'], name]
-end
-
-# We know that the target_name is not in our ccb.members_hash, else we would not
-# be here.
-# query slack for current member list for this slack user.
-def merge_members_hash_from_slack(p_hash, target_name)
-  ccb_members_hash = p_hash[:ccb].members_hash
-  first_m_hash = nil
-  ccb_members_hash.each do |m_hash|
-    first_m_hash = m_hash[1]
-    break
-  end
-  add_update_members_from_rtm_start(p_hash, target_name, ccb_members_hash, first_m_hash)
-  ccb_members_hash
-end
-
-def add_update_members_from_rtm_start(p_hash, target_name, ccb_members_hash, first_m_hash)
-  rtm_start = lib_start_data_from_rtm_start(p_hash[:ccb].bot_api_token)
-  slack_members = rtm_start['users']
-  slack_members.each do |slack_member|
-    # next if slack_member[:name] == 'slackbot' || (slack_member[:deleted] && slack_member[:is_bot])
-    next unless slack_member['name'] == target_name
-    unless ccb_members_hash[slack_member['id']].nil?
-      # Name change. We have recorded that slack user_id before.
-      update_member_name(ccb_members_hash, target_name, slack_member)
-      break
-    end
-    # New member has been added. Add em to our members_hash
-    add_new_member(ccb_members_hash, first_m_hash, slack_member['name'],
-                   slack_member['real_name'], slack_member['id'])
-    break
-  end
-end
-
-# New member has been added. Add em to our members_hash
-def add_new_member(ccb_members_hash, first_m_hash, name, real_name, id)
-  m_hash = {
-    'slack_user_name' => name,
-    'slack_real_name' => real_name,
-    'slack_user_id' => id,
-    'slack_user_api_token' => first_m_hash['slack_user_api_token'],
-    'bot_user_id' => first_m_hash['bot_user_id'],
-    'bot_dm_channel_id' => nil,
-    'bot_api_token' => first_m_hash['bot_api_token']
-  }
-  ccb_members_hash[name] = m_hash
-  ccb_members_hash[id] = m_hash
-end
-
-# Name change. We have recorded that slack user_id before.
-def update_member_name(ccb_members_hash, target_name, slack_member)
-  old_name = ccb_members_hash[slack_member['id']]['slack_user_name']
-  ccb_members_hash[slack_member['id']]['slack_user_name'] = target_name
-  updated_m_hash = ccb_members_hash[slack_member['id']]
-  ccb_members_hash.delete(old_name)
-  ccb_members_hash[target_name] = updated_m_hash
-end
-
-# response is an array of hashes. Team, users, channels, dms.
-def lib_start_data_from_rtm_start(api_token)
-  lib_slack_api('rtm.start', api_token)
+def mentioned_member_not_found(parsed, name)
+  name = parsed[:url_params][:user_name] if name == 'me'
+  member = Member.find_or_create_from(
+    source: :rtm_data,
+    installation_slack_user_id: parsed[:url_params][:user_id],
+    slack_user_name: name,
+    slack_team_id: parsed[:url_params][:team_id]
+  )
+  return [nil, name] if member.nil?
+  [member.slack_user_id, name]
 end
 
 def lib_slack_api(method_name, api_token)

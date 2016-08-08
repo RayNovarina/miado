@@ -8,11 +8,11 @@
   <div class="container">
     <h2><%= "#{locals[:items].length} Tasks in #{locals[:channels].length} Channels in #{locals[:teams].length} Teams"  %></h2>
     <hr>
-    <% locals[:teams].each do |install_channel| %>
+    <% locals[:teams].each do |installation| %>
       <%= render partial: 'items/admin_views/index_team',
-                 locals: { locals: { install_channel: install_channel,
-                                     auth_info: install_channel.auth_json['info'],
-                                     items: ListItem.items(slack_team_id: install_channel.slack_team_id),
+                 locals: { locals: { installation: installation,
+                                     auth_info: installation.auth_json['info'],
+                                     items: ListItem.items(slack_team_id: installation.slack_team_id),
                                    }
                          }
       %>

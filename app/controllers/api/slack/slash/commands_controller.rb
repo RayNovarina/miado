@@ -30,16 +30,16 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
 
   # Returns:
   #   If command processed by controller:
-  #      json response with { text, attachments} fields.
-  #      AND parsed_hash data hash.
+  #      response: json response with { text, attachments} fields.
+  #      p_hash:   parsed_hash data hash.
   # In all cases, @view hash has url_params with Slack slash command form parms.
   def local_response
     # Cmd Context: We need to know our team members and the last list displayed.
-    ccb, previous_action_parse_hash = recover_previous_action_list
-    return [err_resp(params, previous_action_parse_hash, nil), nil] if ccb.nil?
-    # Note: previous_action_list_context: {} becomes our
+    ccb, err_msg = channel_control_block_from_slack
+    return [err_resp(params, err_msg, nil), nil] unless err_msg.empty?
+    # Note: ccb.previous_action_list_context: {} becomes our
     # BEFORE action list(mine) or list(team) or list(all)
-    parsed = parse_slash_cmd(params, ccb, previous_action_parse_hash)
+    parsed = parse_slash_cmd(params, ccb, ccb.after_action_parse_hash)
     return [err_resp(params, "`MiaDo ERROR: #{parsed[:err_msg]}`", nil), parsed] unless parsed[:err_msg].empty?
     text, attachments = process_cmd(parsed)
     # after_action_list_context: {} is AFTER action list(mine) or
@@ -71,14 +71,15 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   user_id	U0VLZ5P51
   user_name	ray
 =end
-  # Case1: Member1 installs miaDo. We only generate channels for the installing
-  #        member. Only this member has a taskbot dm channel and token. BUT the
-  #        slash command is available to all members. Member2 uses /do.
+  # Case1: Member1 installs miaDo. Only this member has a taskbot dm channel and
+  #        token. BUT the slash command is available to all members.
+  #        Member2 uses /do.
   # Case2: a new member has been added to a team.
-  #   In these cases we will not recognize the
+  #
+  # In these cases we will not recognize the
   #   slack_user_id.slack_team_id.slack_channel_id.  A new channel/ccb is
-  #   created. We get the members lookup hash from any channel for this team.
-  def recover_previous_action_list
+  #   created.
+  def channel_control_block_from_slack
     if (@view.channel = Channel.find_or_create_from(source: :slack, view: @view, slash_url_params: params)).nil?
       return [nil,
               "`MiaDo server ERROR: team #{params[:team_domain]}" \
@@ -87,7 +88,7 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
               'MiaDo needs to be installed via add to Slack button ' \
               'at www.miado.net/add_to_slack`']
     end
-    [@view.channel, @view.channel.after_action_parse_hash]
+    [@view.channel, '']
   end
 
   # Returns: [text, attachments]

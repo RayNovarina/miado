@@ -1,12 +1,24 @@
 <% channel = locals[:channel]
+   member = locals[:member]
+   if channel.taskbot_msg_to_slack_id.nil?
+     taskbot_msg_to_name = ''
+   elsif channel.taskbot_msg_to_slack_id.starts_with?('*failed')
+     taskbot_msg_to_name = channel.taskbot_msg_to_slack_id
+   else
+     msg_to_member = Member.find_from(source: :slack,
+                               slack_user_id: channel.taskbot_msg_to_slack_id,
+                               slack_team_id: channel.slack_team_id)
+     taskbot_msg_to_name = '*member?*' if msg_to_member.nil?
+     taskbot_msg_to_name = msg_to_member.slack_user_name unless msg_to_member.nil?
+   end
 %>
 
 <tr>
-  <td><%= "#{channel.slack_channel_name} - #{channel.members_hash[ channel.slack_user_id ]['slack_user_name']}" %></td>
+  <td><%= "#{channel.slack_channel_name} - #{member.slack_user_name}" %></td>
   <td><%= channel.slack_channel_id %></td>
   <td><%= channel.created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %></td>
   <td><%= channel.last_activity_type %><br><%= channel.last_activity_date.nil? ? '' : "@#{channel.last_activity_date.in_time_zone('Pacific Time (US & Canada)').strftime('%a %B %e, %Y %l:%M%P - PT')}" %></td>
-  <td><%= channel.taskbot_msg_to_slack_id.nil? ? '' : channel.members_hash[channel.taskbot_msg_to_slack_id]['slack_user_name'] %>
+  <td><%= taskbot_msg_to_name %>
     <br><%= channel.taskbot_msg_date.nil? ? '' : channel.taskbot_msg_date.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>
   <td><%= locals[:items].length %></td>
 </tr>

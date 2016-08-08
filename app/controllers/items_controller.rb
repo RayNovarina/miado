@@ -9,7 +9,7 @@ class ItemsController < ApplicationController
   #
   def index
     @view.items = ListItem.all
-    @view.teams = Channel.teams
+    @view.teams = Installation.teams
     @view.channels = Channel.all
     @view.locals = { items: @view.items,
                      teams: @view.teams,

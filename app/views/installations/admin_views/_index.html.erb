@@ -17,11 +17,11 @@
         </tr>
       </thead>
       <tbody>
-        <% locals[:installations].each do |channel| %>
+        <% locals[:installations].each do |installation| %>
           <%= render partial: 'installations/admin_views/index_installation',
-                     locals: { locals: { install_channel: channel,
-                                         auth_info: channel.auth_json['info'],
-                                         last_activity: Channel.last_activity(slack_team_id: channel.slack_team_id)
+                     locals: { locals: { installation: installation,
+                                         auth_info: installation.auth_json['info'],
+                                         last_activity: Channel.last_activity(slack_team_id: installation.slack_team_id)
                                        }
                              }
           %>

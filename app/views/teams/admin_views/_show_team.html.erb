@@ -1,7 +1,7 @@
 <h3><u><%= link_to locals[:auth_info]['team'],
                 team_path(locals[:team]),
                 title: "Created on #{locals[:team].created_at.strftime('%c')}" %></u>
-<%= " - #{locals[:installations].length} members have installed MiaDo." %></h3>
+<%= " - #{locals[:installations].length} #{locals[:installations].length == 1 ? 'member has' : 'members have'} installed MiaDo." %></h3>
 <table class="table table-bordered table-hover">
   <thead>
     <tr>

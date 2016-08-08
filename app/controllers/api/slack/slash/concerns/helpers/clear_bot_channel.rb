@@ -3,6 +3,7 @@ def clear_channel_msgs(options)
   api_options = {
     api_client: options[:api_client],
     bot_api_token: options[:bot_api_token],
+    bot_msgs: options[:bot_msgs],
     type: :direct,
     channel: options[:channel_id],
     latest: options[:time_range][:end_ts],
@@ -13,8 +14,10 @@ def clear_channel_msgs(options)
     exclude_pinned_msgs: false }
   has_more = true
   while has_more
-    api_resp = messages_via_im_history(api_options) unless options[:message_source] == :rtm_data
+    api_resp = messages_via_im_history(api_options) if options[:message_source] == :im_history
     api_resp = messages_via_rtm_start(api_options) if options[:message_source] == :rtm_data
+    api_resp = messages_via_taskbot_channel(api_options) if options[:message_source] == :taskbot_channel
+    api_resp = messages_via_member_record(api_options) if options[:message_source] == :member_record
     return { resp: 'Error occurred on Slack\'s API:client.im.history' } unless api_resp.key?('ok')
     return { resp: 'ok' } if (api_options[:messages] = api_resp['messages']).length == 0
     has_more = api_resp.key?('has_more') ? api_resp['has_more'] : false
@@ -38,6 +41,7 @@ def delete_messages(options)
     next if options[:exclude_bot_msgs] && m.key?('subtype') && m['subtype'] == 'bot_message'
     next if options[:exclude_pinned_msgs] && m.key?('subtype') && m['subtype'] == 'pinned_item'
     api_resp = delete_message_on_channel(options)
+    m['deleted'] = true if api_resp.key?('ok')
     next if api_resp.key?('ok')
     # If we can't delete a msg, abandon delete loop, else we just keep trying.
     return { resp: "Error occurred on Slack\'s API:client.chat_delete: #{api_resp}" }
@@ -100,5 +104,21 @@ def messages_via_rtm_start(options)
   { 'ok' => true,
     'has_more' => false,
     'messages' => messages
+  }
+end
+
+# Returns: { resp: 'ok' or err_msg, messages: [] }
+def messages_via_taskbot_channel(options)
+  { 'ok' => true,
+    'has_more' => false,
+    'messages' => options[:taskbot_channel].slack_messages
+  }
+end
+
+# Returns: { resp: 'ok' or err_msg, messages: [] }
+def messages_via_member_record(options)
+  { 'ok' => true,
+    'has_more' => false,
+    'messages' => options[:bot_msgs] || []
   }
 end

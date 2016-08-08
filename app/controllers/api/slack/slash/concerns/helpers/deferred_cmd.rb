@@ -41,6 +41,9 @@ end
 def send_after_action_deferred_cmds(cmds)
   cmds.each do |d_hash|
     parsed = d_hash[:p_hash]
+    #----------------------
+    parsed[:am_hash_source] = :member_record
+    #----------------------
     list_cmds = generate_list_commands(parsed, d_hash)
     chat_msgs = generate_task_list_msgs(parsed, list_cmds)
     chat_msgs.each do |msg|
@@ -48,10 +51,13 @@ def send_after_action_deferred_cmds(cmds)
         api_client: msg[:api_client],
         taskbot_username: msg[:taskbot_username],
         taskbot_channel_id: msg[:taskbot_channel_id],
+        taskbot_api_token: msg[:taskbot_api_token],
         taskbot_msg_id: msg[:taskbot_msg_id],
+        taskbot_msgs: msg[:taskbot_msgs],
         member_name: msg[:member_name],
         member_id: msg[:member_id],
         member_ccb: parsed[:ccb],
+        member_mcb: parsed[:mcb],
         text: msg[:text],
         attachments: msg[:attachments],
         p_hash: d_hash[:p_hash]
@@ -90,10 +96,11 @@ def generate_list_commands(parsed, deferred_cmd)
         member_name: i_item[:name],
         member_id: i_item[:id],
         slack_user_api_token: i_item[:slack_user_api_token],
-        bot_api_token: i_item[:bot_api_token],
+        taskbot_api_token: i_item[:taskbot_api_token],
         taskbot_channel_id: i_item[:taskbot_channel_id],
         taskbot_user_id: i_item[:taskbot_user_id],
         taskbot_msg_id: i_item[:taskbot_msg_id],
+        taskbot_msgs: i_item[:taskbot_msgs],
         taskbot_username: 'MiaDo Taskbot'
       }
     # ,
@@ -145,15 +152,16 @@ end
 #   {} means we did not look OR commented out the method call.
 #   ListItem record means we have an updated task to process
 #     that may require the taskbot list to be updated.
+
 def determine_impacted_members(parsed, deferred_cmd)
   func = parsed[:func]
   # redo is such a special case, it is easier to handle it specially.
   return build_redo_impacted_members(parsed) if func == :redo
   impacted_task = deferred_cmd[:impacted_task] unless deferred_cmd[:impacted_task] == {}
   impacted_task = taskbot_list_item(parsed) if deferred_cmd[:impacted_task] == {}
-  am_hash = parsed[:ccb].members_hash[parsed[:assigned_member_id]] if impacted_task.nil?
-  am_hash = parsed[:ccb].members_hash[impacted_task[:assigned_member_id]] unless impacted_task.nil?
-  # taskbot_channel_id will be nil if MiaDo not installed by this member.
+  am_hash = am_hash_from_assigned_member_id(parsed, parsed[:assigned_member_id]) if impacted_task.nil?
+  am_hash = am_hash_from_assigned_member_id(parsed, impacted_task[:assigned_member_id]) unless impacted_task.nil?
+  # nil if MiaDo not installed by this member.
   return [] if am_hash.nil? || am_hash['bot_dm_channel_id'].nil?
   case func
   when :add, :assign, :unassign
@@ -192,6 +200,35 @@ def taskbot_list_item(parsed)
   nil
 end
 
+def am_hash_from_assigned_member_id(parsed, assigned_member_id)
+  return am_hash_from_member_record(parsed, assigned_member_id) if parsed[:am_hash_source] == :member_record
+  parsed[:ccb].members_hash[assigned_member_id]
+end
+
+# 'bot_dm_channel_id']
+# 'slack_user_name'],
+# 'slack_user_id']
+# 'slack_user_api_token']
+# 'bot_api_token']
+# 'bot_dm_channel_id']
+# 'bot_user_id']
+# 'bot_msg_id']
+def am_hash_from_member_record(parsed, assigned_member_id)
+  parsed[:mcb] = Member.find_from(
+    source: :slack,
+    slack_team_id: parsed[:url_params]['team_id'],
+    slack_user_id: assigned_member_id)
+
+  { 'bot_dm_channel_id' => parsed[:mcb].bot_dm_channel_id,
+    'slack_user_name' => parsed[:mcb].slack_user_name,
+    'slack_user_id' => parsed[:mcb].slack_user_id,
+    'slack_user_api_token' => parsed[:mcb].slack_user_api_token,
+    'bot_api_token' => parsed[:mcb].bot_api_token,
+    'bot_user_id' => parsed[:mcb].bot_user_id,
+    'bot_msgs' => parsed[:mcb].bot_msgs_json
+  }
+end
+
 # Inputs: am_hash, OPTIONAL: parsed
 def build_one_impacted_member(options)
   impacted_member =
@@ -202,17 +239,18 @@ def build_one_impacted_member(options)
       id: options[:am_hash]['slack_user_id'] } unless options.key?(:parsed)
 
   impacted_member[:slack_user_api_token] = options[:am_hash]['slack_user_api_token']
-  impacted_member[:bot_api_token] = options[:am_hash]['bot_api_token']
+  impacted_member[:taskbot_api_token] = options[:am_hash]['bot_api_token']
   impacted_member[:taskbot_channel_id] = options[:am_hash]['bot_dm_channel_id']
   impacted_member[:taskbot_user_id] = options[:am_hash]['bot_user_id']
   impacted_member[:taskbot_msg_id] = options[:am_hash]['bot_msg_id']
+  impacted_member[:taskbot_msgs] = options[:am_hash]['bot_msgs']
   [impacted_member[:id], impacted_member]
 end
 
 def build_many_impacted_members(parsed)
   impacted_members = []
   parsed[:list_action_item_info].each do |task_info|
-    am_hash = parsed[:ccb].members_hash[task_info[:assigned_member_id]]
+    am_hash = am_hash_from_assigned_member_id(parsed, task_info[:assigned_member_id])
     next if impacted_members.include?(am_hash['slack_user_id'])
     impacted_member_id, impacted_member = build_one_impacted_member(am_hash: am_hash)
     impacted_members << impacted_member_id
@@ -237,7 +275,7 @@ end
 def build_redo_both_tasks(parsed)
   deleted_task_member = build_many_impacted_members(parsed)
   # Now the add task. Don't generate dup msgs.
-  added_task_hash = parsed[:ccb].members_hash[parsed[:assigned_member_id]]
+  added_task_hash = am_hash_from_assigned_member_id(parsed, parsed[:assigned_member_id])
   return deleted_task_member if deleted_task_member.include?(added_task_hash['slack_user_id'])
   # Add task member is different from deleted task member. Both are impacted.
   added_task_member_id, added_task_member = build_one_impacted_member(parsed: parsed, am_hash: added_task_hash)
@@ -252,7 +290,7 @@ def build_redo_only_deleted_task(parsed)
 end
 
 def build_redo_only_added_task(parsed)
-  added_task_hash = parsed[:ccb].members_hash[parsed[:assigned_member_id]]
+  added_task_hash = am_hash_from_assigned_member_id(parsed, parsed[:assigned_member_id])
   build_one_impacted_member(parsed: parsed, am_hash: added_task_hash)
 end
 
@@ -270,14 +308,8 @@ end
   user_name	ray
 =end
 def generate_task_list_msgs(parsed, list_cmds)
-  # url_params = {}.merge(parsed[:url_params])
-  # previous_action_parse_hash = nil # parsed[:ccb].after_action_parse_hash
   chat_msgs = []
   list_cmds.each do |cmd_hash|
-    # url_params[:text] = cmd_hash[:cmd]
-    # parsed_list_cmd = parse_slash_cmd(url_params, parsed[:ccb], previous_action_parse_hash)
-    # return [err_resp(url_params, "`MiaDo ERROR: #{parsed_list_cmd[:err_msg]}`", nil), p_hash] unless parsed_list_cmd[:err_msg].empty
-    # text, attachments = process_cmd(parsed_list_cmd)
     text, attachments =
       pub_command(parsed, type: cmd_hash[:type],
                           member_name: cmd_hash[:member_name],
@@ -288,6 +320,7 @@ def generate_task_list_msgs(parsed, list_cmds)
                    taskbot_channel_id: cmd_hash[:taskbot_channel_id],
                    taskbot_user_id: cmd_hash[:taskbot_user_id],
                    taskbot_msg_id: cmd_hash[:taskbot_msg_id],
+                   taskbot_msgs: cmd_hash[:taskbot_msgs],
                    member_name: cmd_hash[:member_name],
                    member_id: cmd_hash[:member_id],
                    api_client: make_web_client(cmd_hash[:slack_user_api_token])
@@ -305,16 +338,25 @@ def update_taskbot_channel(options)
 
   # Flow 2: Deletes all msgs in bot dm channel.
   #         requires chat:write:bot scope.
-  update_via_rtm_data(options)
+  # update_via_rtm_data(options)
 
-  # Flow 3: No msg delete, Update the single bot dm msg in place.
+  # Flow 3: Deletes all msgs in bot dm channel.
+  #         requires chat:write:bot scope.
+  update_via_member_record(options)
+
+  # Flow 4: Deletes all msgs in bot dm channel.
+  #         requires chat:write:bot scope.
+  # update_via_taskbot_channel(options)
+
+  # Flow 5: No msg delete, Update the single bot dm msg in place.
   #         requires chat:write:bot scope.
   # update_via_update_msg(options)
 
-  # Flow 4: misc experiments.
+  # Flow 6: misc experiments.
   # update_experiments(options)
 end
 
+=begin
 # Flow 1: Deletes all msgs in bot dm channel.
 #         requires im_history, chat:write:bot scopes.
 def update_via_im_history(options)
@@ -336,7 +378,27 @@ def update_via_rtm_data(options)
   api_resp
 end
 
-# Flow 3: No msg delete, Update the single bot dm msg in place.
+# Flow 4: Deletes all msgs in bot dm channel.
+#         requires chat:write:bot scope.
+def update_via_taskbot_channel(options)
+  options[:message_source] = :taskbot_channel
+  options[:bot_api_token] = options[:p_hash][:ccb].bot_api_token
+  options[:taskbot_channel] =
+    Channel.find_or_create_taskbot_channel(slack_team_id: options[:slack_team_id],
+                                           slack_user_id: options[:slack_user_id])
+  # am_hash['bot_dm_channel_id'] = taskbot_channel_ccb.slack_channel_id
+  # am_hash['slack_user_api_token'] = taskbot_channel_ccb.slack_user_api_token
+  # am_hash['bot_api_token'] = taskbot_channel_ccb.bot_api_token
+  # am_hash['bot_user_id'] = taskbot_channel_ccb.bot_user_id
+  # am_hash['bot_messages'] = taskbot_channel_ccb.bot_messages
+  clear_taskbot_msg_channel(options)
+  api_resp = send_taskbot_msg(options)
+  update_ccb_channel(api_resp, options)
+  update_taskbot_channel(api_resp, options)
+  api_resp
+end
+
+# Flow 5: No msg delete, Update the single bot dm msg in place.
 #         requires chat:write:bot scope.
 def update_via_update_msg(options)
   api_resp = send_taskbot_msg(options) if options[:taskbot_msg_id].nil?
@@ -351,7 +413,7 @@ def update_via_update_msg(options)
   api_resp
 end
 
-# Flow 4: misc experiments.
+# Flow 6: misc experiments.
 def update_experiments(options)
   # delete_taskbot_msg(options) unless options[:taskbot_msg_id].nil?
   # blank_taskbot_msg(options) unless options[:taskbot_msg_id].nil?
@@ -361,6 +423,19 @@ def update_experiments(options)
   # update_ccb_channel(api_resp, options)
   # api_resp
 end
+=end
+
+# Flow 3: Deletes all msgs in bot dm channel.
+#         requires chat:write:bot scope.
+def update_via_member_record(options)
+  options[:message_source] = :member_record
+  clear_taskbot_msg_channel(options)
+  api_resp = send_taskbot_msg(options)
+  remember_taskbot_msg_id(api_resp, options)
+  update_ccb_channel(api_resp, options)
+  update_member_record(api_resp, options)
+  api_resp
+end
 
 # Returns: text status msg. 'ok' or err msg.
 def clear_taskbot_msg_channel(options)
@@ -368,7 +443,8 @@ def clear_taskbot_msg_channel(options)
     clear_channel_msgs(message_source: options[:message_source],
                        type: :direct,
                        api_client: options[:api_client],
-                       bot_api_token: options[:bot_api_token],
+                       bot_api_token: options[:taskbot_api_token],
+                       bot_msgs: options[:taskbot_msgs],
                        channel_id: options[:taskbot_channel_id],
                        time_range: { start_ts: 0, end_ts: 0 },
                        exclude_bot_msgs: false)
@@ -411,6 +487,7 @@ rescue Slack::Web::Api::Error => e # (not_authed)
 end
 
 def update_ccb_channel(api_resp, options)
+  return if options[:p_hash][:ccb].nil?
   options[:p_hash][:ccb].taskbot_msg_to_slack_id = options[:member_id] if api_resp['ok'] == true
   options[:p_hash][:ccb].taskbot_msg_to_slack_id = "*failed*: #{api_resp['error']}" unless api_resp['ok'] == true
   options[:p_hash][:ccb].taskbot_msg_date = DateTime.current
@@ -419,6 +496,40 @@ end
 
 def remember_taskbot_msg_id(api_resp, options)
   return unless api_resp['ok'] == true
+  return remember_msgs_via_member_record(api_resp, options) if options[:message_source] == :member_record
+  # remember_msg_via_ccb(api_resp, options)
+end
+
+# {
+#                "text": "`Current tasks list for @suemanley1 in all Team channels (Open)`",
+#                "username": "MiaDo Taskbot",
+#                "bot_id": "B18E3GGJF",
+#                "type": "message",
+#                "subtype": "bot_message",
+#                "ts": "1468010494.521738"
+# }
+def remember_msgs_via_member_record(api_resp, options)
+  message = { 'text' => api_resp['message']['text'],
+              'username' => api_resp['message']['username'],
+              'bot_id' => api_resp['message']['bot_id'],
+              'type' => api_resp['message']['type'],
+              'subtype' => api_resp['message']['subtype'],
+              'ts' => api_resp['message']['ts']
+            }
+  options[:taskbot_msgs] = [message] if options[:p_hash][:mcb].bot_msgs_json.nil?
+  options[:taskbot_msgs] = options[:p_hash][:mcb].bot_msgs_json << message unless options[:p_hash][:mcb].bot_msgs_json.nil?
+end
+
+def update_member_record(_api_resp, options)
+  options[:taskbot_msgs].delete_if { |m| m['deleted'] == true }
+  options[:p_hash][:mcb].update(
+    bot_msgs_json: options[:taskbot_msgs],
+    last_activity_type: 'update_taskbot_msgs',
+    last_activity_date: DateTime.current)
+end
+
+=begin
+def remember_msg_via_ccb(api_resp, options)
   members_hash = options[:member_ccb].members_hash
   am_hash = members_hash[options[:member_id]]
   am_hash['bot_msg_id'] = api_resp['ts']
@@ -503,3 +614,4 @@ def update_one_team_members_hash(options)
                 slack_user_id: options[:slack_user_id])
          .update_all(members_hash: options[:members_hash])
 end
+=end

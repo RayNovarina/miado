@@ -23,6 +23,7 @@ def make_parse_hash
     done_option: false,
     err_msg: '',
     ccb: nil,
+    mcb: nil,
     previous_action_list_context: {},
     # For current action
     list_scope: nil,
@@ -55,27 +56,21 @@ def make_parse_hash
 end
 
 def context_from_ccb_hash(_p_hash, previous_action_parse_hash)
-  # Deserialize ccb.previous_action fields of interest.
   return {} if previous_action_parse_hash.nil?
-  context_s = previous_action_parse_hash['after_action_list_context']
-  # First hash item is list[ids]. Pluck it out first because we don't handle
-  # embedded array properly.
-  ids_array = value_array(context_s.slice(context_s.index('=>') + 2, context_s.index(']') - context_s.index('=>') - 1))
-  # Skip the first hash item of '[....],'
-  context_s_splits = context_s.slice(context_s.index(']') + 3, context_s.length - context_s.index(']') - 4).split(', :')
-  { list: ids_array,
-    list_scope: hash_value(context_s_splits[0]),
-    channel_scope: hash_value(context_s_splits[1]),
-    list_owner: hash_value(context_s_splits[2]),
-    list_owner_name: hash_value(context_s_splits[3]),
-    mentioned_member_id: hash_value(context_s_splits[4]),
-    mentioned_member_name: hash_value(context_s_splits[5]),
-    all_option: hash_value(context_s_splits[6]),
-    func: hash_value(context_s_splits[7]),
-    original_command: hash_value(context_s_splits[8]),
-    open_option: hash_value(context_s_splits[9]),
-    done_option: hash_value(context_s_splits[10]),
-    due_option: hash_value(context_s_splits[11])
+  context = previous_action_parse_hash['after_action_list_context']
+  { list: context['list'],
+    list_scope: context['list_scope'].to_sym,
+    channel_scope: context['channel_scope'].to_sym,
+    list_owner: context['list_owner'].to_sym,
+    list_owner_name: context['list_owner_name'],
+    mentioned_member_id: context['mentioned_member_id'],
+    mentioned_member_name: context['mentioned_member_name'],
+    all_option: context['all_option'],
+    func: context['func'].to_sym,
+    original_command: context['original_command'],
+    open_option: context['open_option'],
+    done_option: context['done_option'],
+    due_option: context['due_option']
   }
 end
 
@@ -98,6 +93,7 @@ def save_after_action_list_context(parsed, context, list_ids = nil)
   # Trim what we store to db, store, restore it.
   parsed[:url_params] = {}
   parsed[:ccb] = nil
+  parsed[:mcb] = nil
   @view.channel.after_action_parse_hash = parsed
   @view.channel.last_activity_type = "slash_command - #{parsed[:func]}"
   @view.channel.last_activity_date = DateTime.current

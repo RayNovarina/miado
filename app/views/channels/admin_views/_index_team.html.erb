@@ -20,7 +20,10 @@
                                        items: ListItem.items(slack_team_id: channel.slack_team_id,
                                                              slack_channel_id: channel.slack_channel_id),
                                        last_item: ListItem.last_active(slack_team_id: channel.slack_team_id,
-                                                                       slack_channel_id: channel.slack_channel_id)
+                                                                       slack_channel_id: channel.slack_channel_id),
+                                       member: Member.find_from(source: :slack,
+                                                                slack_user_id: channel.slack_user_id,
+                                                                slack_team_id: channel.slack_team_id)
                                      }
                            }
         %>
@@ -44,7 +47,10 @@
                                        items: ListItem.items(slack_team_id: channel.slack_team_id,
                                                              slack_channel_id: channel.slack_channel_id),
                                        last_item: ListItem.last_active(slack_team_id: channel.slack_team_id,
-                                                                       slack_channel_id: channel.slack_channel_id)
+                                                                       slack_channel_id: channel.slack_channel_id),
+                                       member: Member.find_from(source: :slack,
+                                                                slack_user_id: channel.slack_user_id,
+                                                                slack_team_id: channel.slack_team_id)
                                      }
                            }
         %>
