@@ -63,7 +63,7 @@ def one_channel_display(parsed, context, list_of_records)
   list_ids = []
   attachments = []
   list_of_records.each_with_index do |item, index|
-    list_add_item_to_display_list(parsed, attachments, 0, item, index)
+    list_add_item_to_display_list(parsed, attachments, 0, item, index + 1)
     list_ids << item.id
   end
   channel_display_footer(parsed, context, list_of_records, text, attachments)
@@ -97,14 +97,13 @@ def format_owner_title(context)
 end
 
 # Returns: updated attachments array.
-def list_add_item_to_display_list(parsed, attachments, attch_idx, item, index)
+def list_add_item_to_display_list(parsed, attachments, attch_idx, item, tasknum)
   attachments << { text: '', mrkdwn_in: ['text'] } if attachments.empty?
-  attachments[attch_idx][:text].concat(list_add_attachment_text(parsed, item, index))
+  attachments[attch_idx][:text].concat(list_add_attachment_text(parsed, item, tasknum))
 end
 
-def list_add_attachment_text(parsed, item, index)
-  "\n" \
-  "#{index + 1}) #{item.description}" \
+def list_add_attachment_text(parsed, item, tasknum)
+  "\n#{tasknum}) #{item.description}" \
   "#{list_cmd_assigned_to_clause(parsed, item)}" \
   "#{list_cmd_due_date_clause(item)}" \
   "#{list_cmd_task_completed_clause(item)}"
@@ -139,7 +138,7 @@ def all_channels_display(parsed, context, list_of_records)
         mrkdwn_in: ['text']
       }
     end
-    list_add_item_to_display_list(parsed, attachments, attachments.size - 1, item, index)
+    list_add_item_to_display_list(parsed, attachments, attachments.size - 1, item, index + 1)
     list_ids << item.id
   end
   channel_display_footer(parsed, context, list_of_records, text, attachments)
