@@ -29,7 +29,7 @@ SLASH_CMD_HLP_TEXT =
   " Lists all TEAM tasks that are OPEN for THIS channel.\n" \
   '• `/do list team all`' \
   " Lists all TEAM tasks that are OPEN for ALL channels.\n" \
-  ':bulb: Click on the <https://shadowhtracteam.slack.com/messages/@a.taskbot|a.taskbot> member to see all of your up to date ' \
+  ':bulb: Click on the <https://slack.com/messages/@a.taskbot|a.taskbot> member to see all of your up to date ' \
   'lists.' \
   "\n".freeze
 
