@@ -80,6 +80,7 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   #   slack_user_id.slack_team_id.slack_channel_id.  A new channel/ccb is
   #   created.
   def channel_control_block_from_slack
+    update_url_params_from_interactive_msg if params.has_key?('payload')
     if (@view.channel = Channel.find_or_create_from(source: :slack, view: @view, slash_url_params: params)).nil?
       return [nil,
               "`MiaDo server ERROR: team #{params[:team_domain]}" \
@@ -89,6 +90,20 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
               'at www.miado.net/add_to_slack`']
     end
     [@view.channel, '']
+  end
+
+  # Returns: url_params{}
+  # //HACK
+  def update_url_params_from_interactive_msg
+    payload = JSON.parse(params[:payload])
+    params[:channel_id] = payload['channel']['id']
+    params[:channel_name] = payload['channel']['name']
+    params[:response_url] = payload['response_url']
+    params[:team_domain] = payload['team']['domain']
+    params[:team_id] = payload['team']['id']
+    params[:token] = payload['token']
+    params[:user_id] = payload['user']['id']
+    params[:user_name] = payload['user']['name']
   end
 
   # Returns: [text, attachments]

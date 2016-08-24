@@ -5,6 +5,7 @@ def pub_command(parsed, options = nil)
   parsed[:display_after_action_list] = true
   unless options.nil?
     if options[:type] == 'all open due_first'
+      # //HACK
       # parsed[:debug] = true
       parsed[:list_query_trace_info] = ''
       parsed[:func] = :pub
@@ -24,9 +25,9 @@ def pub_command(parsed, options = nil)
       parsed[:url_params][:text] = "list @#{parsed[:mentioned_member_name]} all due_first"
     end
   end
-  text, attachments = list_command(parsed)
+  text, attachments, after_action_list_context = list_command(parsed)
   # Prevent the CommandsController from generating the list again.
   parsed[:display_after_action_list] = false
   text = debug_headers(parsed).concat(format_pub_header(parsed, text))
-  [text, attachments]
+  [text, attachments, after_action_list_context]
 end

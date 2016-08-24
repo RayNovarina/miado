@@ -5,6 +5,8 @@
 def after_action_list_command(parsed)
   # Fixup previous action list hash to look like a parsed hash.
   context = parsed[:previous_action_list_context]
+  context[:button_callback_id] = parsed[:button_callback_id]
+  context[:button_actions] = parsed[:button_actions]
   context[:err_msg] = ''
   context[:url_params] = parsed[:url_params]
   redisplay_action_list(context)

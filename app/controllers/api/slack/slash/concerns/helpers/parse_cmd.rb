@@ -89,7 +89,7 @@ def scan4_command_func(p_hash)
 end
 
 def scan4_taskbot_cmd_func(p_hash)
-  scan4_command_func(p_hash)
+  return scan4_command_func(p_hash) unless p_hash[:button_callback_id].nil?
   p_hash[:err_msg] =
     # "Error: only the '#{params[:command]} /done' command is " \
     # 'allowed in the Taskbot channel.' unless p_hash[:func] == :done

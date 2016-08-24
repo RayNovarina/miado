@@ -32,6 +32,8 @@ SLASH_CMD_HLP_TEXT =
   ':bulb: Click on the <https://shadowhtracteam.slack.com/messages/@a.taskbot|a.taskbot> member to see all of your up to date ' \
   'lists.' \
   "\n".freeze
+# ':bulb: Click on the <https://slack.com/messages/@a.taskbot|a.taskbot> member to see all of your up to date ' \
+# 'lists.' \
 
 # Returns: [text, attachments]
 def help_command(_parsed)

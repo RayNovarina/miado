@@ -53,21 +53,41 @@ def format_display_list(parsed, context, list_of_records)
   # Persist the channel.list_ids[] for the next transaction.
   save_after_action_list_context(parsed, context, list_ids) unless parsed[:display_after_action_list]
   text.concat(parsed[:err_msg]) unless parsed[:err_msg].empty?
-  [text, attachments]
+  # //HACK - if pub command, pass back list context for taskbot msgs.
+  return [text, attachments] unless parsed[:due_first_option]
+  [text, attachments, after_action_list_context(context, list_ids)] if parsed[:due_first_option]
 end
 
 # Returns: [text, attachments]
 def one_channel_display(parsed, context, list_of_records)
-  # "<##{parsed[:url_params]['channel_id']}|#{parsed[:url_params]['channel_name']}> "
-  text = channel_display_header(parsed, context, list_of_records, '')
+  text, attachments = button_action_one_chan_header(
+    parsed, context, list_of_records) unless parsed[:button_callback_id].nil?
+  text, attachments = default_one_chan_header(
+    parsed, context, list_of_records) if parsed[:button_callback_id].nil?
   list_ids = []
-  attachments = []
   list_of_records.each_with_index do |item, index|
-    list_add_item_to_display_list(parsed, attachments, item, index)
+    list_add_item_to_display_list(parsed, attachments, attachments.length - 1, item, index + 1)
     list_ids << item.id
   end
   channel_display_footer(parsed, context, list_of_records, text, attachments)
   [text, attachments, list_ids]
+end
+
+# Returns [text, attachments]
+def default_one_chan_header(parsed, context, list_of_records)
+  # "<##{parsed[:url_params]['channel_id']}|#{parsed[:url_params]['channel_name']}> "
+  [channel_display_header(parsed, context, list_of_records, ''), []]
+end
+
+# Returns [text, attachments]
+def button_action_one_chan_header(parsed, context, list_of_records)
+  ['', [{ text: "#{parsed[:response_headline]}\n\n" \
+                "#{channel_display_header(parsed, context, list_of_records, '')}",
+          color: '#3AA3E3',
+          mrkdwn_in: ['text']
+        }
+       ]
+  ]
 end
 
 def channel_display_header(_parsed, context, list_of_records, channel_name)
@@ -97,17 +117,18 @@ def format_owner_title(context)
 end
 
 # Returns: updated attachments array.
-def list_add_item_to_display_list(parsed, attachments, item, index)
-  # { text: '1) rev 1 spec @susan /jun15 | *Assigned* to @susan',
-  #  mrkdwn_in: ['text']
-  # }
-  attachments << {
-    text: "#{index + 1}) #{item.description}" \
-          "#{list_cmd_assigned_to_clause(parsed, item)}" \
-          "#{list_cmd_due_date_clause(item)}" \
-          "#{list_cmd_task_completed_clause(item)}",
-    mrkdwn_in: ['text']
-  }
+def list_add_item_to_display_list(parsed, attachments, attch_idx, item, tasknum)
+  return list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, tasknum) if parsed[:func] == :pub
+  attachments << { text: '', mrkdwn_in: ['text'] } if attachments.empty?
+  attachments[attch_idx][:text].concat(list_add_attachment_text(parsed, item, tasknum))
+end
+
+def list_add_attachment_text(parsed, item, tasknum)
+  s_num = tasknum.nil? ? '' : "#{tasknum})"
+  "\n#{s_num} #{item.description}" \
+  "#{list_cmd_assigned_to_clause(parsed, item)}" \
+  "#{list_cmd_due_date_clause(item)}" \
+  "#{list_cmd_task_completed_clause(item)}"
 end
 
 def list_cmd_assigned_to_clause(parsed, item)
@@ -139,11 +160,59 @@ def all_channels_display(parsed, context, list_of_records)
         mrkdwn_in: ['text']
       }
     end
-    list_add_item_to_display_list(parsed, attachments, item, index)
+    list_add_item_to_display_list(parsed, attachments, attachments.size - 1, item, index + 1)
     list_ids << item.id
   end
   channel_display_footer(parsed, context, list_of_records, text, attachments)
   [text, attachments, list_ids]
+end
+
+# all_channels_display(parsed, context, list_of_records)
+# last_add_item_to_taskbot_display_list(parsed, attachments, attachments.size - 1, item, index + 1)
+# def list_add_attachment_text(parsed, item, tasknum)
+#  "\n#{tasknum}) #{item.description}" \
+#  "#{list_cmd_assigned_to_clause(parsed, item)}" \
+#  "#{list_cmd_due_date_clause(item)}" \
+#  "#{list_cmd_task_completed_clause(item)}"
+# end
+=begin
+attachments = [
+  { response_type: 'ephemeral',
+    text: attachment_text,
+    fallback: 'Do not view list',
+    callback_id: 'add task',
+    color: '#3AA3E3',
+    attachment_type: 'default',
+    actions: [
+      { name: 'current',
+        text: 'View Current List',
+        type: 'button',
+        value: 'current'
+      }
+    ]
+  }
+]
+=end
+def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, tasknum)
+  # attachments << { text: '', mrkdwn_in: ['text'] } if attachments.empty?
+  # attachments[attch_idx][:text].concat(list_add_attachment_text(parsed, item, tasknum))
+  attachment_text = list_add_attachment_text(parsed, item, nil)
+  attachments <<
+    { response_type: 'ephemeral',
+      text: attachment_text,
+      fallback: 'not done',
+      callback_id: 'task is done',
+      color: 'default',
+      attachment_type: 'default',
+      actions: [
+        { name: 'done',
+          text: 'Done',
+          style: 'primary',
+          type: 'button',
+          value: tasknum
+        }
+      ]
+    }
 end
 
 def adjust_list_cmd_action_context(parsed)

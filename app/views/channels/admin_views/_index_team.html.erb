@@ -5,7 +5,7 @@
     <span style="font-size: 1.2em;"><%= "Shared Channels(#{locals[:shared_channels].length})" %></span>
     <thead>
       <tr>
-        <th>Name - Creator</th>
+        <th>Name - Creator<br>(db recId)</th>
         <th>Slack Chan Id</th>
         <th>Created Date</th>
         <th>Last Task Activity type<br>@Date(now)<br>(<%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>)</th>
@@ -35,7 +35,7 @@
     <span style="font-size: 1.2em;">Last Activity</span>
     <thead>
       <tr>
-        <th>Name - Creator</th>
+        <th>Name - Creator<br>(db recId)</th>
         <th>Task Activity type<br>@Date(now)<br>(<%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>)</th>
         <th>Description</th>
       </tr>
