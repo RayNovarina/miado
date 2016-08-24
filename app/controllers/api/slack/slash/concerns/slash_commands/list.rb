@@ -53,7 +53,9 @@ def format_display_list(parsed, context, list_of_records)
   # Persist the channel.list_ids[] for the next transaction.
   save_after_action_list_context(parsed, context, list_ids) unless parsed[:display_after_action_list]
   text.concat(parsed[:err_msg]) unless parsed[:err_msg].empty?
-  [text, attachments]
+  # //HACK - if pub command, pass back list context for taskbot msgs.
+  return [text, attachments] unless parsed[:due_first_option]
+  [text, attachments, after_action_list_context(context, list_ids)] if parsed[:due_first_option]
 end
 
 # Returns: [text, attachments]

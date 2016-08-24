@@ -61,6 +61,7 @@ def send_after_action_deferred_cmds(cmds)
         member_mcb: parsed[:mcb],
         text: msg[:text],
         attachments: msg[:attachments],
+        after_action_list_context: msg[:after_action_list_context],
         p_hash: d_hash[:p_hash]
       )
     end
@@ -311,7 +312,7 @@ end
 def generate_task_list_msgs(parsed, list_cmds)
   chat_msgs = []
   list_cmds.each do |cmd_hash|
-    text, attachments =
+    text, attachments, after_action_list_context =
       pub_command(parsed, type: cmd_hash[:type],
                           member_name: cmd_hash[:member_name],
                           member_id: cmd_hash[:member_id])
@@ -324,6 +325,7 @@ def generate_task_list_msgs(parsed, list_cmds)
                    taskbot_msgs: cmd_hash[:taskbot_msgs],
                    member_name: cmd_hash[:member_name],
                    member_id: cmd_hash[:member_id],
+                   after_action_list_context: after_action_list_context,
                    api_client: make_web_client(cmd_hash[:slack_user_api_token])
                    # api_client: make_web_client(cmd_hash[:bot_api_token])
                  }
@@ -456,7 +458,7 @@ def update_taskbot_ccb_channel(api_resp, options)
   end
   # Persist the channel.list_ids[] for the next transaction.
   channel.after_action_parse_hash = {
-    'after_action_list_context' => options[:p_hash][:after_action_list_context] }
+    'after_action_list_context' => options[:after_action_list_context] }
   channel.last_activity_type = 'msg_update'
   channel.last_activity_date = DateTime.current
   channel.save
