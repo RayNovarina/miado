@@ -123,8 +123,6 @@ module InstallationExtensions
     end
 
     def create_from_omniauth_callback(options)
-      require 'pry'
-      binding.pry
       auth = options[:request].env['omniauth.auth']
       installation = Installation.new(
         slack_user_id: auth.uid,

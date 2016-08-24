@@ -85,8 +85,6 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       p_hash[:func] = :add
       p_hash[:assigned_member_id] = @view.installation.slack_user_id
       p_hash[:assigned_member_name] = @view.installation.auth_json['info']['user']
-      # p_hash[:ccb] = install_channel
-      # p_hash[:ccb].members_hash = install_channel.members_hash
       p_hash[:url_params] = params
       p_hash[:url_params][:team_id] = @view.installation.slack_team_id
       def_cmds = generate_after_action_cmds(parsed_hash: p_hash)

@@ -17,7 +17,7 @@
 %>
 
 <tr>
-  <td><%= "#{channel.slack_channel_name} - #{locals[:member].slack_user_name}" %></td>
+  <td><%= "#{channel.slack_channel_name} - #{locals[:member].slack_user_name}" %><br>(<%= channel.id %>)</td>
   <td><%= channel.last_activity_type %>
     <br>@<%= channel.last_activity_date.nil? ? 'none' : channel.last_activity_date.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %></td>
   <td><%= description %></td>

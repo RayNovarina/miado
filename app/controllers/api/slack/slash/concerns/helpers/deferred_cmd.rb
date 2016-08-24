@@ -10,7 +10,7 @@ def new_member_deferred_logic(options)
   end
 end
 
-CMD_FUNCS_IGNORED_BY_AFTER_ACTION_DEFERRED = [:help, :list, :pub].freeze
+CMD_FUNCS_IGNORED_BY_AFTER_ACTION_DEFERRED = [:help, :list, :pub, :last_action_list].freeze
 #
 # if a member's taskbot lists could be changed, then we need to update em.
 def generate_after_action_cmds(options)
@@ -51,6 +51,7 @@ def send_after_action_deferred_cmds(cmds)
         api_client: msg[:api_client],
         taskbot_username: msg[:taskbot_username],
         taskbot_channel_id: msg[:taskbot_channel_id],
+        taskbot_user_id: msg[:taskbot_user_id],
         taskbot_api_token: msg[:taskbot_api_token],
         taskbot_msg_id: msg[:taskbot_msg_id],
         taskbot_msgs: msg[:taskbot_msgs],
@@ -432,9 +433,33 @@ def update_via_member_record(options)
   clear_taskbot_msg_channel(options)
   api_resp = send_taskbot_msg(options)
   remember_taskbot_msg_id(api_resp, options)
+  update_taskbot_ccb_channel(api_resp, options)
   update_ccb_channel(api_resp, options)
   update_member_record(api_resp, options)
   api_resp
+end
+
+def update_taskbot_ccb_channel(api_resp, options)
+  if (channel = Channel.find_from(source: :slack, slash_url_params: {
+        'channel_id' => options[:taskbot_channel_id],
+        'user_id' => options[:member_id],
+        'team_id' => options[:member_mcb].slack_team_id }
+    ).first).nil?
+    # Case: This channel has not been accessed before.
+    channel = Channel.create_from(source: :slack, slash_url_params: {
+      'channel_name' => 'directmessage', # installation.rtm_start_json['self']['name'
+      'channel_id' => options[:taskbot_channel_id],
+      'user_id' => options[:member_id],
+      'team_id' => options[:member_mcb].slack_team_id })
+    channel.is_taskbot = true
+    channel.bot_user_id = options[:taskbot_user_id]
+  end
+  # Persist the channel.list_ids[] for the next transaction.
+  channel.after_action_parse_hash = {
+    'after_action_list_context' => options[:p_hash][:after_action_list_context] }
+  channel.last_activity_type = 'msg_update'
+  channel.last_activity_date = DateTime.current
+  channel.save
 end
 
 # Returns: text status msg. 'ok' or err msg.

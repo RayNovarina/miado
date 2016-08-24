@@ -5,6 +5,7 @@ def pub_command(parsed, options = nil)
   parsed[:display_after_action_list] = true
   unless options.nil?
     if options[:type] == 'all open due_first'
+      # //HACK
       # parsed[:debug] = true
       parsed[:list_query_trace_info] = ''
       parsed[:func] = :pub

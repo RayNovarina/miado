@@ -22,7 +22,7 @@
    updated_by = "[#{updated_by}]" if locals[:is_last_updated_item]
    updated_by_class = locals[:is_last_updated_item] ? 'alert-info' : ''
 %>
-  <td><%= locals[:task_num] %></td>
+  <td><%= locals[:task_num] %><br>(<%= item.id %>)</td>
   <td><%= item.description %><br><br><%= "[#{item.debug_trace}]" %></td>
   <td><%= "#{assigned_member_name}" %></td>
   <td><%= item.assigned_due_date.nil? ? '' : item.assigned_due_date.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %></td>

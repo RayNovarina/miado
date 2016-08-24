@@ -38,14 +38,29 @@ def add_command(parsed)
   item.assigned_due_date, due_date_clause = add_due_date(parsed)
   item.description, description_clause = add_description(parsed)
 
-  response =
-    # "#{task_num_clause}#{assigned_to_clause}#{due_date_clause}" \
-    # " Type `#{params[:command]}<enter><enter>` for a current list."
+  text = ''
+  parsed[:response_headline] =
     "#{task_num_clause} as: ` #{description_clause}#{assigned_to_clause} " \
-    "#{due_date_clause}`" \
-    "\n`Type #{params[:command]}<enter><enter> for a current list.`"
+    "#{due_date_clause}`" # \
+  #{ }"\n`Type #{parsed[:slash_cmd_name]}<enter><enter> for a current list.`"
+  attachments = [
+    { response_type: 'ephemeral',
+      text: parsed[:response_headline],
+      fallback: 'Do not view list',
+      callback_id: 'add task',
+      color: '#3AA3E3',
+      attachment_type: 'default',
+      actions: [
+        { name: 'current',
+          text: 'View Current List',
+          type: 'button',
+          value: 'current'
+        }
+      ]
+    }
+  ]
   item.debug_trace =
-    "From add command - Response:#{response}  " \
+    "From add command - Response:#{parsed[:response_headline]}  " \
     "trace_syntax:#{parsed[:trace_syntax]}"
 
   if item.save
@@ -53,12 +68,12 @@ def add_command(parsed)
     list << item.id
     # Special case: just doing an add task for the redo command.
     parsed[:list] = list if parsed[:on_behalf_of_redo_cmd]
-    return [response, nil] if parsed[:on_behalf_of_redo_cmd]
+    return [text, attachments] if parsed[:on_behalf_of_redo_cmd]
     # Persist the channel.list_ids[] for the next transaction.
     save_after_action_list_context(parsed, parsed, list)
     # Display modified list after adding an item if in debug mode.
     parsed[:display_after_action_list] = true if parsed[:debug]
-    return [response, nil]
+    return [text, attachments]
   end
   [parsed[:err_msg] = 'Error creating task. Please try again.', nil]
 end
