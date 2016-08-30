@@ -20,6 +20,7 @@ module ChannelExtensions
     # @view.channel   = Channel.find_or_create_from(source: :slack, view: @view, url_params: params)
     def find_or_create_from(options)
       return find_or_create_from_slack(options) if options[:source] == :slack
+      return find_or_create_from_wordpress(options) if options[:source] == :wordpress
     end
 
     def update_from_or_create_from(options)
@@ -43,7 +44,7 @@ module ChannelExtensions
     def find_taskbot_channel_from_slack(options)
       Channel.where(is_taskbot_channel: true,
                     slack_team_id: options[:slack_team_id],
-                    slack_user_id: options[:slack_user_id]).first
+                    slack_user_id: options[:slack_user_id])
     end
 
     def create_taskbot_channel_from_slack(options)
@@ -218,8 +219,17 @@ module ChannelExtensions
       channel
     end
 
+    # Returns: Channel record.
+    def find_or_create_from_wordpress(options)
+      if (channel = find_from_wordpress(options).first).nil?
+        # Case: This channel has not been accessed before.
+        channel = create_from_wordpress(options)
+      end
+      channel
+    end
+
     def find_or_create_taskbot_channel_from_slack(options)
-      if (taskbot_channel = find_taskbot_channel_from_slack(options)).nil?
+      if (taskbot_channel = find_taskbot_channel_from_slack(options).first).nil?
         # Case: This channel has not been accessed before.
         taskbot_channel = create_taskbot_channel_from_slack(options)
       end
@@ -280,19 +290,44 @@ module ChannelExtensions
         slack_channel_name: options[:slash_url_params]['channel_name'],
         slack_channel_id: options[:slash_url_params]['channel_id'],
         slack_user_id: options[:slash_url_params]['user_id'],
-        slack_team_id: options[:slash_url_params]['team_id'],
+        slack_team_id: options[:slash_url_params]['team_id']
       )
       # If available, add info from a installation record for this user.
       # return channel if (installation = Installation.find_from(
       #  source: :slack,
       #  slack_team_id: options[:slash_url_params]['team_id'],
       #  slack_user_id: options[:slash_url_params]['user_id']
-      # )).nil?
+      # ).first).nil?
       # channel.slack_user_api_token = installation.slack_user_api_token
       # channel.bot_api_token = installation.bot_api_token
       # channel.bot_user_id = installation.bot_user_id
       # channel.save!
       channel
+    end
+
+    def find_from_wordpress(options)
+      @view ||= options[:view]
+      return nil if (target_member = Member.find_from(source: :wordpress,
+                                                      view: @view,
+                                                      slash_url_params: options[:slash_url_params])
+                    .first).nil?
+      Channel.where(slack_user_id: target_member.slack_user_id,
+                    slack_team_id: target_member.slack_team_id,
+                    slack_channel_name: options[:slash_url_params][:channel_name])
+    end
+
+    def create_from_wordpress(options)
+      @view ||= options[:view]
+      return nil if (target_member = Member.find_from(source: :wordpress,
+                                                      view: @view,
+                                                      slash_url_params: options[:slash_url_params])
+                    .first).nil?
+      Channel.new(
+        slack_channel_name: options[:slash_url_params]['channel_name'],
+        slack_channel_id: options[:slash_url_params]['channel_id'],
+        slack_user_id: target_member.slack_user_id,
+        slack_team_id: target_member.slack_team_id
+      )
     end
 
     def create_install_channel_from_omniauth_callback(options)

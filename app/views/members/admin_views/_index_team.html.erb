@@ -19,9 +19,9 @@
       <% locals[:members].each do |member| %>
         <%= render partial: 'members/admin_views/index_member',
                    locals: { locals: { member: member,
-                                       install_channel: Channel.installations(slack_team_id: locals[:team].slack_team_id,
-                                                                              slack_user_id: member['slack_user_id']
-                                                                             ).first,
+                                       installation: Installation.installations(slack_team_id: locals[:team].slack_team_id,
+                                                                                slack_user_id: member['slack_user_id']
+                                                                               ).first,
                                        last_activity: ListItem.last_activity(slack_team_id: locals[:team].slack_team_id,
                                                                              slack_user_id: member['slack_user_id']
                                                                             )

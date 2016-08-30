@@ -105,9 +105,9 @@ module InstallationExtensions
       @view ||= options[:view]
       return Installation.where(slack_user_id: options[:slack_user_id],
                                 slack_team_id: options[:slack_team_id]
-                               ).first if options.key?(:slack_user_id) && options.key?(:slack_team_id)
+                               ) if options.key?(:slack_user_id) && options.key?(:slack_team_id)
       return Installation.where(slack_team_id: options[:slack_team_id]
-                               ).first if options.key?(:slack_team_id)
+                               ) if options.key?(:slack_team_id)
       nil
     end
 

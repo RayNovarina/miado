@@ -2,6 +2,6 @@
   <td><%= "@#{locals[:member]['slack_user_name']}" %></td>
   <td><%= locals[:member]['slack_real_name'] %></td>
   <td><%= locals[:member]['slack_user_id'] %></td>
-  <td><%= "#{locals[:install_channel].nil? ? '*not installed*' : locals[:install_channel].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')}" %></td>
+  <td><%= "#{locals[:installation].nil? ? '*not installed*' : locals[:installation].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')}" %></td>
   <td><%= "#{locals[:last_activity].nil? ? '*none*' :locals[:last_activity].in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')}" %></td>
 </tr>
