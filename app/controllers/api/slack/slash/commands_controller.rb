@@ -81,7 +81,7 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   #   slack_user_id.slack_team_id.slack_channel_id.  A new channel/ccb is
   #   created.
   def channel_control_block_from_slack
-    channel_control_block_from_wordpress_plugin if params.has_key?('channel_id') && params[:channel_id].starts_with?('wordpress:')
+    return channel_control_block_from_wordpress_plugin if params.has_key?('channel_id') && params[:channel_id].starts_with?('wordpress:')
     update_url_params_from_interactive_msg if params.has_key?('payload')
     if (@view.channel = Channel.find_or_create_from(source: :slack, view: @view, slash_url_params: params)).nil?
       return [nil,
