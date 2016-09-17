@@ -52,7 +52,7 @@ module ApplicationHelper
     end
 
     def running_on_qa?
-      @controller.request.domain == 'qa-miado.herokuapp.com'
+      @controller.request.subdomain == 'qa-miado'
     end
 
     # Get flash msgs from controller so we can override em.
