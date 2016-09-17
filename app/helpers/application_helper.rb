@@ -52,7 +52,6 @@ module ApplicationHelper
     end
 
     def running_on_qa?
-      puts "\n#@controller.request.domain:\n{@controller.request.domain}\n"
       @controller.request.domain == 'qa-miado.herokuapp.com'
     end
 

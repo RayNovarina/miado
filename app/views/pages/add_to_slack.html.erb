@@ -30,6 +30,7 @@
           <%= "#{@view.running_on_qa? ? 'QA-' : ''}MiaDo" %>
         </a>
     </h1>
+    <p><%= "@controller.request.domain:" %><br><%= "#{@view.controller.request.domain}" %></p>
     <%= image_tag 'dog_head_icon.png', class: 'img-rounded img-responsive center-block',
         size: '100x100' %>
     <h3>Simple Task Management in Slack</h3>
