@@ -27,7 +27,7 @@
   <div id="home" class="row text-center" style="padding-top:40px;">
     <h1><a href="<%= new_user_session_path %>"
            style="color: black; text-decoration: none; cursor: default;">
-          MiaDo
+          <%= "#{@view.running_on_qa? ? 'QA-' : ''}MiaDo" %>
         </a>
     </h1>
     <%= image_tag 'dog_head_icon.png', class: 'img-rounded img-responsive center-block',
@@ -123,7 +123,8 @@
     <div class="col-sm-8 col-sm-offset-2 well"
          style="background-color: rgb(252, 245, 224); box-shadow: 0 2px 2px 0 rgba(0, 255, 255, .14), 0 3px 1px -2px rgba(0, 255, 255, .2), 0 1px 5px 0 rgba(0, 255, 255, .12)">
       <form name="comments" role="form" data-toggle="validator" method="post" action="/comments">
-        <h4><p class="text-center" style="font-weight: 900;">Have a question?<p></h4>
+        <h4><p class="text-center" style="font-weight: 900;">
+          <%= "#{@view.running_on_qa? ? 'QA-' : ''}Have a question?" %><p></h4>
         <br>
         <div class="form-group">
           <label for="name">Name:</label>
@@ -173,7 +174,7 @@
 </div>
 
 <% else %>
-<h1><%= "You are signed into the MiaDo web app as #{@view.user.name}. Click " %>
+<h1><%= "You are signed into the #{@view.running_on_qa? ? 'QA-' : ''}MiaDo web app as #{@view.user.name}. Click " %>
 <%= link_to 'here',
       destroy_user_session_path(@view.current_user),
       method: :delete,
