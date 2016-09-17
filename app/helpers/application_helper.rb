@@ -18,8 +18,6 @@ module ApplicationHelper
       @model = model
       @user = current_user
       @locals = {}
-      require 'pry'
-      binding.pry
     end
 
     # If authentication system (i.e. Devise) active.
@@ -54,6 +52,7 @@ module ApplicationHelper
     end
 
     def running_on_qa?
+      puts "\n#@controller.request.domain:\n{@controller.request.domain}\n"
       @controller.request.domain == 'qa-miado.herokuapp.com'
     end
 
