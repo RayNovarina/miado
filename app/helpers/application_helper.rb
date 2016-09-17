@@ -18,6 +18,8 @@ module ApplicationHelper
       @model = model
       @user = current_user
       @locals = {}
+      require 'pry'
+      binding.pry
     end
 
     # If authentication system (i.e. Devise) active.
