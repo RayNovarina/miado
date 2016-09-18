@@ -104,6 +104,7 @@ class OmniauthSlackSetup
       #  oauth_url_overrides[:client_id] = '24497218423.80781552071'
       #  oauth_url_overrides[:client_secret] = '102f3b99bc4773cc3838161f01dba3cc'
       # end
+      
       return oauth_url_overrides
     end
     return { scope: 'identity.basic' } if query == 'state=sign_in'
