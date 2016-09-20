@@ -27,12 +27,9 @@
   <div id="home" class="row text-center" style="padding-top:40px;">
     <h1><a href="<%= new_user_session_path %>"
            style="color: black; text-decoration: none; cursor: default;">
-          <%= "#{@view.running_on_qa? ? 'QA-' : ''}MiaDo" %>
+          <%= "#{Rails.env == 'staging' ? 'QA-' : ''}MiaDo" %>
         </a>
     </h1>
-    <p><%= "@controller.request.domain:" %><br><%= "#{@view.controller.request.domain}" %><br>
-      <%= "@controller.request.subdomain:" %><br><%= "#{@view.controller.request.subdomain}" %>
-    </p>
     <%= image_tag 'dog_head_icon.png', class: 'img-rounded img-responsive center-block',
         size: '100x100' %>
     <h3>Simple Task Management in Slack</h3>
@@ -127,7 +124,7 @@
          style="background-color: rgb(252, 245, 224); box-shadow: 0 2px 2px 0 rgba(0, 255, 255, .14), 0 3px 1px -2px rgba(0, 255, 255, .2), 0 1px 5px 0 rgba(0, 255, 255, .12)">
       <form name="comments" role="form" data-toggle="validator" method="post" action="/comments">
         <h4><p class="text-center" style="font-weight: 900;">
-          <%= "#{@view.running_on_qa? ? 'QA-' : ''}Have a question?" %><p></h4>
+          <%= "#{Rails.env == 'staging' ? 'QA-' : ''}Have a question?" %><p></h4>
         <br>
         <div class="form-group">
           <label for="name">Name:</label>

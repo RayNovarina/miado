@@ -7,7 +7,7 @@ class CommentMailer < ApplicationMailer
   def new_comment(view, submitted_comment)
     @view = view
     @comment = submitted_comment
-    mail(subject: "#{@view.running_on_qa? ? 'QA-' : ''}New comment from #{submitted_comment.name} at " \
+    mail(subject: "#{Rails.env == 'staging' ? 'QA-' : ''}New comment from #{submitted_comment.name} at " \
                   "#{submitted_comment.email}")
   end
 end

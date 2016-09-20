@@ -5,7 +5,7 @@
         <center>
           <h1><a href="<%= new_user_session_path %>"
                  style="color: black; text-decoration: none; cursor: default;">
-            <%= "#{@view.running_on_qa? ? 'QA-' : ''}MiaDo" %>
+            <%= "#{Rails.env == 'staging' ? 'QA-' : ''}MiaDo" %>
           </a>
           </h1>
           <%= image_tag 'dog_head_icon.png', class: 'img-circle',
