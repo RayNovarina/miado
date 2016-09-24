@@ -1,6 +1,10 @@
 def after_action_deferred_logic(def_cmds)
-  Thread.new do
+  if def_cmds[0][:p_hash][:expedite_deferred_cmd]
     send_after_action_deferred_cmds(def_cmds)
+  else
+    Thread.new do
+      send_after_action_deferred_cmds(def_cmds)
+    end
   end
 end
 
@@ -13,6 +17,7 @@ end
 CMD_FUNCS_IGNORED_BY_AFTER_ACTION_DEFERRED = [:help, :list, :pub, :last_action_list].freeze
 #
 # if a member's taskbot lists could be changed, then we need to update em.
+# Returns: [ {cmds} ]
 def generate_after_action_cmds(options)
   parsed = options[:parsed_hash]
   return nil if CMD_FUNCS_IGNORED_BY_AFTER_ACTION_DEFERRED.include?(parsed[:func])

@@ -18,6 +18,7 @@ def slash_cmd_from_buttons(url_params, p_hash)
   url_params[:command], url_params[:text] = slash_text_from_button_action(payload, p_hash[:previous_action_list_context])
   p_hash[:button_callback_id] = payload['callback_id']
   p_hash[:button_actions] = payload['actions']
+  p_hash[:expedite_deferred_cmd] = true
 end
 
 =begin
@@ -76,6 +77,7 @@ def make_parse_hash
     due_option: false,
     due_first_option: false,
     done_option: false,
+    expedite_deferred_cmd: false,
     err_msg: '',
     ccb: nil,
     mcb: nil,
