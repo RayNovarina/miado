@@ -1,0 +1,34 @@
+<header class="css-body-header">
+  <%= render partial: 'shared/index_page_header',
+             locals: { locals: { title: 'Admin Dashboard - Install Info' } }
+  %>
+</header>
+
+<main class="css-body-main">
+  <div class="container">
+    <h2>Install info for <%= " (#{locals[:installations].length}) installation of #{locals[:bot_info][:name]} for (#{locals[:teams].length}) " %>teams</h2>
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr>
+          <th>Team Name<br>(db recId)</th>
+          <th>Installed by<br>@Install Date<br>*Last Activity Time<br>[Server Time Now]</th>
+          <th>Members</th>
+          <th>Channels</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% locals[:installations].each do |installation| %>
+          <%= render partial: 'installations/admin_views/index_install_info_team',
+                     locals: { locals: { installation: installation,
+                                         auth_info: installation.auth_json['info'],
+                                         rtm_start_members: installation.rtm_start_json['users'],
+                                         rtm_start_channels: installation.rtm_start_json['channels'],
+                                         last_activity: Channel.last_activity(slack_team_id: installation.slack_team_id)
+                                       }
+                             }
+          %>
+        <% end %>
+      </tbody>
+    </table>
+    </div>
+</main>
