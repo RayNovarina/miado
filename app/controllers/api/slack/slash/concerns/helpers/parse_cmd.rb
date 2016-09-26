@@ -49,8 +49,10 @@ def perform_scans_for_functions(p_hash)
     scan4_task_num(p_hash)
     p_hash[:requires_due_date] = true
     scan4_due_date(p_hash)
+  when :feedback
+    # nothing to do.
   when :help
-    scan4_options(p_hash)
+    # nothing to do.
   when :last_action_list
     # nothing to do.
   when :list
@@ -76,7 +78,7 @@ end
 #       'delete all open tasks for @susan is a new task'
 # Case: command is as entered from command line.
 #       'a new task', 'list team'
-CMD_FUNCS = %w(append assign delete done due help list pub redo unassign).freeze
+CMD_FUNCS = %w(append assign delete done due feedback help list pub redo unassign).freeze
 def scan4_command_func(p_hash)
   # Default if no command given.
   return p_hash[:func] = :help if p_hash[:cmd_splits].empty? # && p_hash[:previous_action_list_context].empty?
