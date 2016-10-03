@@ -119,7 +119,7 @@ end
 # Returns: updated attachments array.
 def list_add_item_to_display_list(parsed, attachments, attch_idx, item, tasknum)
   return list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, tasknum) if parsed[:func] == :pub
-  attachments << { text: '', mrkdwn_in: ['text'] } if attachments.empty?
+  attachments << { color: '#3AA3E3', text: '', mrkdwn_in: ['text'] } if attachments.empty?
   attachments[attch_idx][:text].concat(list_add_attachment_text(parsed, item, tasknum))
 end
 
@@ -156,6 +156,7 @@ def all_channels_display(parsed, context, list_of_records)
     unless current_channel_id == item.channel_id
       current_channel_id = item.channel_id
       attachments << {
+        color: '#3AA3E3',
         text: "---- ##{item.channel_name} channel ----------",
         mrkdwn_in: ['text']
       }
@@ -194,14 +195,12 @@ attachments = [
 ]
 =end
 def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, tasknum)
-  # attachments << { text: '', mrkdwn_in: ['text'] } if attachments.empty?
-  # attachments[attch_idx][:text].concat(list_add_attachment_text(parsed, item, tasknum))
   attachment_text = list_add_attachment_text(parsed, item, nil)
   attachments <<
     { response_type: 'ephemeral',
       text: attachment_text,
       fallback: 'not done',
-      callback_id: 'task is done',
+      callback_id: 'taskbot',
       color: 'default',
       attachment_type: 'default',
       actions: [
@@ -210,6 +209,12 @@ def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, 
           style: 'primary',
           type: 'button',
           value: tasknum
+        },
+        { name: 'discuss',
+          text: 'Discuss',
+          style: 'primary',
+          type: 'button',
+          value: { attch_idx: attch_idx, slack_chan_id: item.channel_id, slack_chan_name: item.channel_name, item_db_id: item.id }.to_json
         }
       ]
     }

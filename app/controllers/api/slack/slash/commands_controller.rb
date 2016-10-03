@@ -6,10 +6,12 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
 
   before_action :authenticate_slash_user
   # before_action :authorize_user
-
   # Returns json slash command response.
   def create
     return render nothing: true, status: :ok, content_type: 'text/html' if params.key?('ssl_check')
+    if params.key?('type') && params['type'] == 'url_verification' && params.key?('challenge')
+      return render text: params['challenge'], status: :ok, content_type: 'text/html'
+    end
     response, p_hash = local_response
     return render nothing: true, status: :ok, content_type: 'text/html' if response.nil?
     unless p_hash.nil? || !p_hash[:err_msg].empty?
@@ -36,6 +38,7 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   def local_response
     # Cmd Context: We need to know our team members and the last list displayed.
     ccb, err_msg = channel_control_block_from_slack
+    return [nil, nil] if ccb.nil? && err_msg.empty?
     return [err_resp(params, err_msg, nil), nil] unless err_msg.empty?
     # Note: ccb.previous_action_list_context: {} becomes our
     # BEFORE action list(mine) or list(team) or list(all)
@@ -81,8 +84,10 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   #   slack_user_id.slack_team_id.slack_channel_id.  A new channel/ccb is
   #   created.
   def channel_control_block_from_slack
-    return channel_control_block_from_wordpress_plugin if params.has_key?('channel_id') && params[:channel_id].starts_with?('wordpress:')
-    update_url_params_from_interactive_msg if params.has_key?('payload')
+    return channel_control_block_from_wordpress_plugin if params.key?('channel_id') && params[:channel_id].starts_with?('wordpress:')
+    return channel_control_block_from_slack_event if params.key?('event')
+    update_url_params_from_interactive_msg if params.key?('payload')
+
     if (@view.channel = Channel.find_or_create_from(source: :slack, view: @view, slash_url_params: params)).nil?
       return [nil,
               "`MiaDo server ERROR: team #{params[:team_domain]}" \
@@ -142,6 +147,57 @@ def create_from_slack(options)
     [@view.channel, '']
   end
 
+=begin
+{
+    "token": "eUPXYEyP40qAztzCdmDANPHt",
+    "team_id": "T0VN565N0",
+    "api_app_id": "A17PMQ5K5",
+    "event": {
+        "type": "message",
+        "user": "U0VLZ5P51",
+        "text": "RAY COMMENT",
+
+        "type": "message",
+        "deleted_ts": "1475307676.000023",
+        "subtype": "message_deleted",
+
+        "type": "message",
+        "subtype": "bot_message",
+
+        "ts": "1475365880.000002",
+        "channel": "D18E3GH2P",
+        "event_ts": "1475365880.000002"
+    },
+    "type": "event_callback",
+    "authed_users": [
+        "U0VLZ5P51"
+    ]
+}
+=end
+  # Returns: [channel, error_message]
+  def channel_control_block_from_slack_event
+    # Quickly ignore event unless it is one we want.
+    # Just event == 'message' after the discuss button is clicked.
+    return [nil, ''] unless params['event']['type'] == 'message'
+    return [nil, ''] if params['event'].key?('subtype')
+    if (@view.channel = Channel.find_from(
+      source: :slack, view: @view,
+      slash_url_params: { 'user_id' => params['event']['user'],
+                          'team_id' => params['team_id'],
+                          'channel_id' => params['event']['channel'] }).first).nil?
+      return [nil, '']
+    end
+    return [nil, ''] unless @view.channel.last_activity_type == 'slash_command - discuss'
+    # We have a message entered after the discuss button is clicked.
+    params[:channel_id] = @view.channel.slack_channel_id
+    params[:channel_name] = @view.channel.slack_channel_name
+    params[:team_id] = @view.channel.slack_team_id
+    params[:token] = params[:token]
+    params[:user_id] = @view.channel.slack_user_id
+    params[:user_name] = ''
+    [@view.channel, '']
+  end
+
   # Returns: url_params{}
   # //HACK
   def update_url_params_from_interactive_msg
@@ -159,18 +215,22 @@ def create_from_slack(options)
   # Returns: [text, attachments]
   def process_cmd(parsed)
     return add_command(parsed) if parsed[:func] == :add
+    return after_action_list_command(parsed) if parsed[:func] == :last_action_list
     return append_command(parsed) if parsed[:func] == :append
     return assign_command(parsed) if parsed[:func] == :assign
-    return done_command(parsed) if parsed[:func] == :done
     return delete_command(parsed) if parsed[:func] == :delete
+    return discuss_command(parsed) if parsed[:func] == :discuss
+    return done_command(parsed) if parsed[:func] == :done
     return due_command(parsed) if parsed[:func] == :due
+    return feedback_command(parsed) if parsed[:func] == :feedback
     return help_command(parsed) if parsed[:func] == :help
+    return hints_command(parsed) if parsed[:func] == :hints
     return list_command(parsed) if parsed[:func] == :list
+    return message_event_command(parsed) if parsed[:func] == :message_event
+    return post_comment_command(parsed) if parsed[:func] == :post_comment
     return pub_command(parsed) if parsed[:func] == :pub
     return redo_command(parsed) if parsed[:func] == :redo
     return unassign_command(parsed) if parsed[:func] == :unassign
-    return feedback_command(parsed) if parsed[:func] == :feedback
-    return after_action_list_command(parsed) if parsed[:func] == :last_action_list
     # Default if no command given.
     help_command(parsed)
   end

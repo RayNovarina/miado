@@ -42,7 +42,7 @@ def add_command(parsed)
   parsed[:response_headline] =
     "#{task_num_clause} as: ` #{description_clause}#{assigned_to_clause} " \
     "#{due_date_clause}`" # \
-  #{ }"\n`Type #{parsed[:slash_cmd_name]}<enter><enter> for a current list.`"
+  # "\n`Type #{parsed[:slash_cmd_name]}<enter><enter> for a current list.`"
   attachments = [
     { response_type: 'ephemeral',
       text: parsed[:response_headline],
@@ -52,9 +52,14 @@ def add_command(parsed)
       attachment_type: 'default',
       actions: [
         { name: 'current',
-          text: 'View Current List',
+          text: 'Your Tasks',
           type: 'button',
           value: 'current'
+        },
+        { name: 'hints',
+          text: 'Hints',
+          type: 'button',
+          value: 'hints'
         }
       ]
     }

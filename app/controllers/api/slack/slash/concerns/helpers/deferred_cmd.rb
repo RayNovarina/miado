@@ -2,9 +2,9 @@ def after_action_deferred_logic(def_cmds)
   if def_cmds[0][:p_hash][:expedite_deferred_cmd]
     send_after_action_deferred_cmds(def_cmds)
   else
-    Thread.new do
+    #Thread.new do
       send_after_action_deferred_cmds(def_cmds)
-    end
+    #end
   end
 end
 
@@ -14,7 +14,9 @@ def new_member_deferred_logic(options)
   end
 end
 
-CMD_FUNCS_IGNORED_BY_AFTER_ACTION_DEFERRED = [:help, :list, :pub, :last_action_list].freeze
+CMD_FUNCS_IGNORED_BY_AFTER_ACTION_DEFERRED =
+  [:discuss, :feedback, :hints, :help, :last_action_list, :list,
+   :post_comment, :pub].freeze
 #
 # if a member's taskbot lists could be changed, then we need to update em.
 # Returns: [ {cmds} ]
@@ -39,37 +41,44 @@ def generate_after_action_cmds(options)
   }]
 end
 
+DEFERRED_EVENT_CMD_FUNCS = [:message_event].freeze
+# Route deferred command to proper handler.
+def send_after_action_deferred_cmds(cmds)
+  cmds.each do |d_hash|
+    parsed = d_hash[:p_hash]
+    send_deferred_event_cmds(d_hash, parsed) if DEFERRED_EVENT_CMD_FUNCS.include?(parsed[:func])
+    send_deferred_list_cmds(d_hash, parsed) unless DEFERRED_EVENT_CMD_FUNCS.include?(parsed[:func])
+  end
+end
+
 # 1) generate list commands array.
 # 2) clear taskbot channel of task lists to be replaced. or replace em?
 # 3) generate new task lists.
 # 4) post new lists into taskbot channel.
-def send_after_action_deferred_cmds(cmds)
-  cmds.each do |d_hash|
-    parsed = d_hash[:p_hash]
-    #----------------------
-    parsed[:am_hash_source] = :member_record
-    #----------------------
-    list_cmds = generate_list_commands(parsed, d_hash)
-    chat_msgs = generate_task_list_msgs(parsed, list_cmds)
-    chat_msgs.each do |msg|
-      update_taskbot_channel(
-        api_client: msg[:api_client],
-        taskbot_username: msg[:taskbot_username],
-        taskbot_channel_id: msg[:taskbot_channel_id],
-        taskbot_user_id: msg[:taskbot_user_id],
-        taskbot_api_token: msg[:taskbot_api_token],
-        taskbot_msg_id: msg[:taskbot_msg_id],
-        taskbot_msgs: msg[:taskbot_msgs],
-        member_name: msg[:member_name],
-        member_id: msg[:member_id],
-        member_ccb: parsed[:ccb],
-        member_mcb: parsed[:mcb],
-        text: msg[:text],
-        attachments: msg[:attachments],
-        after_action_list_context: msg[:after_action_list_context],
-        p_hash: d_hash[:p_hash]
-      )
-    end
+def send_deferred_list_cmds(d_hash, parsed)
+  #----------------------
+  parsed[:am_hash_source] = :member_record
+  #----------------------
+  list_cmds = generate_list_commands(parsed, d_hash)
+  chat_msgs = generate_task_list_msgs(parsed, list_cmds)
+  chat_msgs.each do |msg|
+    update_taskbot_channel(
+      api_client: msg[:api_client],
+      taskbot_username: msg[:taskbot_username],
+      taskbot_channel_id: msg[:taskbot_channel_id],
+      taskbot_user_id: msg[:taskbot_user_id],
+      taskbot_api_token: msg[:taskbot_api_token],
+      taskbot_msg_id: msg[:taskbot_msg_id],
+      taskbot_msgs: msg[:taskbot_msgs],
+      member_name: msg[:member_name],
+      member_id: msg[:member_id],
+      member_ccb: parsed[:ccb],
+      member_mcb: parsed[:mcb],
+      text: msg[:text],
+      attachments: msg[:attachments],
+      after_action_list_context: msg[:after_action_list_context],
+      p_hash: d_hash[:p_hash]
+    )
   end
 end
 
@@ -94,12 +103,16 @@ end
 #   bot_api_token:
 #-------------------------------------
 def generate_list_commands(parsed, deferred_cmd)
+  # return [] if parsed[:func] == :done && parsed[:button_actions].any? && parsed[:button_actions].first['name'] == 'done'
   list_cmds = []
   determine_impacted_members(parsed, deferred_cmd).each do |i_item|
     # impacted_member = ['id string', {impacted_member_hash}
     next unless i_item.respond_to?(:to_hash)
+    type = 'all open due_first'
+    # Edit msg, not list if clicking on taskbot Done button.
+    # type = 'edit msg' if parsed[:func] == :done && parsed[:button_actions].any? && parsed[:button_actions].first['name'] == 'done'
     list_cmds <<
-      { type: 'all open due_first',
+      { type: type,
         member_name: i_item[:name],
         member_id: i_item[:id],
         slack_user_api_token: i_item[:slack_user_api_token],
@@ -317,29 +330,43 @@ end
 def generate_task_list_msgs(parsed, list_cmds)
   chat_msgs = []
   list_cmds.each do |cmd_hash|
-    text, attachments, after_action_list_context =
-      pub_command(parsed, type: cmd_hash[:type],
-                          member_name: cmd_hash[:member_name],
-                          member_id: cmd_hash[:member_id])
-    text = "`MiaDo ERROR: #{parsed[:err_msg]}`" unless parsed[:err_msg].empty?
-    chat_msgs << { text: text, attachments: attachments,
-                   taskbot_username: cmd_hash[:taskbot_username],
-                   taskbot_channel_id: cmd_hash[:taskbot_channel_id],
-                   taskbot_user_id: cmd_hash[:taskbot_user_id],
-                   taskbot_msg_id: cmd_hash[:taskbot_msg_id],
-                   taskbot_msgs: cmd_hash[:taskbot_msgs],
-                   member_name: cmd_hash[:member_name],
-                   member_id: cmd_hash[:member_id],
-                   after_action_list_context: after_action_list_context,
-                   api_client: make_web_client(cmd_hash[:slack_user_api_token])
-                   # api_client: make_web_client(cmd_hash[:bot_api_token])
-                 }
+    if cmd_hash[:type] == 'edit msg'
+      chat_msgs << { edit_taskbot_msg: true,
+                     taskbot_channel_id: cmd_hash[:taskbot_channel_id],
+                     taskbot_user_id: cmd_hash[:taskbot_user_id],
+                     taskbot_msg_id: cmd_hash[:taskbot_msg_id],
+                     after_action_list_context: after_action_list_context,
+                     api_client: make_web_client(cmd_hash[:slack_user_api_token])
+                   }
+    else
+      text, attachments, after_action_list_context =
+        pub_command(parsed, type: cmd_hash[:type],
+                            member_name: cmd_hash[:member_name],
+                            member_id: cmd_hash[:member_id])
+      text = "`MiaDo ERROR: #{parsed[:err_msg]}`" unless parsed[:err_msg].empty?
+      chat_msgs << { edit_taskbot_msg: false,
+                     text: text, attachments: attachments,
+                     taskbot_username: cmd_hash[:taskbot_username],
+                     taskbot_channel_id: cmd_hash[:taskbot_channel_id],
+                     taskbot_user_id: cmd_hash[:taskbot_user_id],
+                     taskbot_msg_id: cmd_hash[:taskbot_msg_id],
+                     taskbot_msgs: cmd_hash[:taskbot_msgs],
+                     member_name: cmd_hash[:member_name],
+                     member_id: cmd_hash[:member_id],
+                     after_action_list_context: after_action_list_context,
+                     api_client: make_web_client(cmd_hash[:slack_user_api_token])
+                     # api_client: make_web_client(cmd_hash[:bot_api_token])
+                   }
+    end
   end
   chat_msgs
 end
 
 # Returns: slack api response hash.
 def update_taskbot_channel(options)
+  # Flow 0: Just edit the specified msg. Nothing is deleted.
+  return edit_taskbot_msg(options) if options[:edit_taskbot_msg]
+
   # Flow 1: Deletes all msgs in bot dm channel.
   #         requires im_history, chat:write:bot scopes.
   # update_via_im_history(options)
@@ -647,3 +674,99 @@ def update_one_team_members_hash(options)
          .update_all(members_hash: options[:members_hash])
 end
 =end
+
+# Process deferred event.
+def send_deferred_event_cmds(_d_hash, parsed)
+  post_taskbot_comment(parsed)
+end
+
+=begin
+{
+    "token": "eUPXYEyP40qAztzCdmDANPHt",
+    "team_id": "T0VN565N0",
+    "api_app_id": "A17PMQ5K5",
+    "event": {
+        "type": "message",
+        "user": "U0VLZ5P51",
+        "text": "555",
+        "ts": "1475448087.000017",
+        "channel": "D18E3GH2P",
+        "event_ts": "1475448087.000017"
+    },
+    "type": "event_callback",
+    "authed_users": [
+        "U0VLZ5P51"
+    ]
+}
+params[:channel_id] = @view.channel.slack_channel_id
+params[:channel_name] = @view.channel.slack_channel_name
+params[:team_id] = @view.channel.slack_team_id
+params[:token] = params[:token]
+params[:user_id] = @view.channel.slack_user_id
+params[:user_name] = ''
+=end
+# Comment was just added to the taskbot channel after the Discuss button was
+# clicked in the taskbot channel. Send the comment to the channel the task was
+# created in.
+def post_taskbot_comment(parsed)
+  button_value = JSON.parse(parsed[:ccb].after_action_parse_hash['button_actions'].first['value']).with_indifferent_access
+  task = ListItem.find(button_value[:item_db_id].to_i)
+  task_desc = task.debug_trace.split('`')[1]
+  posted_comment = parsed[:url_params]['event']['text']
+  member = Member.find_from(
+    source: :slack,
+    slack_user_id: parsed[:url_params][:user_id],
+    slack_team_id: parsed[:url_params][:team_id]).first
+  text = "Comment from @#{member.slack_user_name} about the task:\n " \
+    "`#{task_desc}`"
+  attachments = [{
+    text: posted_comment,
+    color: '#3AA3E3',
+    mrkdwn_in: ['text']
+  }]
+  # api_resp =
+  send_channel_msg(
+    api_client: make_web_client(member.slack_user_api_token),
+    username: 'taskbot',
+    channel_id: task.channel_id,
+    text: text,
+    attachments: attachments
+  )
+  # Persist our actions for the next transaction.
+  # save_after_action_list_context(parsed, parsed)
+end
+
+# Returns: slack api response hash.
+def send_channel_msg(options)
+  api_resp =
+    options[:api_client]
+    .chat_postMessage(
+      as_user: 'false',
+      username: options[:username],
+      channel: options[:channel_id],
+      text: options[:text],
+      attachments: options[:attachments])
+  options[:api_client].logger.error "\nSent channel msg to: " \
+    "#{options[:taskbot_username]} at dm_channel: " \
+    "#{options[:channel_id]}.  Msg title: #{options[:text]}. " \
+    "For member: #{options[:member_name]}\n"
+  return api_resp if api_resp['ok'] == true
+  err_msg = "Error: From send_channel_msg(API:client.chat_postMessage) = '#{api_resp['error']}'"
+  options[:api_client].logger.error(err_msg)
+  return api_resp
+rescue Slack::Web::Api::Error => e # (not_authed)
+  options[:api_client].logger.error e
+  err_msg = "\nFrom send_channel_msg(API:client.chat_postMessage) = " \
+    "e.message: #{e.message}\n" \
+    "channel_id: #{options[:channel]}  " \
+    "token: #{options[:api_client].token.nil? ? '*EMPTY!*' : options[:api_client].token}\n"
+  options[:api_client].logger.error(err_msg)
+  return { 'ok' => false, 'error' => err_msg }
+end
+
+# Returns: slack api response hash.
+def edit_taskbot_msg(options)
+  require 'pry'
+  binding.pry
+  { 'ok' => true, 'error' => '' }
+end

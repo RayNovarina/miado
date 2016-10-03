@@ -41,6 +41,9 @@ def perform_scans_for_functions(p_hash)
     scan4_task_num(p_hash)
     scan4_mentioned_member(p_hash)
     scan4_options(p_hash)
+  when :discuss
+    p_hash[:requires_task_num] = true
+    scan4_task_num(p_hash)
   when :done
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
@@ -53,11 +56,17 @@ def perform_scans_for_functions(p_hash)
     # nothing to do.
   when :help
     # nothing to do.
+  when :hints
+    scan4_options(p_hash)
   when :last_action_list
-    # nothing to do.
+    scan4_options(p_hash)
   when :list
     scan4_mentioned_member(p_hash)
     scan4_options(p_hash)
+  when :message_event
+    # nothing to do.
+  when :post_comment
+    # nothing to do.
   when :pub
     scan4_mentioned_member(p_hash)
     scan4_options(p_hash)
@@ -80,10 +89,11 @@ end
 #       'a new task', 'list team'
 CMD_FUNCS = %w(append assign delete done due feedback help list pub redo unassign).freeze
 def scan4_command_func(p_hash)
+  return command_func_from_button(p_hash) if p_hash[:button_actions].any?
+  return command_func_from_event(p_hash) unless p_hash[:event_type].empty?
   # Default if no command given.
-  return p_hash[:func] = :help if p_hash[:cmd_splits].empty? # && p_hash[:previous_action_list_context].empty?
+  return p_hash[:func] = :help if p_hash[:cmd_splits].empty?
 
-  return p_hash[:func] = :last_action_list if p_hash[:cmd_splits].empty? && !p_hash[:previous_action_list_context].empty?
   maybe_func = p_hash[:cmd_splits][0]
   p_hash[:func] = CMD_FUNCS.include?(maybe_func) ? maybe_func.to_sym : nil
   # discard/consume func word if we have one.
@@ -92,13 +102,46 @@ def scan4_command_func(p_hash)
   p_hash[:func] = :add if p_hash[:func].nil?
 end
 
+# Returns: p_hash[:func]
+def command_func_from_button(p_hash)
+  return command_func_from_add_task_button(p_hash) if p_hash[:button_callback_id] == 'add task'
+  return command_func_from_taskbot_button(p_hash) if p_hash[:button_callback_id] == 'taskbot'
+end
+
+# Returns: p_hash[:func]
+def command_func_from_add_task_button(p_hash)
+  p_hash[:func] = :last_action_list if p_hash[:button_actions].first['name'] == 'current'
+  p_hash[:func] = :hints if p_hash[:button_actions].first['name'] == 'hints'
+end
+
+# Returns: p_hash[:func]
+def command_func_from_taskbot_button(p_hash)
+  p_hash[:func] = :done if p_hash[:button_actions].first['name'] == 'done'
+  p_hash[:func] = :discuss if p_hash[:button_actions].first['name'] == 'discuss'
+  p_hash[:func] = :post_comment if p_hash[:button_actions].first['name'] == 'post comment'
+  p_hash[:command] = p_hash[:button_actions].first['value']
+  p_hash[:cmd_splits] = p_hash[:command].split
+end
+
+# Returns: p_hash[:func]
+def command_func_from_event(p_hash)
+  return command_func_from_message_event(p_hash) if p_hash[:event_type] == 'message'
+end
+
+# Returns: p_hash[:func]
+def command_func_from_message_event(p_hash)
+  p_hash[:func] = :message_event
+end
+
 def scan4_taskbot_cmd_func(p_hash)
-  return scan4_command_func(p_hash) unless p_hash[:button_callback_id].nil?
+  return scan4_command_func(p_hash) if p_hash[:button_actions].any?
+  return scan4_command_func(p_hash) unless p_hash[:event_type].empty?
   p_hash[:err_msg] =
     # "Error: only the '#{params[:command]} /done' command is " \
     # 'allowed in the Taskbot channel.' unless p_hash[:func] == :done
-    "Error: Sorry, no '#{params[:command]}' commands allowed in the " \
-    'Taskbot channel.'
+    "Error: Sorry, but at this time no '#{params[:command]}' commands " \
+    'allowed in the Taskbot channel. (Except for the Done and Discuss ' \
+    'buttons). Switch to a regular channel to run /do commands.'
 end
 
 # Case: command function has been processed, leaving:
@@ -108,6 +151,7 @@ end
 CMD_OPTIONS = %w(open due due_first done all team).freeze
 def scan4_options(p_hash)
   return unless p_hash[:err_msg].empty?
+  return options_from_button(p_hash) if p_hash[:button_actions].any?
   # Have to be adding task if command is longer than options allow.
   return p_hash[:func] = :add if p_hash[:cmd_splits].length > CMD_OPTIONS.length - 1
   CMD_OPTIONS.each_with_index do |option, index|
@@ -115,6 +159,9 @@ def scan4_options(p_hash)
     p_hash[''.concat(option).concat('_option').to_sym] = true
   end
   adjust_cmd_options_for_add_cmd(p_hash)
+end
+
+def options_from_button(_p_hash)
 end
 
 # Correct for case of add task using most of the same syntax as another cmd.

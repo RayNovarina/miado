@@ -6,7 +6,7 @@
 #-------------------------------------------------
 # /do done 4  Marks task 4 for this channel as done.
 def done_command(parsed)
-  return taskbot_done_command(parsed) unless parsed[:button_callback_id].nil?
+  return taskbot_done_command(parsed) if parsed[:button_actions].any?
   # We are trying to set a task's done status on a list the user is looking at.
   adjust_inherited_cmd_action_context(parsed)
   text = done_one(parsed)
@@ -32,6 +32,8 @@ def done_one(parsed)
   parsed[:err_msg] = 'Error: There was an error setting this Task to a DONE status.'
 end
 
+# Someone clicked on the Done button in the taskbot channel.
+# Set the task as done and redisplay the taskbot channel list.
 def taskbot_done_command(parsed)
   # We are trying to set a task's done status on a list the user is looking at.
   adjust_inherited_cmd_action_context(parsed)
