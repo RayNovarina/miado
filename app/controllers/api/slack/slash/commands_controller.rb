@@ -13,7 +13,7 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
       return render text: params['challenge'], status: :ok, content_type: 'text/html'
     end
     response, p_hash = local_response
-    return render nothing: true, status: :ok, content_type: 'text/html' if response.nil?
+    # return render nothing: true, status: :ok, content_type: 'text/html' if response.nil?
     unless p_hash.nil? || !p_hash[:err_msg].empty?
       # Sync up taskbot msgs, etc. in background task.
       unless (def_cmds = generate_after_action_cmds(parsed_hash: p_hash)).nil?
@@ -22,6 +22,7 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
       end
     end
     # Reply to slash command. Could be an error response.
+    return render nothing: true, status: :ok, content_type: 'text/html' if response.nil?
     render json: response, status: 200
   end
 
@@ -228,7 +229,6 @@ def create_from_slack(options)
     return list_command(parsed) if parsed[:func] == :list
     return message_event_command(parsed) if parsed[:func] == :message_event
     return post_comment_command(parsed) if parsed[:func] == :post_comment
-    return pub_command(parsed) if parsed[:func] == :pub
     return redo_command(parsed) if parsed[:func] == :redo
     return unassign_command(parsed) if parsed[:func] == :unassign
     # Default if no command given.

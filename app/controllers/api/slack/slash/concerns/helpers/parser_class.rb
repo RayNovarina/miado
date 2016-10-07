@@ -48,6 +48,7 @@ def make_parse_hash
     err_msg: '',
     ccb: nil,
     mcb: nil,
+    tcb: nil,
     previous_action_list_context: {},
     # For current action
     list_scope: nil,
@@ -112,6 +113,7 @@ def save_after_action_list_context(parsed, context, list_ids = nil)
   parsed[:url_params] = {}
   parsed[:ccb] = nil
   parsed[:mcb] = nil
+  parsed[:tcb] = nil
   @view.channel.after_action_parse_hash = parsed
   @view.channel.last_activity_type = "slash_command - #{parsed[:func]}"
   @view.channel.last_activity_date = DateTime.current
@@ -122,7 +124,7 @@ def save_after_action_list_context(parsed, context, list_ids = nil)
   parsed[:err_msg] = '  Error: Saving after action context.'
 end
 
-def after_action_list_context(context, list_ids)
+def after_action_list_context(context, list_ids = nil)
   { list: list_ids || context[:list_ids] || [],
     list_scope: context[:list_scope],
     channel_scope: context[:channel_scope],

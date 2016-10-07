@@ -37,6 +37,23 @@ module ChannelExtensions
       return create_from_omniauth_callback(options) if options[:source] == :omniauth_callback
     end
 
+=begin
+    if (channel = Channel.find_from(source: :slack, slash_url_params: {
+          'channel_id' => options[:taskbot_channel_id],
+          'user_id' => options[:member_id],
+          'team_id' => options[:member_mcb].slack_team_id }
+       ).first).nil?
+      # Case: This channel has not been accessed before.
+      channel = Channel.create_from(source: :slack, slash_url_params: {
+        'channel_name' => 'directmessage', # installation.rtm_start_json['self']['name'
+        'channel_id' => options[:taskbot_channel_id],
+        'user_id' => options[:member_id],
+        'team_id' => options[:member_mcb].slack_team_id })
+      channel.is_taskbot = true
+      channel.bot_user_id = options[:taskbot_user_id]
+    end
+=end
+
     def find_or_create_taskbot_channel(options)
       return find_or_create_taskbot_channel_from_slack(options) if options[:source] == :slack
     end

@@ -25,6 +25,7 @@ def done_one(parsed)
   item.done = true
   item.updated_by_slack_user_id = parsed[:url_params]['user_id']
   if item.save
+    return nil if parsed[:button_actions].any?
     return "Task #{parsed[:task_num]} " \
            "#{item.assigned_member_id.nil? ? '' : "for @#{slack_member_name_from_slack_user_id(parsed, item.assigned_member_id)}"} " \
            'set to a completed/DONE status.'
@@ -37,7 +38,7 @@ end
 def taskbot_done_command(parsed)
   # We are trying to set a task's done status on a list the user is looking at.
   adjust_inherited_cmd_action_context(parsed)
-  text = done_one(parsed)
+  done_one(parsed)
   return [parsed[:err_msg], nil] unless parsed[:err_msg].empty?
-  [text, nil]
+  [nil, nil]
 end

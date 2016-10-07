@@ -40,21 +40,32 @@ def add_command(parsed)
 
   text = ''
   parsed[:response_headline] =
-    "#{task_num_clause} as: ` #{description_clause}#{assigned_to_clause} " \
-    "#{due_date_clause}`" # \
-  # "\n`Type #{parsed[:slash_cmd_name]}<enter><enter> for a current list.`"
+    "#{task_num_clause} as: `#{description_clause}` #{assigned_to_clause} " \
+    "#{due_date_clause}"
   attachments = [
     { response_type: 'ephemeral',
       text: parsed[:response_headline],
       fallback: 'Do not view list',
       callback_id: 'add task',
       color: '#3AA3E3',
+      mrkdwn_in: ['text'],
       attachment_type: 'default',
       actions: [
-        { name: 'current',
+        { name: 'list',
           text: 'Your Tasks',
+          style: 'primary',
           type: 'button',
-          value: 'current'
+          value: '@me'
+        },
+        { name: 'list',
+          text: 'All Tasks',
+          type: 'button',
+          value: 'team'
+        },
+        { name: 'feedback',
+          text: 'Feedback',
+          type: 'button',
+          value: 'feedback'
         },
         { name: 'hints',
           text: 'Hints',
@@ -93,7 +104,7 @@ end
 def add_assigned_member(parsed)
   return [nil, ''] if parsed[:assigned_member_id].nil?
   [parsed[:assigned_member_id], parsed[:assigned_member_name],
-   "| *Assigned* to @#{parsed[:assigned_member_name]}."
+   " *Assigned* to @#{parsed[:assigned_member_name]}."
   ]
 end
 
@@ -101,7 +112,7 @@ end
 def add_due_date(parsed)
   return [nil, ''] if parsed[:due_date].nil?
   [parsed[:due_date],
-   "| *Due* #{parsed[:due_date].strftime('%a, %d %b')}."
+   " *Due* #{parsed[:due_date].strftime('%a, %d %b')}."
   ]
 end
 

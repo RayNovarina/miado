@@ -59,6 +59,7 @@ def perform_scans_for_functions(p_hash)
   when :hints
     scan4_options(p_hash)
   when :last_action_list
+    scan4_mentioned_member(p_hash)
     scan4_options(p_hash)
   when :list
     scan4_mentioned_member(p_hash)
@@ -67,7 +68,7 @@ def perform_scans_for_functions(p_hash)
     # nothing to do.
   when :post_comment
     # nothing to do.
-  when :pub
+  when :taskbot_rpts
     scan4_mentioned_member(p_hash)
     scan4_options(p_hash)
   when :redo
@@ -87,7 +88,7 @@ end
 #       'delete all open tasks for @susan is a new task'
 # Case: command is as entered from command line.
 #       'a new task', 'list team'
-CMD_FUNCS = %w(append assign delete done due feedback help list pub redo unassign).freeze
+CMD_FUNCS = %w(append assign delete done due feedback help list taskbot_rpts redo unassign).freeze
 def scan4_command_func(p_hash)
   return command_func_from_button(p_hash) if p_hash[:button_actions].any?
   return command_func_from_event(p_hash) unless p_hash[:event_type].empty?
@@ -110,8 +111,10 @@ end
 
 # Returns: p_hash[:func]
 def command_func_from_add_task_button(p_hash)
-  p_hash[:func] = :last_action_list if p_hash[:button_actions].first['name'] == 'current'
-  p_hash[:func] = :hints if p_hash[:button_actions].first['name'] == 'hints'
+  return p_hash[:func] = :hints if p_hash[:button_actions].first['name'] == 'hints'
+  p_hash[:func] = :list # if p_hash[:button_actions].first['name'] == 'list'
+  p_hash[:command] = p_hash[:button_actions].first['value']
+  p_hash[:cmd_splits] = p_hash[:command].split
 end
 
 # Returns: p_hash[:func]
@@ -151,7 +154,6 @@ end
 CMD_OPTIONS = %w(open due due_first done all team).freeze
 def scan4_options(p_hash)
   return unless p_hash[:err_msg].empty?
-  return options_from_button(p_hash) if p_hash[:button_actions].any?
   # Have to be adding task if command is longer than options allow.
   return p_hash[:func] = :add if p_hash[:cmd_splits].length > CMD_OPTIONS.length - 1
   CMD_OPTIONS.each_with_index do |option, index|
@@ -159,9 +161,6 @@ def scan4_options(p_hash)
     p_hash[''.concat(option).concat('_option').to_sym] = true
   end
   adjust_cmd_options_for_add_cmd(p_hash)
-end
-
-def options_from_button(_p_hash)
 end
 
 # Correct for case of add task using most of the same syntax as another cmd.

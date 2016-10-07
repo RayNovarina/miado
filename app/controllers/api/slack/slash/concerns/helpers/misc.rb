@@ -67,21 +67,6 @@ def task_num_out_of_range?(parsed)
   !parsed[:err_msg].empty?
 end
 
-# Convert text header for @taskbot display.
-def format_pub_header(parsed, _list_cmd_text)
-  channel_text = 'all Team channels' if parsed[:channel_scope] == :all_channels
-  channel_text = "##{parsed[:url_params]['channel_name']}" if parsed[:channel_scope] == :one_channel
-  options_text = ''
-  options_text.concat('Open') if parsed[:open_option]
-  options_text.concat(', ') if parsed[:open_option] && parsed[:due_option] && parsed[:done_option]
-  options_text.concat(' and ') if parsed[:open_option] && parsed[:due_option] && !parsed[:done_option]
-  options_text.concat('Due') if parsed[:due_option]
-  options_text.concat(' and ') if (parsed[:open_option] || parsed[:due_option]) && parsed[:done_option]
-  options_text.concat('Done') if parsed[:done_option]
-  "`Current tasks list for @#{parsed[:mentioned_member_name]} " \
-  "in #{channel_text} (#{options_text})`"
-end
-
 def make_web_client(api_token)
   # Slack.config.token = 'xxxxx'
   Slack.configure do |config|
