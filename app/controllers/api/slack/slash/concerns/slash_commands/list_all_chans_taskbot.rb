@@ -11,7 +11,6 @@ def all_chans_taskbot_header(parsed, _context, _list_of_records)
   rpt_headline = format_all_chans_taskbot_header(parsed)
   text = ''
   attachments = [
-    # { text: "#{parsed[:response_headline]}\n\n#{rpt_type}",
     { text: '',
       color: 'ffffff',
       actions: [
