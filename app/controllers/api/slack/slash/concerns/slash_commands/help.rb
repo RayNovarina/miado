@@ -53,8 +53,8 @@ def headline(parsed)
   # <@U024BE7LH|bob>
   msg =
     "Hi, *@#{parsed[:url_params][:user_name]}*, " \
-    'MiaDo is the easiest way for teams to track assignments and due dates, all ' \
-    'in Slack.\n'
+    'MiaDo is the easiest way for teams to track assignments and due dates, ' \
+    'all in Slack.'
   { fallback: 'headline',
     pretext: msg,
     text: '',
@@ -67,6 +67,9 @@ ADDING_TASKS_HLP_TEXT =
   '• `/do rev 1 spec @susan /jun15`' \
   ' Adds "rev 1 spec" task to this channel, assigns it to Susan,' \
   " due date is June 15.\n" \
+  '• `/do update product meeting agenda. @me /today`' \
+  ' Adds task to this channel, assigns it to you,' \
+  " due date is today's date.\n" \
   "\n".freeze
 
 # Returns: attachment{}

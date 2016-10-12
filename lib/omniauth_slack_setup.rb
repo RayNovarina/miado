@@ -100,6 +100,7 @@ class OmniauthSlackSetup
                  ',bot' \
                  ',chat:write:bot' \
                  ',im:history' \
+                 ',channels:history' \
         }
       return oauth_url_overrides
     end

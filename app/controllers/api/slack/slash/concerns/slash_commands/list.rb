@@ -48,8 +48,12 @@ end
 
 # Returns: [text, attachments]
 def format_display_list(parsed, context, list_of_records)
-  text, attachments, list_ids = one_channel_display(parsed, context, list_of_records) if context[:channel_scope] == :one_channel
-  text, attachments, list_ids = all_channels_display(parsed, context, list_of_records) if context[:channel_scope] == :all_channels
+  if parsed[:button_actions].any?
+    text, attachments, list_ids = button_lists(parsed, list_of_records)
+  else
+    text, attachments, list_ids = one_channel_display(parsed, context, list_of_records) if context[:channel_scope] == :one_channel
+    text, attachments, list_ids = all_channels_display(parsed, context, list_of_records) if context[:channel_scope] == :all_channels
+  end
   # Persist the channel.list_ids[] for the next transaction.
   save_after_action_list_context(parsed, context, list_ids) unless parsed[:display_after_action_list]
   text.concat(parsed[:err_msg]) unless parsed[:err_msg].empty?
@@ -57,10 +61,16 @@ def format_display_list(parsed, context, list_of_records)
 end
 
 # Returns: [text, attachments]
-def list_chan_header(_parsed, context, list_of_records, channel_name = '')
-  text = "#{channel_name}" \
+def list_chan_header(parsed, context, list_of_records, add_chan_name = false)
+  if add_chan_name.respond_to? :to_str
+    channel_name = add_chan_name
+  else
+    channel_name = add_chan_name ? "*##{parsed[:url_params][:channel_name]}* channel" : ''
+  end
+  text =
     "`to-do list#{list_format_owner_title(context)}`" \
-    "#{list_of_records.empty? ? ' (empty)' : ''}"
+    "#{list_of_records.empty? ? ' (empty)' : ''}" \
+    " #{channel_name}"
   [text, []]
 end
 
@@ -69,6 +79,7 @@ def list_chan_footer(_parsed, context, list_of_records, _text, attachments)
     attachments << {
       text: "`to-do list#{list_format_owner_title(context)}`" \
             "#{list_of_records.empty? ? ' (empty)' : ''}",
+      color: '#3AA3E3',
       mrkdwn_in: ['text']
     }
   end

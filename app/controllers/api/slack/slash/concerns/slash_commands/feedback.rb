@@ -1,19 +1,22 @@
 
 # Returns: [text, attachments]
 def feedback_command(parsed)
-  text = send_comment(parsed)
-  @view.channel.last_activity_type = 'slash_command - feedback'
+  text, attachments, options = send_comment(parsed)
+  @view.channel.last_activity_type = 'slash_command - feedback' if parsed[:button_callback_id].nil?
+  @view.channel.last_activity_type = 'button_action - feedback' unless parsed[:button_callback_id].nil?
   @view.channel.last_activity_date = DateTime.current
   @view.channel.save
-  [text, nil]
+  [text, attachments, options]
 end
 
-# Returns: text response message.
+# Returns: [text, attachments]
 def send_comment(parsed)
+  return feedback_button_add_task(parsed) if parsed[:button_callback_id] == 'add task'
+  return feedback_button_taskbot_rpts(parsed) if parsed[:button_callback_id] == 'taskbot'
   submitted_comment = comment_from_slash_feedback(parsed)
   if submitted_comment.valid?
     CommentMailer.new_comment(@view, submitted_comment).deliver_now
-    return 'Thank you, we appreciate your input.'
+    return ['Thank you, we appreciate your input.', []]
   end
   parsed[:err_msg] = 'Error: Feedback message is empty.'
 end
@@ -42,4 +45,13 @@ def comment_from_slash_feedback(parsed)
   email = '**Submitted as feedback**'
   body = parsed[:cmd_splits].join(' ')
   Comment.new(name: name, email: email, body: body)
+end
+
+# Returns: [text, attachments]
+def feedback_button_add_task(parsed)
+  text = "Ok, type in a comment.\n" \
+    "\nWhen done, hit [enter] and it will be emailed to MiaDo product " \
+    'support and then removed from this channel.'
+  attachments = []
+  [text, attachments, { replace_original: false }]
 end

@@ -45,14 +45,14 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
     # BEFORE action list(mine) or list(team) or list(all)
     parsed = parse_slash_cmd(params, ccb, ccb.after_action_parse_hash)
     return [err_resp(params, "`MiaDo ERROR: #{parsed[:err_msg]}`", nil), parsed] unless parsed[:err_msg].empty?
-    text, attachments = process_cmd(parsed)
+    text, attachments, options = process_cmd(parsed)
     # after_action_list_context: {} is AFTER action list(mine) or
     # list(team) or list(all)
     return [err_resp(params, text, attachments), parsed] unless parsed[:err_msg].empty?
     # Display an updated AFTER ACTION list if useful, i.e. task has been added
     # or deleted.
     text, attachments = prepend_text_to_list_command(parsed, text) if parsed[:display_after_action_list]
-    [slash_response(text, attachments, parsed), parsed]
+    [slash_response(text, attachments, parsed, options), parsed]
   end
 
   def err_resp(url_params, err_msg, err_attachments)
@@ -178,7 +178,7 @@ def create_from_slack(options)
   # Returns: [channel, error_message]
   def channel_control_block_from_slack_event
     # Quickly ignore event unless it is one we want.
-    # Just event == 'message' after the discuss button is clicked.
+    # Just event == 'message' after the discuss or feedback buttons are clicked.
     return [nil, ''] unless params['event']['type'] == 'message'
     return [nil, ''] if params['event'].key?('subtype')
     if (@view.channel = Channel.find_from(
@@ -188,8 +188,8 @@ def create_from_slack(options)
                           'channel_id' => params['event']['channel'] }).first).nil?
       return [nil, '']
     end
-    return [nil, ''] unless @view.channel.last_activity_type == 'slash_command - discuss'
-    # We have a message entered after the discuss button is clicked.
+    return [nil, ''] unless @view.channel.last_activity_type == 'button_action - discuss' || @view.channel.last_activity_type == 'button_action - feedback'
+    # We have a message entered after the discuss or feedback button is clicked.
     params[:channel_id] = @view.channel.slack_channel_id
     params[:channel_name] = @view.channel.slack_channel_name
     params[:team_id] = @view.channel.slack_team_id

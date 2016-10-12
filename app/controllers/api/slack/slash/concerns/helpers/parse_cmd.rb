@@ -57,7 +57,7 @@ def perform_scans_for_functions(p_hash)
   when :help
     # nothing to do.
   when :hints
-    scan4_options(p_hash)
+    # nothing to do.
   when :last_action_list
     scan4_mentioned_member(p_hash)
     scan4_options(p_hash)
@@ -88,7 +88,7 @@ end
 #       'delete all open tasks for @susan is a new task'
 # Case: command is as entered from command line.
 #       'a new task', 'list team'
-CMD_FUNCS = %w(append assign delete done due feedback help list taskbot_rpts redo unassign).freeze
+CMD_FUNCS = %w(append assign delete done due feedback help hints list taskbot_rpts redo unassign).freeze
 def scan4_command_func(p_hash)
   return command_func_from_button(p_hash) if p_hash[:button_actions].any?
   return command_func_from_event(p_hash) unless p_hash[:event_type].empty?
@@ -112,6 +112,7 @@ end
 # Returns: p_hash[:func]
 def command_func_from_add_task_button(p_hash)
   return p_hash[:func] = :hints if p_hash[:button_actions].first['name'] == 'hints'
+  return p_hash[:func] = :feedback if p_hash[:button_actions].first['name'] == 'feedback'
   p_hash[:func] = :list # if p_hash[:button_actions].first['name'] == 'list'
   p_hash[:command] = p_hash[:button_actions].first['value']
   p_hash[:cmd_splits] = p_hash[:command].split
@@ -254,10 +255,12 @@ def remove_due_date_from_command(p_hash)
   p_hash[:command] = begin_phrase.concat(end_phrase)
 end
 
-# Returns: [nil, false] if invalide date.
+# Returns: [nil, false] if invalid date.
 #          [datetime object, true/false if due date input string is of format]
 #         'sun' thru 'sat'
 def date_from_due_date(due_date_string)
+  # Case: /today
+  due_date_string = DateTime.now.strftime('%a').downcase if due_date_string == 'today'
   numeric_partition = due_date_string.partition(/\d/)
   # Case: no numeric portion. /fri or /jun or /half
   if numeric_partition[1].empty?
@@ -269,7 +272,7 @@ def date_from_due_date(due_date_string)
     is_day_of_week =
       Date::ABBR_DAYNAMES.map(&:downcase).include?(numeric_partition[0].downcase) ||
       Date::DAYNAMES.map(&:downcase).include?(numeric_partition[0].downcase)
-    return due_date, is_day_of_week
+    return [due_date, is_day_of_week]
   end
   # Case: just day of month specified. /12
   if numeric_partition[0].empty?

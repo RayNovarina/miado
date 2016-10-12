@@ -67,7 +67,7 @@ def all_chans_taskbot_body(parsed, _text, attachments, list_of_records)
     unless current_channel_id == item.channel_id
       current_channel_id = item.channel_id
       attachments << {
-        color: '#3AA3E3',
+        color: 'f8f8f8',
         text: "---- ##{item.channel_name} channel ----------",
         mrkdwn_in: ['text']
       }
@@ -84,8 +84,8 @@ def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, 
     { response_type: 'ephemeral',
       text: attachment_text,
       fallback: 'not done',
-      callback_id: 'task is done',
-      color: 'default',
+      callback_id: 'taskbot',
+      color: '#3AA3E3',
       attachment_type: 'default',
       actions: [
         { name: 'done',
@@ -94,7 +94,7 @@ def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, 
           type: 'button',
           value: tasknum
         },
-        { name: 'done',
+        { name: 'done and delete',
           text: 'Done and Delete',
           type: 'button',
           value: tasknum,

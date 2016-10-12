@@ -3,7 +3,7 @@ def all_channels_display(parsed, context, list_of_records)
   return all_channels_taskbot_format(parsed, context, list_of_records) if parsed[:due_first_option]
   text, attachments = all_chans_header(parsed, context, list_of_records)
   list_ids = all_chans_body(parsed, text, attachments, list_of_records)
-  list_chan_footer(parsed, context, list_of_records, text, attachments)
+  # list_chan_footer(parsed, context, list_of_records, text, attachments)
   [text, attachments, list_ids]
 end
 

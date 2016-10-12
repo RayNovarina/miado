@@ -58,7 +58,7 @@ def add_command(parsed)
           value: '@me'
         },
         { name: 'list',
-          text: 'All Tasks',
+          text: 'Team Tasks',
           type: 'button',
           value: 'team'
         },

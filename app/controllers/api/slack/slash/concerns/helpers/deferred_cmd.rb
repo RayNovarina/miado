@@ -248,7 +248,7 @@ def am_hash_from_member_record(parsed, assigned_member_id)
     source: :slack,
     slack_team_id: parsed[:url_params]['team_id'],
     slack_user_id: assigned_member_id).first
-
+  return nil if mcb.nil?
   { 'mcb' => mcb,
     'bot_dm_channel_id' => mcb.bot_dm_channel_id,
     'slack_user_name' => mcb.slack_user_name,
@@ -565,10 +565,9 @@ end
 # us to be here.
 def update_ccb_channel(api_resp, options)
   return if options[:p_hash][:ccb].nil?
-  options[:p_hash][:ccb].taskbot_msg_to_slack_id = options[:member_id] if api_resp['ok'] == true
-  options[:p_hash][:ccb].taskbot_msg_to_slack_id = "*failed*: #{api_resp['error']}" unless api_resp['ok'] == true
-  options[:p_hash][:ccb].taskbot_msg_date = DateTime.current
-  options[:p_hash][:ccb].save
+  options[:p_hash][:ccb].update(
+    taskbot_msg_to_slack_id: api_resp['ok'] == true ? options[:member_id] : "*failed*: #{api_resp['error']}",
+    taskbot_msg_date: DateTime.current)
 end
 
 def remember_taskbot_msg_id(api_resp, options)
@@ -694,8 +693,50 @@ end
 =end
 
 # Process deferred event.
+# Returns: nothing
 def send_deferred_event_cmds(_d_hash, parsed)
+  parsed[:mcb] = Member.find_from(
+    source: :slack,
+    slack_user_id: parsed[:url_params][:user_id],
+    slack_team_id: parsed[:url_params][:team_id]).first
+  return respond_to_discuss_event(parsed) if parsed[:ccb]['last_activity_type'] == 'button_action - discuss'
+  respond_to_feedback_event(parsed) if parsed[:ccb]['last_activity_type'] == 'button_action - feedback'
+end
+
+# p_hash[:ccb] --> channel of the member who typed in the slash cmd that caused
+# us to be here.
+def update_event_ccb_channel(parsed, activity_type)
+  return if parsed[:ccb].nil?
+  parsed[:ccb].update(
+    last_activity_type: activity_type,
+    last_activity_date: DateTime.current)
+end
+
+# Returns: nothing
+def respond_to_discuss_event(parsed)
   post_taskbot_comment(parsed)
+  update_event_ccb_channel(parsed, 'msg_update - discuss')
+end
+
+# Returns: nothing
+def respond_to_feedback_event(parsed)
+  submitted_comment = comment_from_feedback_button(parsed)
+  if submitted_comment.valid?
+    CommentMailer.new_comment(@view, submitted_comment).deliver_now
+    # return ['Thank you, we appreciate your input.', []]
+    update_event_ccb_channel(parsed, 'msg_update - feedback')
+    return
+  end
+  update_event_ccb_channel(parsed, 'msg_update - feedback:error')
+  parsed[:err_msg] = 'Error: Feedback message is empty.'
+end
+
+# Returns: Comment object.
+def comment_from_feedback_button(parsed)
+  name = "#{parsed[:mcb].slack_user_name} on Slack Team '#{parsed[:mcb].slack_team_name}'"
+  email = '**Submitted as feedback**'
+  body = parsed[:url_params][:event][:text]
+  Comment.new(name: name, email: email, body: body)
 end
 
 =begin
@@ -731,11 +772,7 @@ def post_taskbot_comment(parsed)
   task = ListItem.find(button_value[:item_db_id].to_i)
   task_desc = task.debug_trace.split('`')[1]
   posted_comment = parsed[:url_params]['event']['text']
-  member = Member.find_from(
-    source: :slack,
-    slack_user_id: parsed[:url_params][:user_id],
-    slack_team_id: parsed[:url_params][:team_id]).first
-  text = "Comment from @#{member.slack_user_name} about the task:\n " \
+  text = "Comment from @#{parsed[:mcb].slack_user_name} about the task:\n " \
     "`#{task_desc}`"
   attachments = [{
     text: posted_comment,
@@ -744,7 +781,7 @@ def post_taskbot_comment(parsed)
   }]
   # api_resp =
   send_channel_msg(
-    api_client: make_web_client(member.slack_user_api_token),
+    api_client: make_web_client(parsed[:mcb].slack_user_api_token),
     username: 'taskbot',
     channel_id: task.channel_id,
     text: text,

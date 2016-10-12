@@ -12,7 +12,7 @@ def add_standard_err_help_info(parsed, url_params, text)
 end
 
 # Returns json response with text, attachments fields.
-def slash_response(text, attachments, parsed)
+def slash_response(text, attachments, parsed, resp_options = nil)
   return nil if text.nil? && attachments.nil?
   options = {
     # Required fields.
@@ -21,6 +21,8 @@ def slash_response(text, attachments, parsed)
   }
   # Optional fields.
   options[:attachments] = attachments unless attachments.nil?
+  # options[:replace_original] = false unless resp_options.nil?
+  options.merge!(resp_options) unless resp_options.nil?
   options
 end
 
