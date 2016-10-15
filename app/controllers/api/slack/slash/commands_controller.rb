@@ -185,7 +185,7 @@ def create_from_slack(options)
       source: :slack, view: @view,
       slash_url_params: { 'user_id' => params['event']['user'],
                           'team_id' => params['team_id'],
-                          'channel_id' => params['event']['channel'] }).first).nil?
+                          'channel_id' => params['event']['channel'] })).nil?
       return [nil, '']
     end
     return [nil, ''] unless @view.channel.last_activity_type == 'button_action - discuss' || @view.channel.last_activity_type == 'button_action - feedback'
@@ -202,7 +202,7 @@ def create_from_slack(options)
   # Returns: url_params{}
   # //HACK
   def update_url_params_from_interactive_msg
-    payload = JSON.parse(params[:payload])
+    payload = JSON.parse(params[:payload]).with_indifferent_access
     params[:channel_id] = payload['channel']['id']
     params[:channel_name] = payload['channel']['name']
     params[:response_url] = payload['response_url']
@@ -211,6 +211,7 @@ def create_from_slack(options)
     params[:token] = payload['token']
     params[:user_id] = payload['user']['id']
     params[:user_name] = payload['user']['name']
+    params[:payload] = payload
   end
 
   # Returns: [text, attachments]

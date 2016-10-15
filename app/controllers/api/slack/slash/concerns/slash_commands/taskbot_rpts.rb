@@ -25,7 +25,7 @@ def taskbot_rpts_command(parsed, options = nil)
     text: "list @#{options[:member_name]} all due_first"
   }
   context = parse_slash_cmd(url_params, parsed[:ccb], parsed[:ccb].after_action_parse_hash)
-  return [err_resp(url_params, "`MiaDo ERROR: #{context[:err_msg]}`", nil), context] unless context[:err_msg].empty?
+  return ["`MiaDo ERROR: #{context[:err_msg]}`", nil] unless context[:err_msg].empty?
   # context[:debug] = true
   # Note: this prevents the list_command from resaving an after action hash to
   #       the channel. We are just getting a list report.

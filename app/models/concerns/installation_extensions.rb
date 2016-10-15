@@ -74,6 +74,7 @@ module InstallationExtensions
 
     # Various methods to support Installations and Team and Members models.
 
+    # Returns: [Installation records]
     def installations(options = {})
       if options.key?(:slack_user_id)
         return Installation.where(slack_team_id: options[:slack_team_id],
@@ -87,6 +88,7 @@ module InstallationExtensions
       Installation.all.reorder('slack_team_id ASC')
     end
 
+    # Returns: [Installation records]
     def teams
       Installation.select('DISTINCT ON(slack_team_id)*')
                   .reorder('slack_team_id ASC')
@@ -94,6 +96,7 @@ module InstallationExtensions
 
     private
 
+    # Returns: Installation record or nil
     def find_from_omniauth_callback(options)
       @view ||= options[:view]
       Installation.where(slack_user_id: options[:request].env['omniauth.auth'].uid,
@@ -101,13 +104,14 @@ module InstallationExtensions
                         ).first
     end
 
+    # Returns: Installation record or nil
     def find_from_slack(options)
       @view ||= options[:view]
       return Installation.where(slack_user_id: options[:slack_user_id],
                                 slack_team_id: options[:slack_team_id]
-                               ) if options.key?(:slack_user_id) && options.key?(:slack_team_id)
+                               ).first if options.key?(:slack_user_id) && options.key?(:slack_team_id)
       return Installation.where(slack_team_id: options[:slack_team_id]
-                               ) if options.key?(:slack_team_id)
+                               ).first if options.key?(:slack_team_id)
       nil
     end
 

@@ -247,7 +247,7 @@ def am_hash_from_member_record(parsed, assigned_member_id)
   mcb = Member.find_from(
     source: :slack,
     slack_team_id: parsed[:url_params]['team_id'],
-    slack_user_id: assigned_member_id).first
+    slack_user_id: assigned_member_id)
   return nil if mcb.nil?
   { 'mcb' => mcb,
     'bot_dm_channel_id' => mcb.bot_dm_channel_id,
@@ -284,6 +284,10 @@ def build_many_impacted_members(parsed)
   impacted_members = []
   parsed[:list_action_item_info].each do |task_info|
     am_hash = am_hash_from_assigned_member_id(parsed, task_info[:assigned_member_id])
+    if am_hash.nil?
+      require 'pry'
+      binding.pry
+    end
     next if impacted_members.include?(am_hash['slack_user_id'])
     impacted_member_id, impacted_member = build_one_impacted_member(am_hash: am_hash)
     impacted_members << impacted_member_id
@@ -494,11 +498,22 @@ def update_taskbot_ccb_channel(_api_resp, options)
 end
 
 def find_or_create_taskbot_channel(options)
+  Channel.find_or_create_taskbot_channel_from(
+    source: :slack,
+    slash_url_params: { 'user_id' => options[:member_id],
+                        'team_id' => options[:member_mcb].slack_team_id
+                      })
+=begin
+  Channel.where(is_taskbot: true,
+                slack_user_id: options[:slash_url_params]['user_id'],
+                slack_team_id: options[:slash_url_params]['team_id']).first
+  Channel.find_or_create_taskbot_channel_from(source: :installation, installation: @view.installation)
+  # @view.channel = Channel.find_or_create_taskbot_channel_from(source: :installation, installation: @view.installation)
   if (channel = Channel.find_from(source: :slack, slash_url_params: {
         'channel_id' => options[:taskbot_channel_id],
         'user_id' => options[:member_id],
         'team_id' => options[:member_mcb].slack_team_id }
-     ).first).nil?
+     )).nil?
     # Case: This channel has not been accessed before.
     channel = Channel.create_from(source: :slack, slash_url_params: {
       'channel_name' => 'directmessage', # installation.rtm_start_json['self']['name'
@@ -510,7 +525,9 @@ def find_or_create_taskbot_channel(options)
     channel.save
   end
   channel
+=end
 end
+
 
 # Returns: text status msg. 'ok' or err msg.
 def clear_taskbot_msg_channel(options)
@@ -698,24 +715,15 @@ def send_deferred_event_cmds(_d_hash, parsed)
   parsed[:mcb] = Member.find_from(
     source: :slack,
     slack_user_id: parsed[:url_params][:user_id],
-    slack_team_id: parsed[:url_params][:team_id]).first
+    slack_team_id: parsed[:url_params][:team_id])
   return respond_to_discuss_event(parsed) if parsed[:ccb]['last_activity_type'] == 'button_action - discuss'
   respond_to_feedback_event(parsed) if parsed[:ccb]['last_activity_type'] == 'button_action - feedback'
-end
-
-# p_hash[:ccb] --> channel of the member who typed in the slash cmd that caused
-# us to be here.
-def update_event_ccb_channel(parsed, activity_type)
-  return if parsed[:ccb].nil?
-  parsed[:ccb].update(
-    last_activity_type: activity_type,
-    last_activity_date: DateTime.current)
 end
 
 # Returns: nothing
 def respond_to_discuss_event(parsed)
   post_taskbot_comment(parsed)
-  update_event_ccb_channel(parsed, 'msg_update - discuss')
+  update_ccb_channel_activity(parsed, 'msg_update - discuss')
 end
 
 # Returns: nothing
@@ -727,7 +735,7 @@ def respond_to_feedback_event(parsed)
     update_event_ccb_channel(parsed, 'msg_update - feedback')
     return
   end
-  update_event_ccb_channel(parsed, 'msg_update - feedback:error')
+  update_ccb_channel_activity(parsed, 'msg_update - feedback:error')
   parsed[:err_msg] = 'Error: Feedback message is empty.'
 end
 

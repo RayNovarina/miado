@@ -38,43 +38,6 @@ def add_command(parsed)
   item.assigned_due_date, due_date_clause = add_due_date(parsed)
   item.description, description_clause = add_description(parsed)
 
-  text = ''
-  parsed[:response_headline] =
-    "#{task_num_clause} as: `#{description_clause}` #{assigned_to_clause} " \
-    "#{due_date_clause}"
-  attachments = [
-    { response_type: 'ephemeral',
-      text: parsed[:response_headline],
-      fallback: 'Do not view list',
-      callback_id: 'add task',
-      color: '#3AA3E3',
-      mrkdwn_in: ['text'],
-      attachment_type: 'default',
-      actions: [
-        { name: 'list',
-          text: 'Your Tasks',
-          style: 'primary',
-          type: 'button',
-          value: '@me'
-        },
-        { name: 'list',
-          text: 'Team Tasks',
-          type: 'button',
-          value: 'team'
-        },
-        { name: 'feedback',
-          text: 'Feedback',
-          type: 'button',
-          value: 'feedback'
-        },
-        { name: 'hints',
-          text: 'Hints',
-          type: 'button',
-          value: 'hints'
-        }
-      ]
-    }
-  ]
   item.debug_trace =
     "From add command - Response:#{parsed[:response_headline]}  " \
     "trace_syntax:#{parsed[:trace_syntax]}"
@@ -82,6 +45,11 @@ def add_command(parsed)
   if item.save
     # We have a new list that is in context.
     list << item.id
+    text = ''
+    parsed[:response_headline] =
+      "#{task_num_clause} as: `#{description_clause}` #{assigned_to_clause} " \
+      "#{due_date_clause}"
+    attachments = [add_response_attachment(parsed[:response_headline], item.id)]
     # Special case: just doing an add task for the redo command.
     parsed[:list] = list if parsed[:on_behalf_of_redo_cmd]
     return [text, attachments] if parsed[:on_behalf_of_redo_cmd]
@@ -118,6 +86,43 @@ end
 
 def add_description(parsed)
   [parsed[:command], parsed[:command]]
+end
+
+def add_response_attachment(response_text, item_db_id)
+  { response_type: 'ephemeral',
+    text: response_text,
+    fallback: 'Do not view list',
+    callback_id: { func: 'add task',
+                   item_db_id: item_db_id,
+                   response_headline: response_text
+                 }.to_json,
+    color: '#3AA3E3',
+    mrkdwn_in: ['text'],
+    attachment_type: 'default',
+    actions: [
+      { name: 'list',
+        text: 'Your Tasks',
+        style: 'primary',
+        type: 'button',
+        value: { command: '@me' }.to_json
+      },
+      { name: 'list',
+        text: 'Team Tasks',
+        type: 'button',
+        value: { command: 'team' }.to_json
+      },
+      { name: 'feedback',
+        text: 'Feedback',
+        type: 'button',
+        value: { resp_options: { replace_original: false } }.to_json
+      },
+      { name: 'hints',
+        text: 'Hints',
+        type: 'button',
+        value: {}.to_json
+      }
+    ]
+  }
 end
 
 def adjust_add_cmd_action_context(parsed)

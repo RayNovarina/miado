@@ -59,7 +59,7 @@
          slash_url_params: { 'user_id' => parsed[:url_params][:user_id],
                              'team_id' => parsed[:url_params][:team_id],
                              'channel_id' => chan_id_to_discuss
-                           }).first
+                           })
        task_to_discuss = ListItem.items(team_id: parsed[:url_params][:team_id],
                                        channel_id: chan_id_to_discuss)[task_num_to_discuss.to_i]
 =end

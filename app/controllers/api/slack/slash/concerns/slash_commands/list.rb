@@ -1,6 +1,6 @@
 # Inputs: parsed = parsed command line info that has been verified.
 #         list = [ListItem.id] for the list that the user is referencing.
-# Returns: [text, attachments]
+# Returns: [text, attachments, options]
 #          parsed[:err_msg] if needed.
 #          parsed[:list_for_after_action] = based on the new parsed info.
 #-----------------------------------
@@ -49,15 +49,15 @@ end
 # Returns: [text, attachments]
 def format_display_list(parsed, context, list_of_records)
   if parsed[:button_actions].any?
-    text, attachments, list_ids = button_lists(parsed, list_of_records)
+    text, attachments, list_ids, options = button_lists(parsed, list_of_records)
   else
-    text, attachments, list_ids = one_channel_display(parsed, context, list_of_records) if context[:channel_scope] == :one_channel
-    text, attachments, list_ids = all_channels_display(parsed, context, list_of_records) if context[:channel_scope] == :all_channels
+    text, attachments, list_ids, options = one_channel_display(parsed, context, list_of_records) if context[:channel_scope] == :one_channel
+    text, attachments, list_ids, options = all_channels_display(parsed, context, list_of_records) if context[:channel_scope] == :all_channels
   end
   # Persist the channel.list_ids[] for the next transaction.
   save_after_action_list_context(parsed, context, list_ids) unless parsed[:display_after_action_list]
   text.concat(parsed[:err_msg]) unless parsed[:err_msg].empty?
-  [text, attachments]
+  [text, attachments, options]
 end
 
 # Returns: [text, attachments]

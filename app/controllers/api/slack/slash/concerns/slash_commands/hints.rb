@@ -1,11 +1,11 @@
 
 # Returns: [text, attachments]
 def hints_command(parsed)
-  text, attachments = hints(parsed)
+  text, attachments, options = hints(parsed)
   @view.channel.last_activity_type = 'slash_command - hints'
   @view.channel.last_activity_date = DateTime.current
   @view.channel.save
-  [text, attachments]
+  [text, attachments, options]
 end
 
 # Returns: [text, attachments]
@@ -22,11 +22,11 @@ def hints_add_task(parsed)
     hints_add_task_subsection1(parsed),
     hints_add_task_footer(parsed)
   ]
-  [text, attachments]
+  [text, attachments, { replace_original: false }]
 end
 
 # Returns: attachment{}
-def hints_add_task_headline(parsed)
+def hints_add_task_headline(_parsed)
   msg =
     'Add Task hints:'
   { fallback: 'headline',

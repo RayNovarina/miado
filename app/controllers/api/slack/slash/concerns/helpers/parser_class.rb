@@ -15,11 +15,11 @@ end
 
 # Returns: url_params{}
 def slash_cmd_from_buttons(url_params, p_hash)
-  payload = JSON.parse(url_params[:payload])
   url_params[:command] = '/do'
   url_params[:text] = ''
-  p_hash[:button_callback_id] = payload['callback_id']
-  p_hash[:button_actions] = payload['actions']
+  p_hash[:button_callback_id] = JSON.parse(url_params[:payload][:callback_id]).with_indifferent_access
+  p_hash[:button_actions] = url_params[:payload][:actions]
+  p_hash[:first_button_value] = JSON.parse(url_params[:payload][:actions].first[:value]).with_indifferent_access
   p_hash[:expedite_deferred_cmd] = true
 end
 
@@ -79,6 +79,7 @@ def make_parse_hash
     response_headline: nil,
     button_callback_id: nil,
     button_actions: [],
+    first_button_value: nil,
     event_type: '',
     url_params: {}
   }
@@ -114,6 +115,7 @@ def save_after_action_list_context(parsed, context, list_ids = nil)
   parsed[:ccb] = nil
   parsed[:mcb] = nil
   parsed[:tcb] = nil
+  parsed[:button_actions] = []
   @view.channel.after_action_parse_hash = parsed
   @view.channel.last_activity_type = "slash_command - #{parsed[:func]}"
   @view.channel.last_activity_date = DateTime.current

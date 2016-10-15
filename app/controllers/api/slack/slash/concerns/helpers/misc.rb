@@ -16,13 +16,13 @@ def slash_response(text, attachments, parsed, resp_options = nil)
   return nil if text.nil? && attachments.nil?
   options = {
     # Required fields.
-    response_type: 'ephemeral',
     text: debug_headers(parsed).concat(text)
   }
   # Optional fields.
   options[:attachments] = attachments unless attachments.nil?
   # options[:replace_original] = false unless resp_options.nil?
   options.merge!(resp_options) unless resp_options.nil?
+  options[:response_type] = 'ephemeral' unless options.key?(:response_type)
   options
 end
 
@@ -85,17 +85,27 @@ def slack_member_from_name(parsed, name)
     member = Member.find_from(source: :slack,
                               slack_user_name: name,
                               slack_team_id: parsed[:url_params][:team_id]
-                             ).first).nil?
+                             )).nil?
   [member.slack_user_id, name]
 end
 
+# Returns: err msg if name not found
+#          slack user name
 def slack_member_name_from_slack_user_id(parsed, id)
   return '??not recognized' if (
     member = Member.find_from(source: :slack,
                               slack_user_id: id,
                               slack_team_id: parsed[:url_params][:team_id]
-                             ).first).nil?
+                             )).nil?
   member.slack_user_name
+end
+
+# Returns: Member record
+def slack_member_from_url_params(parsed)
+  Member.find_from(
+    source: :slack,
+    slack_user_id: parsed[:url_params][:user_id],
+    slack_team_id: parsed[:url_params][:team_id])
 end
 
 # Returns: [member_slack_id, member_name]
@@ -110,6 +120,15 @@ def mentioned_member_not_found(parsed, name)
   )
   return [nil, name] if member.nil?
   [member.slack_user_id, name]
+end
+
+# p_hash[:ccb] --> channel of the member who typed in the slash cmd that caused
+# us to be here.
+def update_ccb_channel_activity(parsed, activity_type)
+  return if parsed[:ccb].nil?
+  parsed[:ccb].update(
+    last_activity_type: activity_type,
+    last_activity_date: DateTime.current)
 end
 
 def lib_slack_api(method_name, api_token)

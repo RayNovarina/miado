@@ -16,8 +16,7 @@ user_name	ray
 
 def parse_slash_cmd(params, ccb, previous_action_parse_hash)
   p_hash = new_parse_hash(params, ccb, previous_action_parse_hash)
-  scan4_command_func(p_hash) unless ccb.is_taskbot
-  scan4_taskbot_cmd_func(p_hash) if ccb.is_taskbot
+  scan4_command_func(p_hash)
   return p_hash unless p_hash[:err_msg].empty?
   perform_scans_for_functions(p_hash)
   p_hash
@@ -92,6 +91,8 @@ CMD_FUNCS = %w(append assign delete done due feedback help hints list taskbot_rp
 def scan4_command_func(p_hash)
   return command_func_from_button(p_hash) if p_hash[:button_actions].any?
   return command_func_from_event(p_hash) unless p_hash[:event_type].empty?
+  scan4_taskbot_cmd_func(p_hash) if p_hash[:ccb].is_taskbot
+  return p_hash unless p_hash[:err_msg].empty?
   # Default if no command given.
   return p_hash[:func] = :help if p_hash[:cmd_splits].empty?
 
@@ -105,8 +106,8 @@ end
 
 # Returns: p_hash[:func]
 def command_func_from_button(p_hash)
-  return command_func_from_add_task_button(p_hash) if p_hash[:button_callback_id] == 'add task'
-  return command_func_from_taskbot_button(p_hash) if p_hash[:button_callback_id] == 'taskbot'
+  return command_func_from_add_task_button(p_hash) if p_hash[:button_callback_id][:func] == 'add task'
+  return command_func_from_taskbot_button(p_hash) if p_hash[:button_callback_id][:func] == 'taskbot'
 end
 
 # Returns: p_hash[:func]
@@ -114,7 +115,7 @@ def command_func_from_add_task_button(p_hash)
   return p_hash[:func] = :hints if p_hash[:button_actions].first['name'] == 'hints'
   return p_hash[:func] = :feedback if p_hash[:button_actions].first['name'] == 'feedback'
   p_hash[:func] = :list # if p_hash[:button_actions].first['name'] == 'list'
-  p_hash[:command] = p_hash[:button_actions].first['value']
+  p_hash[:command] = p_hash[:first_button_value][:command]
   p_hash[:cmd_splits] = p_hash[:command].split
 end
 
@@ -138,14 +139,13 @@ def command_func_from_message_event(p_hash)
 end
 
 def scan4_taskbot_cmd_func(p_hash)
-  return scan4_command_func(p_hash) if p_hash[:button_actions].any?
-  return scan4_command_func(p_hash) unless p_hash[:event_type].empty?
   p_hash[:err_msg] =
     # "Error: only the '#{params[:command]} /done' command is " \
     # 'allowed in the Taskbot channel.' unless p_hash[:func] == :done
     "Error: Sorry, but at this time no '#{params[:command]}' commands " \
     'allowed in the Taskbot channel. (Except for the Done and Discuss ' \
-    'buttons). Switch to a regular channel to run /do commands.'
+    'buttons). Switch to a regular channel to ' \
+    'run /do commands.' unless p_hash[:original_command].include?('due_first')
 end
 
 # Case: command function has been processed, leaving:
