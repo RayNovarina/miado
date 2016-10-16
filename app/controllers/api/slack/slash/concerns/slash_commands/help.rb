@@ -26,7 +26,7 @@ def header_buttons(_parsed)
   { fallback: 'header_buttons',
     text: '',
     color: '#f8f8f8',
-    callback_id: 'help',
+    callback_id: { id: 'help' }.to_json,
     actions: [
       { name: 'faqs',
         text: 'FAQs',

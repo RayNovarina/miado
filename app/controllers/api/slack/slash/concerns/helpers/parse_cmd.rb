@@ -106,8 +106,8 @@ end
 
 # Returns: p_hash[:func]
 def command_func_from_button(p_hash)
-  return command_func_from_add_task_button(p_hash) if p_hash[:button_callback_id][:func] == 'add task'
-  return command_func_from_taskbot_button(p_hash) if p_hash[:button_callback_id][:func] == 'taskbot'
+  return command_func_from_add_task_button(p_hash) if p_hash[:button_callback_id][:id] == 'add task'
+  return command_func_from_taskbot_button(p_hash) if p_hash[:button_callback_id][:id] == 'taskbot'
 end
 
 # Returns: p_hash[:func]

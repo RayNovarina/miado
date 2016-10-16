@@ -1,5 +1,5 @@
 
-# Returns: [text, attachments]
+# Returns: [text, attachments, response_options]
 def feedback_command(parsed)
   text, attachments, options = send_comment(parsed)
   @view.channel.update(
@@ -8,10 +8,10 @@ def feedback_command(parsed)
   [text, attachments, options]
 end
 
-# Returns: [text, attachments]
+# Returns: [text, attachments, response_options]
 def send_comment(parsed)
-  return feedback_button_add_task(parsed) if parsed[:button_callback_id][:func] == 'add task'
-  return feedback_button_taskbot_rpts(parsed) if parsed[:button_callback_id][:func] == 'taskbot'
+  return feedback_button_add_task(parsed) if parsed[:button_callback_id][:id] == 'add task'
+  return feedback_button_taskbot_rpts(parsed) if parsed[:button_callback_id][:id] == 'taskbot'
   submitted_comment = comment_from_slash_feedback(parsed)
   if submitted_comment.valid?
     CommentMailer.new_comment(@view, submitted_comment).deliver_now
@@ -19,20 +19,6 @@ def send_comment(parsed)
   end
   parsed[:err_msg] = 'Error: Feedback message is empty.'
 end
-
-=begin
-  Form Params
-  channel_id	C0VNKV7BK
-  channel_name	general
-  command	/do
-  response_url	https://hooks.slack.com/commands/T0VN565N0/36163731489/YAHWUMXlBdviTE1rBILELuFK
-  team_domain	shadowhtracteam
-  team_id	T0VN565N0
-  text	call GoDaddy @susan /fri
-  token	3ZQVG7rk4p7EZZluk1gTH3aN
-  user_id	U0VLZ5P51
-  user_name	ray
-=end
 
 # Returns: Comment object.
 def comment_from_slash_feedback(parsed)
@@ -43,37 +29,16 @@ def comment_from_slash_feedback(parsed)
   Comment.new(name: name, email: email, body: body)
 end
 
-# Returns: [text, attachments]
+# Returns: [text, attachments, response_options]
 def feedback_button_add_task(parsed)
-  feedback_button_add_task_response(parsed)
-  # feedback_button_add_task_chat_msg(parsed)
-end
-
-=begin
-{ name: 'feedback',
-  text: 'Feedback',
-  type: 'button',
-  # value: { item_db_id: item_db_id,
-  #         response_headline: response_text
-  #       }.to_json
-  value: { resp_options: { replace_original: false } }.to_json
-}
-=end
-def feedback_button_add_task_response(parsed)
   text = ''
-  attachments = []
-  attachments <<
-    add_response_attachment(
-      parsed[:button_callback_id][:response_headline],
-      parsed[:button_callback_id][:item_db_id]
-    ) if parsed[:first_button_value][:resp_options].nil? ||
-         parsed[:first_button_value][:resp_options][:replace_original]
-  attachments <<
+  attachments = [
+    list_button_action_headline_replacement(parsed),
     { pretext: 'Please use the MiaDo `/do feedback` command to email MiaDo ' \
       "product support.\n" \
       "Example: `/do feedback This is my suggestion. [enter]`\n\n",
       mrkdwn_in: ['pretext']
-    }
+    }]
   [text, attachments, parsed[:first_button_value][:resp_options]]
 end
 

@@ -1,75 +1,29 @@
 # Returns: [text, attachments, list_ids, options]
 def button_lists(parsed, list_of_records)
-  return button_my_tasks_display(parsed, list_of_records) if parsed[:list_scope] == :one_member
-  button_team_display(parsed, list_of_records) # if parsed[:channel_scope] == :team
+  return button_my_tasks_display(parsed, list_of_records) if parsed[:first_button_value][:command] == '@me'
+  button_team_display(parsed, list_of_records) # if parsed[:first_button_value][:command] == 'team'
 end
 
 # Returns: [text, attachments, list_ids, options]
 def button_my_tasks_display(parsed, list_of_records)
-  text, attachments = my_tasks_header_button_action(parsed, list_of_records)
-  list_ids = one_chan_body(parsed, text, attachments, list_of_records)
+  text, attachments, response_options = button_lists_header(parsed)
+  list_ids = one_chan_body(parsed, text, attachments, list_of_records, new_attachment: true)
   # list_chan_footer(parsed, context, list_of_records, text, attachments)
-  [text, attachments, list_ids, { replace_original: false }]
+  [text, attachments, list_ids, response_options]
 end
 
-# Returns [text, attachments]
-def my_tasks_header_button_action(parsed, _list_of_records, _add_chan_name = false)
-  rpt_type = "`Your #{parsed[:list_scope] == :team ? 'team\'s ' : ''}current (open) tasks in this channel:`"
-  rpt_headline = "#{parsed[:response_headline]}\n\n#{rpt_type}"
-  text = ''
-  attachments = [
-    # { text: '',
-    #  fallback: 'Do not view list',
-    #  callback_id: 'add task',
-    #  color: 'ffffff',
-    #  actions: [
-    #    { name: 'list',
-    #      text: 'Team Open Tasks',
-    #      type: 'button',
-    #      value: { command: 'team' }.to_json
-    #    }
-    #  ]
-    # },
-    { pretext: rpt_headline,
-      text: '',
-      color: 'ffffff',
-      mrkdwn_in: ['pretext']
-    }
+# Returns [text, attachments, response_options]
+def button_lists_header(parsed)
+  ['',
+   [list_button_action_headline_replacement(parsed)],
+   parsed[:first_button_value][:resp_options]
   ]
-  [text, attachments]
 end
 
 # Returns: [text, attachments, list_ids, options]
 def button_team_display(parsed, list_of_records)
-  text, attachments = team_header_button_action(parsed, list_of_records)
-  list_ids = one_chan_body(parsed, text, attachments, list_of_records)
+  text, attachments, response_options = button_lists_header(parsed)
+  list_ids = all_chans_body(parsed, text, attachments, list_of_records, new_attachment: true)
   # list_chan_footer(parsed, context, list_of_records, text, attachments)
-  [text, attachments, list_ids, { replace_original: false }]
-end
-
-# Returns [text, attachments]
-def team_header_button_action(parsed, _list_of_records, _add_chan_name = false)
-  rpt_type = "`Your #{parsed[:list_scope] == :team ? 'team\'s ' : ''}current (open) tasks in this channel:`"
-  rpt_headline = "#{parsed[:response_headline]}\n\n#{rpt_type}"
-  text = ''
-  attachments = [
-    # { text: '',
-    #  fallback: 'Do not view list',
-    #  callback_id: 'add task',
-    #  color: 'ffffff',
-    #  actions: [
-    #    { name: 'list',
-    #      text: 'My Open Tasks',
-    #      type: 'button',
-    #      value: { command: '@me' }.to_json
-    #    }
-    #  ]
-    # },
-    { pretext: rpt_headline,
-      text: '',
-      color: 'ffffff',
-      mrkdwn_in: ['pretext']
-    }
-  ]
-  [text, attachments]
+  [text, attachments, list_ids, response_options]
 end

@@ -92,7 +92,7 @@ def add_response_attachment(response_text, item_db_id)
   { response_type: 'ephemeral',
     text: response_text,
     fallback: 'Do not view list',
-    callback_id: { func: 'add task',
+    callback_id: { id: 'add task',
                    item_db_id: item_db_id,
                    response_headline: response_text
                  }.to_json,

@@ -12,22 +12,24 @@ def all_chans_taskbot_header(parsed, _context, _list_of_records)
   text = ''
   attachments = [
     { text: '',
+      fallback: 'Do not view list',
+      callback_id: { id: 'taskbot' }.to_json,
       color: 'ffffff',
       actions: [
         { name: 'feedback',
           text: 'Feedback',
           type: 'button',
-          value: ''
+          value: {}.to_json
         },
         { name: 'hints',
           text: 'Hints',
           type: 'button',
-          value: ''
+          value: {}.to_json
         },
         { name: 'all',
-          text: 'All Tasks',
+          text: 'Team Tasks',
           type: 'button',
-          value: '',
+          value: { command: 'team' }.to_json,
           style: 'primary'
         }
       ]
@@ -84,7 +86,7 @@ def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, 
     { response_type: 'ephemeral',
       text: attachment_text,
       fallback: 'not done',
-      callback_id: 'taskbot',
+      callback_id: { id: 'taskbot' }.to_json,
       color: '#3AA3E3',
       attachment_type: 'default',
       actions: [
@@ -92,12 +94,12 @@ def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, 
           text: 'Done',
           style: 'primary',
           type: 'button',
-          value: tasknum
+          value: { tasknum: tasknum }.to_json
         },
         { name: 'done and delete',
           text: 'Done and Delete',
           type: 'button',
-          value: tasknum,
+          value: { tasknum: tasknum }.to_json,
           style: 'danger'
         },
         { name: 'discuss',

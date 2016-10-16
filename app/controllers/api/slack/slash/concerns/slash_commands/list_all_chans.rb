@@ -13,7 +13,7 @@ def all_chans_header(parsed, context, list_of_records)
 end
 
 # Returns: list_ids[]
-def all_chans_body(parsed, _text, attachments, list_of_records)
+def all_chans_body(parsed, _text, attachments, list_of_records, options = { new_attachment: false })
   list_ids = []
   current_channel_id = ''
   list_of_records.each_with_index do |item, index|
@@ -25,7 +25,12 @@ def all_chans_body(parsed, _text, attachments, list_of_records)
         mrkdwn_in: ['text']
       }
     end
-    list_add_item_to_display_list(parsed, attachments, attachments.size - 1, item, index + 1)
+    list_add_item_to_display_list(
+      parsed,
+      attachments,
+      options[:new_attachment] && index == 0 ? 'new' : 'last',
+      item,
+      index + 1)
     list_ids << item.id
   end
   list_ids
