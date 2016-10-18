@@ -44,6 +44,7 @@ def make_parse_hash
     due_option: false,
     due_first_option: false,
     done_option: false,
+    taskbot_rpt: false,
     expedite_deferred_cmd: false,
     err_msg: '',
     ccb: nil,
@@ -104,7 +105,8 @@ def context_from_ccb_hash(previous_action_parse_hash)
     slash_cmd_name: context['slash_cmd_name'],
     open_option: context['open_option'],
     done_option: context['done_option'],
-    due_option: context['due_option']
+    due_option: context['due_option'],
+    taskbot_rpt: context['taskbot_rpt']
   }
 end
 
@@ -143,6 +145,7 @@ def after_action_list_context(context, list_ids = nil)
     response_headline: context[:response_headline],
     open_option: context[:open_option],
     done_option: context[:done_option],
-    due_option: context[:due_option]
+    due_option: context[:due_option],
+    taskbot_rpt: context[:taskbot_rpt]
   }
 end

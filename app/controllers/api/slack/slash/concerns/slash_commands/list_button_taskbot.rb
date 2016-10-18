@@ -1,3 +1,10 @@
+# Returns: [text, attachments{}, list_ids[], response_options{}]
+def button_lists_taskbot_chan(parsed, list_of_records)
+  require 'pry'
+  binding.pry
+end
+
+=begin
 # Returns: [text, attachments]
 def all_channels_taskbot_format(parsed, context, list_of_records)
   text, attachments = all_chans_taskbot_header(parsed, context, list_of_records)
@@ -10,43 +17,55 @@ end
 # Returns: [text, attachments]
 def all_chans_taskbot_header(parsed, _context, _list_of_records)
   rpt_headline = format_all_chans_taskbot_header(parsed, parsed[:channel_scope])
-  text = ''
-  attachments =
-    [{ text: '',
-       fallback: 'Do not view list',
-       callback_id: { id: 'taskbot' }.to_json,
-       color: 'ffffff',
-       actions: [
-         { name: 'list',
-           text: 'Your Tasks',
-           type: 'button',
-           value: { command: '@me all' }.to_json,
-           style: 'default'
-         },
-         { name: 'list',
-           text: 'Team Tasks',
-           type: 'button',
-           value: { command: 'team all' }.to_json,
-           style: 'primary'
-         },
-         { name: 'feedback',
-           text: 'Feedback',
-           type: 'button',
-           value: {}.to_json
-         },
-         { name: 'hints',
-           text: 'Hints',
-           type: 'button',
-           value: {}.to_json
-         }
-       ]
-     },
-     { pretext: rpt_headline,
-       text: '',
-       color: 'ffffff',
-       mrkdwn_in: ['pretext']
-     }]
-  [text, attachments]
+  ['', add_all_chans_taskbot_response_attachments(parsed, rpt_headline)]
+end
+
+# Returns: [attachment{}]
+def add_all_chans_taskbot_response_attachments(parsed, rpt_headline = '')
+  # If "Team Tasks" or "Hints" buttons are clicked, change "Your Tasks" button
+  # color to primary.
+  style_your_tasks = 'default'
+  style_your_tasks = 'primary' if !parsed[:button_callback_id].nil? &&
+                                  parsed[:button_callback_id][:id] == 'taskbot' &&
+                                  (parsed[:button_actions].first['name'] == 'hints' ||
+                                   parsed[:list_scope] == :team
+                                  )
+  style_team_tasks = 'primary' if style_your_tasks == 'default'
+  style_team_tasks = 'default' unless style_your_tasks == 'default'
+  [{ text: '',
+     fallback: 'Do not view list',
+     callback_id: { id: 'taskbot' }.to_json,
+     color: 'ffffff',
+     actions: [
+       { name: 'list',
+         text: 'Your Tasks',
+         type: 'button',
+         value: { command: '@me all' }.to_json,
+         style: style_your_tasks
+       },
+       { name: 'list',
+         text: 'Team Tasks',
+         type: 'button',
+         value: { command: 'team all' }.to_json,
+         style: style_team_tasks
+       },
+       { name: 'feedback',
+         text: 'Feedback',
+         type: 'button',
+         value: {}.to_json
+       },
+       { name: 'hints',
+         text: 'Hints',
+         type: 'button',
+         value: {}.to_json
+       }
+     ]
+   },
+   { pretext: rpt_headline,
+     text: '',
+     color: 'ffffff',
+     mrkdwn_in: ['pretext']
+   }]
 end
 
 # text = debug_headers(context).concat(format_pub_header(context, text))
@@ -116,3 +135,16 @@ def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, 
       ]
     }
 end
+
+# Top of report buttons and headline.
+# Returns: Replacement add_task headline [attachment{}] if specified.
+def taskbot_button_action_headline_replacement(parsed)
+  if parsed[:first_button_value][:resp_options].nil? ||
+     parsed[:first_button_value][:resp_options][:replace_original]
+    return add_all_chans_taskbot_response_attachments(
+      parsed,
+      parsed[:button_callback_id][:response_headline] || '')
+  end
+  []
+end
+=end

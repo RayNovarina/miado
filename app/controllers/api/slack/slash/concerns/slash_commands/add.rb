@@ -49,7 +49,7 @@ def add_command(parsed)
     parsed[:response_headline] =
       "#{task_num_clause} as: `#{description_clause}` #{assigned_to_clause} " \
       "#{due_date_clause}"
-    attachments = [add_response_attachment(parsed[:response_headline], item.id)]
+    attachments = add_response_headline_attachments(parsed, parsed[:response_headline], item.id)
     # Special case: just doing an add task for the redo command.
     parsed[:list] = list if parsed[:on_behalf_of_redo_cmd]
     return [text, attachments] if parsed[:on_behalf_of_redo_cmd]
@@ -88,41 +88,42 @@ def add_description(parsed)
   [parsed[:command], parsed[:command]]
 end
 
-def add_response_attachment(response_text, item_db_id)
-  { response_type: 'ephemeral',
-    text: response_text,
-    fallback: 'Do not view list',
-    callback_id: { id: 'add task',
-                   item_db_id: item_db_id,
-                   response_headline: response_text
-                 }.to_json,
-    color: '#3AA3E3',
-    mrkdwn_in: ['text'],
-    attachment_type: 'default',
-    actions: [
-      { name: 'list',
-        text: 'Your Tasks',
-        style: 'primary',
-        type: 'button',
-        value: { command: '@me' }.to_json
-      },
-      { name: 'list',
-        text: 'Team Tasks',
-        type: 'button',
-        value: { command: 'team' }.to_json
-      },
-      { name: 'feedback',
-        text: 'Feedback',
-        type: 'button',
-        value: { resp_options: { replace_original: false } }.to_json
-      },
-      { name: 'hints',
-        text: 'Hints',
-        type: 'button',
-        value: {}.to_json
-      }
-    ]
-  }
+# Returns: [attachment{}]
+def add_response_headline_attachments(_parsed, response_text = '', item_db_id = '')
+  [{ response_type: 'ephemeral',
+     text: response_text,
+     fallback: 'Do not view list',
+     callback_id: { id: 'add task',
+                    item_db_id: item_db_id,
+                    response_headline: response_text
+                  }.to_json,
+     color: '#3AA3E3',
+     mrkdwn_in: ['text'],
+     attachment_type: 'default',
+     actions: [
+       { name: 'list',
+         text: 'Your Tasks',
+         style: 'primary',
+         type: 'button',
+         value: { command: '@me' }.to_json
+       },
+       { name: 'list',
+         text: 'Team Tasks',
+         type: 'button',
+         value: { command: 'team' }.to_json
+       },
+       { name: 'feedback',
+         text: 'Feedback',
+         type: 'button',
+         value: { resp_options: { replace_original: false } }.to_json
+       },
+       { name: 'hints',
+         text: 'Hints',
+         type: 'button',
+         value: {}.to_json
+       }
+     ]
+  }]
 end
 
 def adjust_add_cmd_action_context(parsed)

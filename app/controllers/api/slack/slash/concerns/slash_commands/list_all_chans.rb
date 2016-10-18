@@ -1,6 +1,6 @@
 # Returns: [text, attachments]
 def all_channels_display(parsed, context, list_of_records)
-  return all_channels_taskbot_format(parsed, context, list_of_records) if parsed[:due_first_option]
+  return all_channels_taskbot_format(parsed, context, list_of_records) if parsed[:taskbot_rpt] # in list_all_chans_taskbot.rb
   text, attachments = all_chans_header(parsed, context, list_of_records)
   list_ids = all_chans_body(parsed, text, attachments, list_of_records)
   # list_chan_footer(parsed, context, list_of_records, text, attachments)
@@ -9,7 +9,7 @@ end
 
 # Returns: [text, attachments]
 def all_chans_header(parsed, context, list_of_records)
-  list_chan_header(parsed, context, list_of_records, '#all-channels ')
+  [list_chan_header(parsed, context, list_of_records, '#all-channels '), []] # in list.rb
 end
 
 # Returns: list_ids[]

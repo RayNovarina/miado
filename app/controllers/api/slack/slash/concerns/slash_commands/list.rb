@@ -12,7 +12,7 @@
 #------------------------------
 def list_command(parsed)
   adjust_list_cmd_action_context(parsed)
-  format_display_list(parsed, parsed, list_from_parsed(parsed))
+  format_display_list(parsed, parsed, list_from_parsed(parsed)) # list_from_parsed(parsed) in: list_item_query.rb
 end
 
 # Returns: [text, attachments, response_options], parsed[:err_msg] if needed.
@@ -49,29 +49,30 @@ end
 # Returns: [text, attachments{}, list_ids[], response_options{}]
 def format_display_list(parsed, context, list_of_records)
   if parsed[:button_actions].any?
-    text, attachments, list_ids, options = button_lists(parsed, list_of_records)
+    # List generated via buttons have special formats.
+    text, attachments, list_ids, options = button_lists_taskbot_chan(parsed, list_of_records) if context[:button_callback_id][:id] == 'taskbot' # list_button_taskbot.rb
+    text, attachments, list_ids, options = button_lists_public_chan(parsed, list_of_records) unless context[:button_callback_id][:id] == 'taskbot' # list_button_public.rb
   else
-    text, attachments, list_ids, options = one_channel_display(parsed, context, list_of_records) if context[:channel_scope] == :one_channel
-    text, attachments, list_ids, options = all_channels_display(parsed, context, list_of_records) if context[:channel_scope] == :all_channels
+    # Regular list commands.
+    text, attachments, list_ids, options = one_channel_display(parsed, context, list_of_records) if context[:channel_scope] == :one_channel # list_one_chans.rb
+    text, attachments, list_ids, options = all_channels_display(parsed, context, list_of_records) if context[:channel_scope] == :all_channels # list_all_chans.rb
   end
   # Persist the channel.list_ids[] for the next transaction.
-  save_after_action_list_context(parsed, context, list_ids) unless parsed[:display_after_action_list]
+  save_after_action_list_context(parsed, context, list_ids) unless parsed[:display_after_action_list] # parser_class.rb
   text.concat(parsed[:err_msg]) unless parsed[:err_msg].empty?
   [text, attachments, options]
 end
 
-# Returns: [text, attachments]
+# Returns: text
 def list_chan_header(parsed, context, list_of_records, add_chan_name = false)
   if add_chan_name.respond_to? :to_str
     channel_name = add_chan_name
   else
     channel_name = add_chan_name ? "*##{parsed[:url_params][:channel_name]}* channel" : ''
   end
-  text =
     "`to-do list#{list_format_owner_title(context)}`" \
     "#{list_of_records.empty? ? ' (empty)' : ''}" \
     " #{channel_name}"
-  [text, []]
 end
 
 def list_chan_footer(_parsed, context, list_of_records, _text, attachments)
@@ -125,17 +126,6 @@ end
 def list_cmd_task_completed_clause(item)
   return '' unless item.done
   ' | *Completed* '
-end
-
-# Returns: Replacement add_task headline attachment{} if specified.
-def list_button_action_headline_replacement(parsed)
-  if parsed[:first_button_value][:resp_options].nil? ||
-     parsed[:first_button_value][:resp_options][:replace_original]
-    add_response_attachment(
-      parsed[:button_callback_id][:response_headline],
-      parsed[:button_callback_id][:item_db_id]
-    )
-  end
 end
 
 def adjust_list_cmd_action_context(parsed)

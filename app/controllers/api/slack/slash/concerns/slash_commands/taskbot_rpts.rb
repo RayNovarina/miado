@@ -22,7 +22,7 @@ def taskbot_rpts_command(parsed, options = nil)
     token: parsed[:url_params][:token],
     user_id: parsed[:ccb].slack_user_id,
     user_name: parsed[:url_params][:user_name],
-    text: "list @#{options[:member_name]} all due_first"
+    text: "list_taskbot @#{options[:member_name]} all due_first"
   }
   context = parse_slash_cmd(url_params, parsed[:ccb], parsed[:ccb].after_action_parse_hash)
   return ["`MiaDo ERROR: #{context[:err_msg]}`", nil] unless context[:err_msg].empty?

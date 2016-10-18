@@ -9,7 +9,7 @@ end
 # Returns: [text, attachments]
 def one_chan_header(parsed, context, list_of_records)
   # Default case.
-  list_chan_header(parsed, context, list_of_records, true)
+  [list_chan_header(parsed, context, list_of_records, true), []]
 end
 
 # Returns: list_ids[]
