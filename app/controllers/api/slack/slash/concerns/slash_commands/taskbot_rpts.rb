@@ -1,5 +1,5 @@
 # Inputs: parsed
-# Returns: [text, attachments]
+# Returns: [text, attachments, options, list_cmd_after_action_list_context]
 #          parsed[:err_msg] if needed.
 #-----------------------------------
 # Generate a variety of lists/reports formatted for the taskbot channel.

@@ -117,10 +117,11 @@ def save_after_action_list_context(parsed, context, list_ids = nil)
   parsed[:ccb] = nil
   parsed[:mcb] = nil
   parsed[:tcb] = nil
-  parsed[:button_actions] = []
   @view.channel.after_action_parse_hash = parsed
-  @view.channel.last_activity_type = "slash_command - #{parsed[:func]}"
+  @view.channel.last_activity_type =
+    "#{parsed[:button_actions].any? ? 'button_action' : 'slash_command'} - #{parsed[:func]}"
   @view.channel.last_activity_date = DateTime.current
+  parsed[:button_actions] = []
   ok = @view.channel.save
   parsed[:url_params] = params
   parsed[:ccb] = @view.channel

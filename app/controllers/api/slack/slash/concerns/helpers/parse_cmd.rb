@@ -132,10 +132,10 @@ def command_func_from_taskbot_button(p_hash)
   return p_hash[:func] = :hints if p_hash[:button_actions].first['name'] == 'hints'
   return p_hash[:func] = :feedback if p_hash[:button_actions].first['name'] == 'feedback'
   p_hash[:taskbot_rpt] = true if p_hash[:button_actions].first['name'] == 'list'
-  return p_hash[:func] = :list if p_hash[:button_actions].first['name'] == 'list'
+  p_hash[:func] = :list if p_hash[:button_actions].first['name'] == 'list'
   p_hash[:func] = :done if p_hash[:button_actions].first['name'] == 'done' || p_hash[:button_actions].first['name'] == 'done and delete'
   p_hash[:func] = :discuss if p_hash[:button_actions].first['name'] == 'discuss'
-  p_hash[:command] = p_hash[:button_actions].first['value']
+  p_hash[:command] = p_hash[:first_button_value][:command]
   p_hash[:cmd_splits] = p_hash[:command].split
 end
 

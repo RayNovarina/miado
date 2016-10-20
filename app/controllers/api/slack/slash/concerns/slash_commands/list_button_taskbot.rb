@@ -1,7 +1,71 @@
 # Returns: [text, attachments{}, list_ids[], response_options{}]
 def button_lists_taskbot_chan(parsed, list_of_records)
-  require 'pry'
-  binding.pry
+  text, attachments, response_options = button_taskbot_lists_header(parsed, list_of_records)
+  list_ids = all_chans_taskbot_body(parsed, text, attachments, list_of_records) # in: list_all_chans_taskbot.rb
+  # list_chan_footer(parsed, parsed, list_of_records, text, attachments)
+  [text, attachments, list_ids, response_options]
+end
+
+# Returns [text, attachments, response_options]
+def button_taskbot_lists_header(parsed, list_of_records)
+  text = ''
+  attachments = list_button_taskbot_headline_replacement(
+    parsed, format_all_chans_taskbot_header(parsed, parsed[:channel_scope])) # in: list_all_chans_taskbot.rb
+  # attachments << {
+  #  color: '#3AA3E3',
+  #  text: "#{list_chan_header(parsed, parsed, list_of_records, true)}\n",
+  #  mrkdwn_in: ['text']
+  # }
+  [text, attachments, parsed[:first_button_value][:resp_options]]
+end
+
+# Top of report buttons and headline.
+# Returns: Replacement taskbot headline [attachment{}]
+def list_button_taskbot_headline_replacement(parsed, rpt_headline = '')
+  # If "Team Tasks" or "Hints" buttons are clicked, change "Your Tasks" button
+  # color to primary.
+  style_your_tasks = 'default'
+  style_your_tasks = 'primary' if !parsed[:button_callback_id].nil? &&
+                                  parsed[:button_callback_id][:id] == 'taskbot' &&
+                                  (!(parsed[:button_actions].first['name'] == 'list') ||
+                                   parsed[:list_scope] == :team
+                                  )
+  style_team_tasks = 'primary' if style_your_tasks == 'default'
+  style_team_tasks = 'default' unless style_your_tasks == 'default'
+  [{ text: '',
+     fallback: 'Do not view list',
+     callback_id: { id: 'taskbot' }.to_json,
+     color: 'ffffff',
+     actions: [
+       { name: 'list',
+         text: 'Your Tasks',
+         type: 'button',
+         value: { command: '@me all' }.to_json,
+         style: style_your_tasks
+       },
+       { name: 'list',
+         text: 'Team Tasks',
+         type: 'button',
+         value: { command: 'team all' }.to_json,
+         style: style_team_tasks
+       },
+       { name: 'feedback',
+         text: 'Feedback',
+         type: 'button',
+         value: {}.to_json
+       },
+       { name: 'hints',
+         text: 'Hints',
+         type: 'button',
+         value: {}.to_json
+       }
+     ]
+   },
+   { pretext: rpt_headline,
+     text: '',
+     color: 'ffffff',
+     mrkdwn_in: ['pretext']
+   }]
 end
 
 =begin

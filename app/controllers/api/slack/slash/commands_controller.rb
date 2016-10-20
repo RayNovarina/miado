@@ -38,6 +38,7 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   # In all cases, @view hash has url_params with Slack slash command form parms.
   def local_response
     # Cmd Context: We need to know our team members and the last list displayed.
+    # ccb = Channel that this transaction is associated with.
     ccb, err_msg = channel_control_block_from_slack
     return [nil, nil] if ccb.nil? && err_msg.empty?
     return [err_resp(params, err_msg, nil), nil] unless err_msg.empty?
@@ -45,6 +46,8 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
     # BEFORE action list(mine) or list(team) or list(all)
     parsed = parse_slash_cmd(params, ccb, ccb.after_action_parse_hash)
     return [err_resp(params, "`MiaDo ERROR: #{parsed[:err_msg]}`", nil), parsed] unless parsed[:err_msg].empty?
+    # tcb = Taskbot Channel.
+    parsed[:tcb] = parsed[:ccb] if parsed[:ccb].is_taskbot
     text, attachments, options = process_cmd(parsed)
     # after_action_list_context: {} is AFTER action list(mine) or
     # list(team) or list(all)

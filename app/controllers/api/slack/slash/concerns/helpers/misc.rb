@@ -69,6 +69,26 @@ def task_num_out_of_range?(parsed)
   !parsed[:err_msg].empty?
 end
 
+def save_item_info(parsed, id)
+  if id == -1
+    parsed[:list_action_item_info] = []
+    return nil
+  end
+  begin
+    item = ListItem.find(id)
+  rescue ActiveRecord::RecordNotFound => e
+    logger.info e
+    return nil
+  end
+  unless item.nil?
+    parsed[:list_action_item_info] << {
+      db_id: item.id,
+      assigned_member_id: item.assigned_member_id
+    }
+  end
+  item
+end
+
 def make_web_client(api_token)
   # Slack.config.token = 'xxxxx'
   Slack.configure do |config|

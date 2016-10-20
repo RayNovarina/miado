@@ -1,6 +1,6 @@
 # Returns: [text, attachments{}, list_ids[], response_options{}]
 def button_lists_public_chan(parsed, list_of_records)
-  text, attachments, response_options = button_public_lists_header(parsed)
+  text, attachments, response_options = button_public_lists_header(parsed, list_of_records)
   list_ids = one_chan_body(parsed, text, attachments, list_of_records, new_attachment: false) # in: list_all_chans.rb
   # list_chan_footer(parsed, context, list_of_records, text, attachments)
   [text, attachments, list_ids, response_options]
@@ -9,7 +9,7 @@ end
 # Returns [text, attachments, response_options]
 def button_public_lists_header(parsed, list_of_records)
   text = ''
-  attachments = list_button_public_headline_replacement(parsed) # in list.rb
+  attachments = list_button_public_headline_replacement(parsed)
   attachments << {
     color: '#3AA3E3',
     text: "#{list_chan_header(parsed, parsed, list_of_records, true)}\n",

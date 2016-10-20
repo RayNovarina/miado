@@ -11,7 +11,7 @@ end
 # Returns: [text, attachments, response_options]
 def hints(parsed)
   return hints_button_add_task(parsed) if !parsed[:button_callback_id].nil? && parsed[:button_callback_id][:id] == 'add task'
-  return hints_button_taskbot(parsed) if !parsed[:button_callback_id].nil? && parsed[:button_callback_id][:id] == 'taskbot'
+  return hints_button_taskbot_rpts(parsed) if !parsed[:button_callback_id].nil? && parsed[:button_callback_id][:id] == 'taskbot'
   ["Take the hint #{parsed[:url_params][:user_name]}", []]
 end
 
@@ -48,10 +48,10 @@ def hints_add_task_footer(parsed)
 end
 
 # Returns: [text, attachments, response_options]
-def hints_taskbot_rpts(parsed)
+def hints_button_taskbot_rpts(parsed)
   text = ''
   attachments =
-    taskbot_button_action_headline_replacement(parsed) # in list_all_chans_taskbot.rb
+    list_button_taskbot_headline_replacement(parsed) # in list_button_taskbot.rb
     .concat(hints_taskbot_rpts_headline(parsed))
     .concat(hints_taskbot_rpts_subsection1(parsed))
     .concat(hints_taskbot_rpts_footer(parsed))
