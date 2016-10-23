@@ -1,18 +1,12 @@
 
 # Returns: [text, attachments, response_options]
 def feedback_command(parsed)
-  text, attachments, options = send_comment(parsed)
-  @view.channel.update(
-    last_activity_type:  parsed[:button_callback_id].nil? ? 'slash_command - feedback' : 'button_action - feedback',
-    last_activity_date: DateTime.current)
-  [text, attachments, options]
-end
-
-# Returns: [text, attachments, response_options]
-def send_comment(parsed)
   return feedback_button_add_task(parsed) if !parsed[:button_callback_id].nil? && parsed[:button_callback_id][:id] == 'add task'
   return feedback_button_taskbot_rpts(parsed) if !parsed[:button_callback_id].nil? && parsed[:button_callback_id][:id] == 'taskbot'
   submitted_comment = comment_from_slash_feedback(parsed)
+  @view.channel.update(
+    last_activity_type:  'slash_command - feedback',
+    last_activity_date: DateTime.current)
   if submitted_comment.valid?
     CommentMailer.new_comment(@view, submitted_comment).deliver_now
     return ['Thank you, we appreciate your input.', []]
@@ -49,6 +43,15 @@ def feedback_button_taskbot_rpts(parsed)
                       "\nWhen done, hit [enter] and it will be emailed to " \
                       "MiaDo product support.\n\n",
              mrkdwn_in: ['pretext']])
+  # NOTE: should not need parsed[:button_callback_id]['payload_message_ts']
+  # message.ts to edit is in parsed[:mcb].bot_msgs_json - should be first
+  # and only taskbot msg.
+  ccb_after_action_parse_hash = @view.channel.after_action_parse_hash
+  ccb_after_action_parse_hash['button_callback_id'] = parsed[:button_callback_id]
+  @view.channel.update(
+    after_action_parse_hash: ccb_after_action_parse_hash,
+    last_activity_type: 'button_action - feedback',
+    last_activity_date: DateTime.current)
   [text, attachments, parsed[:first_button_value][:resp_options]]
 end
 

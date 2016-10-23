@@ -18,6 +18,9 @@ def slash_cmd_from_buttons(url_params, p_hash)
   url_params[:command] = '/do'
   url_params[:text] = ''
   p_hash[:button_callback_id] = JSON.parse(url_params[:payload][:callback_id]).with_indifferent_access
+  p_hash[:button_callback_id][:payload_action_ts] = url_params[:payload]['action_ts']
+  p_hash[:button_callback_id][:payload_message_ts] = url_params[:payload]['message_ts']
+  p_hash[:button_callback_id][:payload_attachment_id] = url_params[:payload]['attachment_id']
   p_hash[:button_actions] = url_params[:payload][:actions]
   p_hash[:first_button_value] = JSON.parse(url_params[:payload][:actions].first[:value]).with_indifferent_access
   p_hash[:expedite_deferred_cmd] = true
@@ -87,8 +90,9 @@ def make_parse_hash
 end
 
 def context_from_ccb_hash(previous_action_parse_hash)
-  return {} if previous_action_parse_hash.nil?
-  context = previous_action_parse_hash['after_action_list_context']
+  return {} if previous_action_parse_hash.nil? ||
+               previous_action_parse_hash['after_action_list_context'].nil? ||
+               (context = previous_action_parse_hash['after_action_list_context']).empty?
   { list: context['list'],
     list_scope: context['list_scope'].nil? ? '' : context['list_scope'].to_sym,
     channel_scope: context['channel_scope'].nil? ? '' : context['channel_scope'].to_sym,
@@ -114,9 +118,7 @@ def save_after_action_list_context(parsed, context, list_ids = nil)
   parsed[:after_action_list_context] = after_action_list_context(context, list_ids)
   # Trim what we store to db, store, restore it.
   parsed[:url_params] = {}
-  parsed[:ccb] = nil
-  parsed[:mcb] = nil
-  parsed[:tcb] = nil
+  parsed[:ccb], parsed[:mcb], parsed[:tcb], parsed[:api_client_bot], parsed[:api_client_user] = nil
   @view.channel.after_action_parse_hash = parsed
   @view.channel.last_activity_type =
     "#{parsed[:button_actions].any? ? 'button_action' : 'slash_command'} - #{parsed[:func]}"

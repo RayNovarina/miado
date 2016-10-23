@@ -18,41 +18,49 @@ def clear_channel_msgs(options)
     api_resp = messages_via_rtm_start(api_options) if options[:message_source] == :rtm_data
     api_resp = messages_via_taskbot_channel(api_options) if options[:message_source] == :taskbot_channel
     api_resp = messages_via_member_record(api_options) if options[:message_source] == :member_record
-    return { resp: 'Error occurred on Slack\'s API:client.im.history' } unless api_resp.key?('ok')
-    return { resp: 'ok' } if (api_options[:messages] = api_resp['messages']).length == 0
+    return { 'ok' => false, error: 'Error occurred on Slack\'s API:client.im.history' } unless api_resp['ok']
+    return { 'ok' => true } if (api_options[:messages] = api_resp['messages']).length == 0
     has_more = api_resp.key?('has_more') ? api_resp['has_more'] : false
     # Returns updated delete_msgs_options hash with resp, latest.
     api_resp = delete_messages(api_options)
-    return api_resp unless api_resp[:resp] == 'ok'
+    return api_resp unless api_resp['ok']
   end
-  { resp: 'ok' }
+  { 'ok' => true }
 end
 
-# Returns: { resp: 'ok' or err_msg, latest msg timestamp }
+# Returns: { 'ok' or err_msg, latest msg timestamp }
 def delete_messages(options)
   options[:messages].each do |m|
     # Prepare for next page query
     options[:latest] = m['ts']
     options[:message] = m
-    return { resp: "Invalid msg type(#{m['type']}) from API:client.im.history" } unless m['type'] == 'message'
+    return { 'ok' => false, error: "Invalid msg type(#{m['type']}) from API:client.im.history" } unless m['type'] == 'message'
     # Delete message if user_name matched or `--user=*` or we are deleting
     # bot messages too.
     next unless options[:user_id] == -1 || (m.key?('user') && (m['user'] == options[:user_id]))
     next if options[:exclude_bot_msgs] && m.key?('subtype') && m['subtype'] == 'bot_message'
     next if options[:exclude_pinned_msgs] && m.key?('subtype') && m['subtype'] == 'pinned_item'
     api_resp = delete_message_on_channel(options)
-    m['deleted'] = true if api_resp.key?('ok')
-    next if api_resp.key?('ok')
+    m['deleted'] = true if api_resp['ok']
+    next if api_resp['ok'] == true
     # If we can't delete a msg, abandon delete loop, else we just keep trying.
-    return { resp: "Error occurred on Slack\'s API:client.chat_delete: #{api_resp}" }
+    return { 'ok' => false, error: "Error occurred on Slack\'s API:client.chat_delete: #{api_resp}" }
   end
-  { resp: 'ok' }
+  { 'ok' => true }
 end
 
 def delete_message_on_channel(options)
   begin
     # No response is a good response
-    return options[:api_client].chat_delete(channel: options[:channel], ts: options[:message]['ts'])
+    api_resp = options[:api_client].chat_delete(channel: options[:channel],
+                                                as_user: true,
+                                                ts: options[:message]['ts'])
+    ok_msg = "\nSUCCESS: From delete_message_on_channel(API:client.chat_delete) = " \
+      "channel_id: #{options[:channel]}  " \
+      "message timestamp id: #{options[:message]['ts']}\n" \
+      "token: #{options[:api_client].token.nil? ? '*EMPTY!*' : options[:api_client].token}\n"
+    options[:api_client].logger.error(ok_msg)
+    return api_resp
   rescue Slack::Web::Api::Error => e # (cant_delete_message)
     options[:api_client].logger.error e
     err_msg = "\nFrom delete_message_on_channel(API:client.chat_delete) = " \
@@ -65,7 +73,7 @@ def delete_message_on_channel(options)
   end
 end
 
-# Returns: { resp: 'ok' or err_msg, messages: [] }
+# Returns: { 'ok' or err_msg, messages: [] }
 def messages_via_im_history(options)
   case options[:type]
   when :channel
@@ -90,7 +98,7 @@ def messages_via_im_history(options)
   resp
 end
 
-# Returns: { resp: 'ok' or err_msg, messages: [] }
+# Returns: { 'ok' or err_msg, messages: [] }
 def messages_via_rtm_start(options)
   rtm_start = lib_start_data_from_rtm_start(options[:bot_api_token])
   slack_dm_channels = rtm_start['ims']
@@ -107,7 +115,7 @@ def messages_via_rtm_start(options)
   }
 end
 
-# Returns: { resp: 'ok' or err_msg, messages: [] }
+# Returns: { 'ok' or err_msg, messages: [] }
 def messages_via_taskbot_channel(options)
   { 'ok' => true,
     'has_more' => false,
@@ -115,7 +123,7 @@ def messages_via_taskbot_channel(options)
   }
 end
 
-# Returns: { resp: 'ok' or err_msg, messages: [] }
+# Returns: { 'ok' or err_msg, messages: [] }
 def messages_via_member_record(options)
   { 'ok' => true,
     'has_more' => false,

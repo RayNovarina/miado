@@ -361,7 +361,7 @@ def generate_task_list_msgs(parsed, list_cmds)
                    taskbot_channel_id: cmd_hash[:taskbot_channel_id],
                    taskbot_user_id: cmd_hash[:taskbot_user_id],
                    taskbot_msg_id: cmd_hash[:taskbot_msg_id],
-                   # api_client: make_web_client(cmd_hash[:bot_api_token])
+                   # api_client: make_web_client(cmd_hash[:taskbot_api_token])
                    api_client: make_web_client(cmd_hash[:slack_user_api_token])
                  }
     if cmd_hash[:type] == 'edit msg'
@@ -413,6 +413,37 @@ def update_taskbot_channel(options)
 
   # Flow 6: misc experiments.
   # update_experiments(options)
+end
+
+# Pluck taskbot summary list msg from the button payload, edit it and write
+# back the msg via chat_update
+# Returns: slack api response hash.
+def edit_taskbot_msg(options)
+  edit_taskbot_msg_for_taskbot_done_button(options) if options[:p_hash][:func] == :done
+end
+
+# Returns: api response{} from send_taskbot_update_msg()
+def edit_taskbot_msg_for_taskbot_done_button(options)
+  options[:text] =
+    options[:p_hash][:url_params][:payload][:original_message][:text]
+    .concat("#{options[:p_hash][:button_actions].first['name'] == 'done and delete' ? 'Deleted: ' : ''}" \
+            "~#{options[:p_hash][:button_callback_id]['task_desc']}~\n")
+  options[:attachments] = []
+  options[:attachment_id_to_remove] = options[:p_hash][:url_params][:payload][:attachment_id]
+  options[:taskbot_msg_id] = options[:p_hash][:url_params][:payload]['message_ts']
+  edit_and_send_taskbot_update_msg(options)
+end
+
+# Given the attachment number in the button payload, remove that attachment
+# and write back the msg via chat_update
+# Returns: api response{} from send_taskbot_update_msg()
+def edit_and_send_taskbot_update_msg(options)
+  if options[:attachments].empty? && options.key?(:attachment_id_to_remove)
+    options[:attachments] = options[:p_hash][:url_params][:payload][:original_message][:attachments]
+    # attachment_to_edit = attachments[attachment_id_to_remove].to_i - 1]
+    options[:attachments].delete_at(options[:attachment_id_to_remove].to_i - 1)
+  end
+  send_taskbot_update_msg(options)
 end
 
 =begin
@@ -503,12 +534,15 @@ end
 def update_ccb_channel(api_resp, options)
   return if options[:p_hash][:ccb].nil?
   options[:p_hash][:ccb].update(
-    taskbot_msg_to_slack_id: api_resp['ok'] == true ? options[:member_id] : "*failed*: #{api_resp['error']}",
+    taskbot_msg_to_slack_id: api_resp['ok'] ? options[:member_id] : "*failed*: #{api_resp['error']}",
     taskbot_msg_date: DateTime.current)
 end
 
-def update_channel_activity(cb, activity_type)
-  cb.update(last_activity_type: activity_type,
+def update_channel_activity(cb, activity_type, after_action_parse_hash = nil)
+  return cb.update(last_activity_type: activity_type,
+                   last_activity_date: DateTime.current) if after_action_parse_hash.nil?
+  cb.update(after_action_parse_hash: after_action_parse_hash,
+            last_activity_type: activity_type,
             last_activity_date: DateTime.current)
 end
 
@@ -518,11 +552,8 @@ def update_taskbot_ccb_channel(options_or_parsed, activity_type)
   taskbot_ccb = options_or_parsed[:tcb] if options_or_parsed.key?(:tcb)
   taskbot_ccb ||= find_or_create_taskbot_channel(options_or_parsed)
   # Persist the channel.list_ids[] for the next transaction.
-  taskbot_ccb.update(
-    after_action_parse_hash: {
-      'after_action_list_context' => options_or_parsed[:after_action_list_context] },
-    last_activity_type: activity_type,
-    last_activity_date: DateTime.current)
+  # after_action_parse_hash: { 'after_action_list_context' => options_or_parsed[:after_action_list_context] },
+  update_channel_activity(taskbot_ccb, activity_type, options_or_parsed[:after_action_list_context])
 end
 
 def find_or_create_taskbot_channel(options_or_parsed)
@@ -538,7 +569,7 @@ def find_or_create_taskbot_channel(options_or_parsed)
 end
 
 def remember_taskbot_msg_id(api_resp, options)
-  return unless api_resp['ok'] == true
+  return unless api_resp['ok']
   return remember_msgs_via_member_record(api_resp, options) if options[:message_source] == :member_record
   # remember_msg_via_ccb(api_resp, options)
 end
@@ -586,10 +617,10 @@ def clear_taskbot_msg_channel(options)
        "#{options[:taskbot_username]} at dm_channel: " \
        "#{options[:taskbot_channel_id]}. " \
        "For member: #{options[:member_name]}\n"
-  return 'ok' if api_resp[:resp] == 'ok'
+  return api_resp if api_resp['ok']
   err_msg = "ERROR: clear_taskbot_msgs failed with '#{api_resp}"
   options[:api_client].logger.error(err_msg)
-  err_msg
+  { 'ok' => false, error: err_msg }
 end
 
 # Returns: slack api response hash.
@@ -597,7 +628,7 @@ def send_taskbot_msg(options)
   api_resp =
     options[:api_client]
     .chat_postMessage(
-      as_user: 'false',
+      as_user: 'true',
       username: options[:taskbot_username],
       channel: options[:taskbot_channel_id],
       text: options[:text],
@@ -606,10 +637,10 @@ def send_taskbot_msg(options)
     "#{options[:taskbot_username]} at dm_channel: " \
     "#{options[:taskbot_channel_id]}.  Msg title: #{options[:text]}. " \
     "For member: #{options[:member_name]}\n"
-  return api_resp if api_resp['ok'] == true
+  return api_resp if api_resp['ok']
   err_msg = "Error: From send_taskbot_msg(API:client.chat_postMessage) = '#{api_resp['error']}'"
   options[:api_client].logger.error(err_msg)
-  return api_resp
+  return { 'ok' => false, error: err_msg }
 rescue Slack::Web::Api::Error => e # (not_authed)
   options[:api_client].logger.error e
   err_msg = "\nFrom send_taskbot_msg(API:client.chat_postMessage) = " \
@@ -708,6 +739,8 @@ def update_one_team_members_hash(options)
 end
 =end
 
+################### Deferred Events. Does not use chat_msgs options hash.
+#
 # Process deferred event.
 # Returns: nothing
 def send_deferred_event_cmds(_d_hash, parsed)
@@ -715,33 +748,28 @@ def send_deferred_event_cmds(_d_hash, parsed)
     source: :slack,
     slack_user_id: parsed[:url_params][:user_id],
     slack_team_id: parsed[:url_params][:team_id])
-  return respond_to_discuss_event(parsed) if parsed[:ccb]['last_activity_type'] == 'button_action - discuss'
-  respond_to_feedback_event(parsed) if parsed[:ccb]['last_activity_type'] == 'button_action - feedback'
+  parsed[:api_client_user] = make_web_client(parsed[:ccb].slack_user_api_token)
+  parsed[:api_client_bot] = make_web_client(parsed[:ccb].bot_api_token)
+  parsed[:button_callback_id] = parsed[:ccb].after_action_parse_hash['button_callback_id']
+  return respond_to_discuss_msg_event(parsed) if parsed[:ccb]['last_activity_type'] == 'button_action - discuss'
+  respond_to_feedback_msg_event(parsed) if parsed[:ccb]['last_activity_type'] == 'button_action - feedback'
 end
 
 # Returns: nothing
-def respond_to_discuss_event(parsed)
-  button_callback_id = parsed[:ccb].after_action_parse_hash['button_callback_id']
-  post_comment_from_taskbot_to_channel(
-    parsed,
-    "Comment from @#{parsed[:mcb].slack_user_name} about the task:\n" \
-    "`#{button_callback_id['task_desc'].gsub('|', '')}`",
-    parsed[:url_params]['event']['text'],
-    button_callback_id['slack_chan_id'])
-  # :ccb is the Channel the event ocurred on (taskbot, same as :tcb)
-  update_channel_activity(parsed[:ccb], 'msg_update - discuss')
-end
-
-# Returns: nothing
-def respond_to_feedback_event(parsed)
+def respond_to_feedback_msg_event(parsed)
   submitted_comment = comment_from_feedback_button(parsed)
   if submitted_comment.valid?
     CommentMailer.new_comment(@view, submitted_comment).deliver_now
     # return ['Thank you, we appreciate your input.', []]
-    return update_taskbot_ccb_channel(parsed, 'msg_update - feedback')
+    update_taskbot_ccb_channel(parsed, 'msg_update - feedback')
+    status_msg = 'Thank you, we appreciate your input.'
+  else
+    update_channel_activity(parsed[:ccb], 'msg_update - feedback:error')
+    parsed[:err_msg] = 'Error: Feedback message is empty.'
+    status_msg = '*Error: Feedback message is empty.*' unless api_resp['ok']
   end
-  update_channel_activity(parsed[:ccb], 'msg_update - feedback:error')
-  parsed[:err_msg] = 'Error: Feedback message is empty.'
+  # Delete feedback msg and display taskbot button header and response msg.
+  delete_event_msg_and_update_taskbot_msg(parsed, status_msg)
 end
 
 # Returns: Comment object.
@@ -752,35 +780,51 @@ def comment_from_feedback_button(parsed)
   Comment.new(name: name, email: email, body: body)
 end
 
-=begin
-{
-    "token": "eUPXYEyP40qAztzCdmDANPHt",
-    "team_id": "T0VN565N0",
-    "api_app_id": "A17PMQ5K5",
-    "event": {
-        "type": "message",
-        "user": "U0VLZ5P51",
-        "text": "555",
-        "ts": "1475448087.000017",
-        "channel": "D18E3GH2P",
-        "event_ts": "1475448087.000017"
-    },
-    "type": "event_callback",
-    "authed_users": [
-        "U0VLZ5P51"
-    ]
-}
-params[:channel_id] = @view.channel.slack_channel_id
-params[:channel_name] = @view.channel.slack_channel_name
-params[:team_id] = @view.channel.slack_team_id
-params[:token] = params[:token]
-params[:user_id] = @view.channel.slack_user_id
-params[:user_name] = ''
-=end
-# Comment was just added to the taskbot channel after the Discuss button was
-# clicked in the taskbot channel. Send the comment to the channel the task was
-# created in.
-def post_comment_from_taskbot_to_channel(parsed, headline, comment, slack_channel_id)
+# Delete event msg and display taskbot button header and response msg.
+def delete_event_msg_and_update_taskbot_msg(parsed, text_msg)
+  delete_event_msg(parsed)
+  attachments = list_button_taskbot_headline_replacement(parsed, text_msg) # in list_button_taskbot.rb
+  # NOTE: should not need parsed[:button_callback_id]['payload_message_ts']
+  # message.ts to edit is in parsed[:mcb].bot_msgs_json - should be first
+  # and only taskbot msg.
+  edit_and_send_taskbot_update_msg(
+    api_client: parsed[:api_client_user],
+    taskbot_channel_id: parsed[:ccb].slack_channel_id,
+    text: '',
+    attachments: attachments,
+    taskbot_msg_id: parsed[:button_callback_id]['payload_message_ts'])
+end
+
+# Returns: nothing
+def respond_to_discuss_msg_event(parsed)
+  button_callback_id = parsed[:button_callback_id]
+  api_resp = post_discuss_msg_from_taskbot_to_channel(
+    parsed,
+    "Comment from @#{parsed[:mcb].slack_user_name} about the task:\n" \
+    "`#{button_callback_id['task_desc'].delete('|')}`",
+    parsed[:url_params]['event']['text'],
+    button_callback_id['slack_chan_id'])
+  # :ccb is the Channel the event ocurred on (taskbot, same as :tcb)
+  update_channel_activity(parsed[:ccb], 'msg_update - discuss')
+  status_msg = 'Your comment has been added to the ' \
+               "`##{button_callback_id['slack_chan_name']}` channel.\n" if api_resp['ok']
+  status_msg = '*Your comment failed to send*' unless api_resp['ok']
+  # Delete discuss msg and display taskbot button header and response msg.
+  delete_event_msg_and_update_taskbot_msg(parsed, status_msg)
+end
+
+# Returns: api response{} from delete_message_on_channel()
+def delete_event_msg(parsed)
+  # options[:api_client].chat_delete(channel: options[:channel], ts: options[:message]['ts']
+  # api_resp =
+  delete_message_on_channel(
+    api_client: parsed[:api_client_user],
+    # api_client: make_web_client(parsed[:ccb].bot_api_token),
+    channel: parsed[:url_params]['event']['channel'],
+    message: { 'ts' => parsed[:url_params]['event']['ts'] })
+end
+
+def post_discuss_msg_from_taskbot_to_channel(parsed, headline, comment, slack_channel_id)
   attachments = [{
     text: comment,
     color: '#3AA3E3',
@@ -788,14 +832,12 @@ def post_comment_from_taskbot_to_channel(parsed, headline, comment, slack_channe
   }]
   # api_resp =
   send_channel_msg(
-    api_client: make_web_client(parsed[:mcb].slack_user_api_token),
+    api_client: parsed[:api_client_user],
     username: 'taskbot',
     channel_id: slack_channel_id,
     text: headline,
     attachments: attachments
   )
-  # Persist our actions for the next transaction.
-  # save_after_action_list_context(parsed, parsed)
 end
 
 # Returns: slack api response hash.
@@ -803,7 +845,7 @@ def send_channel_msg(options)
   api_resp =
     options[:api_client]
     .chat_postMessage(
-      as_user: 'false',
+      as_user: 'true',
       username: options[:username],
       channel: options[:channel_id],
       text: options[:text],
@@ -812,10 +854,10 @@ def send_channel_msg(options)
     "#{options[:taskbot_username]} at dm_channel: " \
     "#{options[:channel_id]}.  Msg title: #{options[:text]}. " \
     "For member: #{options[:member_name]}\n"
-  return api_resp if api_resp['ok'] == true
+  return api_resp if api_resp['ok']
   err_msg = "Error: From send_channel_msg(API:client.chat_postMessage) = '#{api_resp['error']}'"
   options[:api_client].logger.error(err_msg)
-  return api_resp
+  return { 'ok' => false, error: err_msg }
 rescue Slack::Web::Api::Error => e # (not_authed)
   options[:api_client].logger.error e
   err_msg = "\nFrom send_channel_msg(API:client.chat_postMessage) = " \
@@ -827,37 +869,12 @@ rescue Slack::Web::Api::Error => e # (not_authed)
 end
 
 # Returns: slack api response hash.
-def edit_taskbot_msg(options)
-  payload = options[:p_hash][:url_params][:payload]
-  options[:taskbot_msg_id] = payload['message_ts']
-  # Modify the options{} params based on different edit logic for different
-  # cases
-  edit_taskbot_msg_for_done_button(options, payload) if options[:p_hash][:func] == :done
-  send_taskbot_update_msg(options)
-end
-
-def edit_taskbot_msg_for_done_button(options, payload)
-  # Pluck taskbot summary list msg from the button payload.
-  # Given the attachment number in the button payload, remove that attachment
-  # and write back the msg via chat_update
-  original_msg = payload[:original_message]
-  rebuilt_attachments = original_msg[:attachments]
-  # attachment_to_edit = rebuilt_attachments[payload[:attachment_id].to_i - 1]
-  rebuilt_text = original_msg[:text]
-                 .concat("#{options[:p_hash][:button_actions].first['name'] == 'done and delete' ? 'Deleted: ' : ''}" \
-                         "~#{options[:p_hash][:button_callback_id]['task_desc']}~\n")
-  rebuilt_attachments.delete_at(payload[:attachment_id].to_i - 1)
-  options[:text] = rebuilt_text
-  options[:attachments] = rebuilt_attachments
-end
-
-# Returns: slack api response hash.
 def send_taskbot_update_msg(options)
   api_resp =
     options[:api_client]
     .chat_update(
       ts: options[:taskbot_msg_id],
-      as_user: 'false',
+      as_user: 'true',
       channel: options[:taskbot_channel_id],
       text: options[:text],
       attachments: options[:attachments].to_json)
@@ -866,10 +883,10 @@ def send_taskbot_update_msg(options)
     "#{options[:taskbot_channel_id]}.  Msg title: #{options[:text]}. " \
     "Message ts Id: #{options[:taskbot_msg_id]}. " \
     "For member: #{options[:member_name]}\n"
-  return api_resp if api_resp['ok'] == true
+  return api_resp if api_resp['ok']
   err_msg = "Error: From update_taskbot_msg(API:client.chat_update) = '#{api_resp['error']}'"
   options[:api_client].logger.error(err_msg)
-  return api_resp
+  return { 'ok' => false, error: err_msg }
 rescue Slack::Web::Api::Error => e # (not_authed)
   if e.message == 'message_not_found'
     api_resp = send_taskbot_msg(options)
@@ -883,5 +900,5 @@ rescue Slack::Web::Api::Error => e # (not_authed)
     "Message ts Id: #{options[:taskbot_msg_id]}. " \
     "token: #{options[:api_client].token.nil? ? '*EMPTY!*' : options[:api_client].token}\n"
   options[:api_client].logger.error(err_msg)
-  return api_resp
+  return { 'ok' => false, error: err_msg }
 end
