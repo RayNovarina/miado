@@ -7,7 +7,7 @@ def all_channels_taskbot_format(parsed, context, list_of_records)
 end
 
 # Returns: [text, attachments]
-def all_chans_taskbot_header(parsed, _context, list_of_records)
+def all_chans_taskbot_header(parsed, _context, _list_of_records)
   text = ''
   attachments = list_button_taskbot_headline_replacement(
     parsed, format_all_chans_taskbot_header(parsed, parsed[:channel_scope]))

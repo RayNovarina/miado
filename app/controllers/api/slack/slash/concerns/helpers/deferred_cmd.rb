@@ -340,19 +340,6 @@ def build_redo_only_added_task(parsed)
   build_one_impacted_member(parsed: parsed, am_hash: added_task_hash)
 end
 
-=begin
-  Form Params
-  channel_id	C0VNKV7BK
-  channel_name	general
-  command	/do
-  response_url	https://hooks.slack.com/commands/T0VN565N0/36163731489/YAHWUMXlBdviTE1rBILELuFK
-  team_domain	shadowhtracteam
-  team_id	T0VN565N0
-  text	list me
-  token	3ZQVG7rk4p7EZZluk1gTH3aN
-  user_id	U0VLZ5P51
-  user_name	ray
-=end
 def generate_task_list_msgs(parsed, list_cmds)
   chat_msgs = []
   list_cmds.each do |cmd_hash|
@@ -362,29 +349,67 @@ def generate_task_list_msgs(parsed, list_cmds)
                    taskbot_channel_id: cmd_hash[:taskbot_channel_id],
                    taskbot_user_id: cmd_hash[:taskbot_user_id],
                    taskbot_msg_id: cmd_hash[:taskbot_msg_id],
+                   taskbot_username: cmd_hash[:taskbot_username],
+                   taskbot_msgs: cmd_hash[:taskbot_msgs],
+                   member_name: cmd_hash[:member_name],
+                   member_id: cmd_hash[:member_id],
                    # api_client: make_web_client(cmd_hash[:taskbot_api_token])
                    api_client: make_web_client(cmd_hash[:slack_user_api_token])
                  }
     if cmd_hash[:type] == 'edit msg'
       chat_msgs.last[:edit_taskbot_msg] = true
-      chat_msgs.last[:after_action_list_context] = after_action_list_context(parsed)
     else
-      text, attachments, _response_options, list_cmd_after_action_list_context =
-        taskbot_rpts_command(parsed, type: cmd_hash[:type],
-                                     member_name: cmd_hash[:member_name],
-                                     member_id: cmd_hash[:member_id])
+      chat_msgs.last[:member_tcb] ||= find_or_create_taskbot_channel(mcb: chat_msgs.last[:member_mcb])
+      text, attachments = taskbot_rpts(parsed, chat_msgs.last)
       text = "`MiaDo ERROR: #{parsed[:err_msg]}`" unless parsed[:err_msg].empty?
       chat_msgs.last[:edit_taskbot_msg] = false
       chat_msgs.last[:text] = text
       chat_msgs.last[:attachments] = attachments
-      chat_msgs.last[:taskbot_username] = cmd_hash[:taskbot_username]
-      chat_msgs.last[:taskbot_msgs] = cmd_hash[:taskbot_msgs]
-      chat_msgs.last[:member_name] = cmd_hash[:member_name]
-      chat_msgs.last[:member_id] = cmd_hash[:member_id]
-      chat_msgs.last[:after_action_list_context] = list_cmd_after_action_list_context
     end
   end
   chat_msgs
+end
+
+# Inputs: parsed, chat_msg{} from generate_task_list_msgs()
+# Returns: [text, attachments, options, list_cmd_after_action_list_context]
+#          parsed[:err_msg] if needed.
+#-----------------------------------
+# Generate a variety of lists/reports formatted for the taskbot channel.
+# Example:
+#   Member john:
+#   >list team
+#   >assign 1 @jane
+# John sends a taskbot msg to Jane's channel AS IF Jane executed the '/do list'
+# commands in her taskbot channel.
+#
+# Note: We simulate the case of these reports, i.e. list cmds,  being run on
+# the taskbot channel of the impacted member, i.e. cmd_hash[:member_tcb]
+# url_params and parsed[:ccb] is the context of the member issuing the slash cmd.
+# context is the parsed{} for the list command/report we want.
+# After the list command is run on the taskbot channel, its
+# Channel.after_action_parse_hash is updated via the list command.
+def taskbot_rpts(parsed, chat_msg)
+  url_params = {
+    channel_id: chat_msg[:member_tcb].slack_channel_id,
+    channel_name: chat_msg[:member_tcb].slack_channel_name,
+    response_url: parsed[:url_params][:response_url],
+    team_domain: parsed[:url_params][:team_domain],
+    team_id: chat_msg[:member_tcb].slack_team_id,
+    token: parsed[:url_params][:token],
+    user_id: chat_msg[:member_tcb].slack_user_id,
+    user_name: parsed[:url_params][:user_name],
+    command: '/do',
+    text: "list_taskbot @#{chat_msg[:member_name]} all due_first"
+  }
+  @view.channel = chat_msg[:member_tcb]
+  context = parse_slash_cmd(url_params, chat_msg[:member_tcb], chat_msg[:member_tcb].after_action_parse_hash)
+  return ["`MiaDo ERROR: #{context[:err_msg]}`", nil] unless context[:err_msg].empty?
+  context[:mcb] = chat_msg[:member_mcb]
+  context[:tcb] = chat_msg[:member_tcb]
+  # context[:debug] = true
+  text, attachments, options, list_cmd_after_action_list_context = list_command(context)
+  @view.channel = parsed[:ccb]
+  [text, attachments, options, list_cmd_after_action_list_context]
 end
 
 # Returns: slack api response hash.
@@ -539,22 +564,20 @@ def update_ccb_channel(api_resp, options)
     taskbot_msg_date: DateTime.current)
 end
 
+# p_hash[:tcb] --> taskbot channel of the member who we just wrote a msg to.
+def update_taskbot_ccb_channel(options_or_parsed, activity_type)
+  taskbot_ccb = options_or_parsed[:member_tcb] if options_or_parsed.key?(:member_tcb)
+  taskbot_ccb = options_or_parsed[:tcb] if options_or_parsed.key?(:tcb)
+  taskbot_ccb ||= find_or_create_taskbot_channel(options_or_parsed)
+  update_channel_activity(taskbot_ccb, activity_type)
+end
+
 def update_channel_activity(cb, activity_type, after_action_parse_hash = nil)
   return cb.update(last_activity_type: activity_type,
                    last_activity_date: DateTime.current) if after_action_parse_hash.nil?
   cb.update(after_action_parse_hash: after_action_parse_hash,
             last_activity_type: activity_type,
             last_activity_date: DateTime.current)
-end
-
-# p_hash[:tcb] --> taskbot channel of the member who we just wrote a msg to.
-def update_taskbot_ccb_channel(options_or_parsed, activity_type)
-  taskbot_ccb = options_or_parsed[:member_tcb] if options_or_parsed.key?(:member_tcb)
-  taskbot_ccb = options_or_parsed[:tcb] if options_or_parsed.key?(:tcb)
-  taskbot_ccb ||= find_or_create_taskbot_channel(options_or_parsed)
-  # Persist the channel.list_ids[] for the next transaction.
-  # after_action_parse_hash: { 'after_action_list_context' => options_or_parsed[:after_action_list_context] },
-  update_channel_activity(taskbot_ccb, activity_type, options_or_parsed[:after_action_list_context])
 end
 
 def find_or_create_taskbot_channel(options_or_parsed)
@@ -575,13 +598,12 @@ def remember_taskbot_msg_id(api_resp, options)
   # remember_msg_via_ccb(api_resp, options)
 end
 
-# {
-#                "text": "`Current tasks list for @suemanley1 in all Team channels (Open)`",
-#                "username": "MiaDo Taskbot",
-#                "bot_id": "B18E3GGJF",
-#                "type": "message",
-#                "subtype": "bot_message",
-#                "ts": "1468010494.521738"
+# { "text": "`Current tasks list for @suemanley1 in all Team channels (Open)`",
+#   "username": "MiaDo Taskbot",
+#   "bot_id": "B18E3GGJF",
+#   "type": "message",
+#   "subtype": "bot_message",
+#   "ts": "1468010494.521738"
 # }
 def remember_msgs_via_member_record(api_resp, options)
   message = { 'text' => api_resp['message']['text'],
@@ -626,11 +648,9 @@ end
 
 # Returns: slack api response hash.
 def send_msg_to_taskbot_channel(options)
-# options[:as_user] = true
   api_resp =
     options[:api_client]
     .chat_postMessage(
-      # as_user: 'true',
       as_user: options[:as_user],
       username: options[:taskbot_username],
       channel: options[:taskbot_channel_id],
@@ -846,11 +866,9 @@ end
 
 # Returns: slack api response hash.
 def send_msg_to_public_channel(options)
-# options[:as_user] = true
   api_resp =
     options[:api_client]
     .chat_postMessage(
-      # as_user: 'true',
       as_user: options[:as_user],
       username: options[:username],
       channel: options[:channel_id],
@@ -876,12 +894,10 @@ end
 
 # Returns: slack api response hash.
 def update_msg_in_taskbot_channel(options)
-# options[:as_user] = true
   api_resp =
     options[:api_client]
     .chat_update(
       ts: options[:taskbot_msg_id],
-      # as_user: 'true',
       as_user: options[:as_user],
       channel: options[:taskbot_channel_id],
       text: options[:text],

@@ -22,16 +22,8 @@ end
 # Top of report buttons and headline.
 # Returns: Replacement taskbot headline [attachment{}]
 def list_button_taskbot_headline_replacement(parsed, rpt_headline = '')
-  # If "Team Tasks" or "Hints" buttons are clicked, change "Your Tasks" button
-  # color to primary.
-  style_your_tasks = 'default'
-  style_your_tasks = 'primary' if !parsed[:button_callback_id].nil? &&
-                                  parsed[:button_callback_id][:id] == 'taskbot' &&
-                                  (!(parsed[:button_actions].first['name'] == 'list') ||
-                                   parsed[:list_scope] == :team
-                                  )
-  style_team_tasks = 'primary' if style_your_tasks == 'default'
-  style_team_tasks = 'default' unless style_your_tasks == 'default'
+  # Set color of list buttons.
+  style_your_tasks, style_team_tasks = list_button_taskbot_headline_colors(parsed)
   [{ text: '',
      fallback: 'Do not view list',
      callback_id: { id: 'taskbot' }.to_json,
@@ -66,6 +58,27 @@ def list_button_taskbot_headline_replacement(parsed, rpt_headline = '')
      color: 'ffffff',
      mrkdwn_in: ['pretext']
    }]
+end
+
+# Returns: [style_your_tasks, style_team_tasks]
+def list_button_taskbot_headline_colors(parsed)
+  # Set color of list buttons.
+  style_your_tasks = 'primary' if parsed[:func] == :message_event
+  unless parsed[:func] == :message_event
+    style_your_tasks = 'default'
+    if !parsed[:button_callback_id].nil? &&
+       parsed[:button_callback_id][:id] == 'taskbot'
+      # A taskbot channel button has been clicked. We toggle between my lists
+      # and team lists as button default. (Green button means recommended one)
+      if !(parsed[:button_actions].first['name'] == 'list') ||
+         parsed[:list_scope] == :team
+        style_your_tasks = 'primary'
+      end
+    end
+  end
+  style_team_tasks = 'primary' if style_your_tasks == 'default'
+  style_team_tasks = 'default' unless style_your_tasks == 'default'
+  [style_your_tasks, style_team_tasks]
 end
 
 =begin

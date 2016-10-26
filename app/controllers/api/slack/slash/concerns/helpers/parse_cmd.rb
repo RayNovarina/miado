@@ -87,7 +87,7 @@ end
 #       'delete all open tasks for @susan is a new task'
 # Case: command is as entered from command line.
 #       'a new task', 'list team'
-CMD_FUNCS = %w(append assign delete done due feedback help hints list list_taskbot taskbot_rpts redo unassign).freeze
+CMD_FUNCS = %w(append assign delete done due feedback help hints list list_taskbot redo unassign).freeze
 def scan4_command_func(p_hash)
   return command_func_from_button(p_hash) if p_hash[:button_actions].any?
   return command_func_from_event(p_hash) unless p_hash[:event_type].empty?
@@ -149,14 +149,15 @@ def command_func_from_message_event(p_hash)
   p_hash[:func] = :message_event
 end
 
+CMD_FUNCS_OK_IN_TASKBOT_CHAN = %w(list_taskbot).freeze
 def scan4_taskbot_cmd_func(p_hash)
   p_hash[:err_msg] =
     # "Error: only the '#{params[:command]} /done' command is " \
     # 'allowed in the Taskbot channel.' unless p_hash[:func] == :done
     "Error: Sorry, but at this time no '#{params[:command]}' commands " \
     'allowed in the Taskbot channel. (Except for the Done and Discuss ' \
-    'buttons). Switch to a regular channel to ' \
-    'run /do commands.' unless p_hash[:original_command].include?('due_first')
+    'buttons). Switch to a regular channel to run /do commands' \
+    '.' unless CMD_FUNCS_OK_IN_TASKBOT_CHAN.include?(p_hash[:cmd_splits][0])
 end
 
 # Case: command function has been processed, leaving:
@@ -187,6 +188,7 @@ def adjust_cmd_options_for_add_cmd(p_hash)
   num_options += 1 if p_hash[:all_option]
   num_options += 1 if p_hash[:open_option]
   num_options += 1 if p_hash[:due_option]
+  num_options += 1 if p_hash[:due_first_option]
   num_options += 1 if p_hash[:done_option]
   num_options += 1 unless p_hash[:task_num].nil?
   num_options += 1 unless p_hash[:mentioned_member_id].nil?

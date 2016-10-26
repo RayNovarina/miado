@@ -40,7 +40,6 @@ def make_parse_hash
     slash_cmd_name: nil,
     debug: false,
     cmd_splits: [],
-    is_taskbot_channel: false,
     team_option: false,
     all_option: false,
     open_option: false,
@@ -89,10 +88,20 @@ def make_parse_hash
   }
 end
 
+# general_channel.after_action_parse_hash
+# general_channel.after_action_parse_hash['after_action_list_context']
+# general_channel.after_action_parse_hash['previous_action_list_context']
 def context_from_ccb_hash(previous_action_parse_hash)
-  return {} if previous_action_parse_hash.nil? ||
-               previous_action_parse_hash['after_action_list_context'].nil? ||
-               (context = previous_action_parse_hash['after_action_list_context']).empty?
+  return {} if previous_action_parse_hash.nil?
+  context = previous_action_parse_hash['after_action_list_context']
+  # return {} if previous_action_parse_hash.nil? ||
+  #             previous_action_parse_hash['after_action_list_context'].nil? ||
+  #             (context = previous_action_parse_hash['after_action_list_context']).empty?
+  if context.nil? || context.empty?
+    # require 'pry'
+    # binding.pry
+    return {}
+  end
   { list: context['list'],
     list_scope: context['list_scope'].nil? ? '' : context['list_scope'].to_sym,
     channel_scope: context['channel_scope'].nil? ? '' : context['channel_scope'].to_sym,
