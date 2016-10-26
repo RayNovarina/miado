@@ -10,7 +10,7 @@ end
 def button_taskbot_lists_header(parsed, list_of_records)
   text = ''
   attachments = list_button_taskbot_headline_replacement(
-    parsed, format_all_chans_taskbot_header(parsed, parsed[:channel_scope])) # in: list_all_chans_taskbot.rb
+    parsed, format_all_chans_taskbot_header(parsed, parsed[:channel_scope], list_of_records)) # in: list_all_chans_taskbot.rb
   # attachments << {
   #  color: '#3AA3E3',
   #  text: "#{list_chan_header(parsed, parsed, list_of_records, true)}\n",

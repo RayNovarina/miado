@@ -7,16 +7,18 @@ def all_channels_taskbot_format(parsed, context, list_of_records)
 end
 
 # Returns: [text, attachments]
-def all_chans_taskbot_header(parsed, _context, _list_of_records)
+def all_chans_taskbot_header(parsed, _context, list_of_records)
   text = ''
   attachments = list_button_taskbot_headline_replacement(
-    parsed, format_all_chans_taskbot_header(parsed, parsed[:channel_scope]))
+    parsed, format_all_chans_taskbot_header(parsed, parsed[:channel_scope], list_of_records))
   [text, attachments]
 end
 
 # text = debug_headers(context).concat(format_pub_header(context, text))
 # Convert text header for @taskbot display.
-def format_all_chans_taskbot_header(parsed, channel_scope)
+def format_all_chans_taskbot_header(parsed, channel_scope, list_of_records)
+  empty_text = ' *empty*' if list_of_records.empty?
+  empty_text = '' unless list_of_records.empty?
   channel_text = 'all Team channels' if channel_scope == :all_channels
   channel_text = "##{parsed[:url_params]['channel_name']}" if channel_scope == :one_channel
   member_text = "Current" if parsed[:mentioned_member_name].nil?
@@ -29,7 +31,7 @@ def format_all_chans_taskbot_header(parsed, channel_scope)
   options_text.concat(' and ') if (parsed[:open_option] || parsed[:due_option]) && parsed[:done_option]
   options_text.concat('Done') if parsed[:done_option]
   "#{debug_headers(parsed)}" \
-  "`#{member_text} (#{options_text}) tasks in #{channel_text}:`"
+  "`#{member_text} (#{options_text}) tasks in #{channel_text}:`#{empty_text}"
   # rpt_type = "`Your #{parsed[:list_owner_name] == 'team' ? 'team\'s ' : ''}current (open) tasks in All channels:`\n"
 end
 
