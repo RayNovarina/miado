@@ -21,7 +21,7 @@ CMD_FUNCS_IGNORED_BY_AFTER_ACTION_DEFERRED =
    :post_comment, :taskbot_rpts].freeze
 #
 # if a member's taskbot lists could be changed, then we need to update em.
-# Returns: [ {cmds} ]
+# Returns: [ deferred_cmd{} ]
 def generate_after_action_cmds(options)
   parsed = options[:parsed_hash]
   return nil if CMD_FUNCS_IGNORED_BY_AFTER_ACTION_DEFERRED.include?(parsed[:func])
@@ -50,6 +50,7 @@ end
 
 DEFERRED_EVENT_CMD_FUNCS = [:message_event].freeze
 # Route deferred command to proper handler.
+# Returns: nothing. Cmd will send msgs, etc.
 def send_after_action_deferred_cmds(cmds)
   cmds.each do |d_hash|
     parsed = d_hash[:p_hash]
@@ -62,6 +63,7 @@ end
 # 2) clear taskbot channel of task lists to be replaced. or replace em?
 # 3) generate new task lists.
 # 4) post new lists into taskbot channel.
+# Returns: nothing. Cmd will send msgs, etc.
 def send_deferred_list_cmds(d_hash, parsed)
   #----------------------
   parsed[:am_hash_source] = :member_record
@@ -110,6 +112,7 @@ end
 #   bot_user_id:
 #   bot_api_token:
 #-------------------------------------
+# Returns: [ list_cmd{} ]
 def generate_list_commands(parsed, deferred_cmd)
   # return [] if parsed[:func] == :done && parsed[:button_actions].any? && parsed[:button_actions].first['name'] == 'done'
   list_cmds = []
@@ -167,11 +170,16 @@ end
 
 # If add and [parsed[:assigned_member_id], update assigned_member_id's list dm.
 
-# If delete: task has been deleted. Need to get impacted_member info from ??
+# If delete: task has been deleted. Need to get impacted_member info from
+#    parsed[:list_action_item_info]
 
 # If append tasknum and the task[tasknum] being appended has an
 #    assigned_member_id, update that assigned_member_id's list dm.
-# If done, same as for append.
+# If slash cmd done, same as for append.
+# If taskbot button done: user is looking at list. If the user's task, then
+#    update the user's/assigned_member_id's list dm. If someone else's task,
+#    then update both someone else's list dm and the user's list dm.
+
 # If due, same as for append.
 
 # If assign, always update the assigned_member_id's list dm.
@@ -185,10 +193,11 @@ end
 #   {} means we did not look OR commented out the method call.
 #   ListItem record means we have an updated task to process
 #     that may require the taskbot list to be updated.
-
+# Returns: [ impacted_member_id, impacted_member{} ]
 def determine_impacted_members(parsed, deferred_cmd)
   func = parsed[:func]
-  # redo is such a special case, it is easier to handle it specially.
+  # redo and taskbot button done are such special cases, it is easier to handle
+  # them specially.
   return build_redo_impacted_members(parsed) if func == :redo
   impacted_task = deferred_cmd[:impacted_task] unless deferred_cmd[:impacted_task] == {}
   impacted_task = taskbot_list_item(parsed) if deferred_cmd[:impacted_task] == {}
@@ -201,10 +210,12 @@ def determine_impacted_members(parsed, deferred_cmd)
     return build_one_impacted_member(parsed: parsed, am_hash: am_hash)
   when :append, :done, :due
     return [] if impacted_task.nil?
+    return build_taskbot_button_done_impacted_members(parsed, am_hash) if parsed[:button_actions].any?
     return build_one_impacted_member(am_hash: am_hash)
   when :delete
     # delete command has already deleted the impacted task.
     return build_many_impacted_members(parsed) if parsed[:list_action_item_info].size > 1
+    return [] if impacted_task[:done]
     return build_one_impacted_member(impacted_task: impacted_task, am_hash: am_hash)
   end
   []
@@ -216,6 +227,7 @@ end
 #                   process that may require the taskbot list to be updated.
 CMD_FUNCS_IGNORED_IF_TASK_HAS_NO_ASSIGNED_MEMBER = [:append, :done, :due].freeze
 # CMD_FUNCS_WE_ALWAYS_GET_impacted_task_FOR = [:assign, :unassign].freeze
+# Returns: impacted_task{}
 def taskbot_list_item(parsed)
   return impacted_task_if_no_assigned_member(parsed) if CMD_FUNCS_IGNORED_IF_TASK_HAS_NO_ASSIGNED_MEMBER.include?(parsed[:func])
   # add, assign and unassign commands include the name of the impacted member,
@@ -229,6 +241,7 @@ end
 #                   doesn't require the taskbot list be updated.
 #   impacted_task{} = ListItem record info means we have an updated task to
 #                   process that may require the taskbot list to be updated.
+# Returns: impacted_task{}
 def impacted_task_if_no_assigned_member(parsed)
   # Taskbot channel done_and_delete button command has already deleted the
   # impacted task.
@@ -243,6 +256,7 @@ def impacted_task_if_no_assigned_member(parsed)
   nil
 end
 
+# Returns: am_hash{}
 def am_hash_from_assigned_member_id(parsed, assigned_member_id)
   return am_hash_from_member_record(parsed, assigned_member_id) if parsed[:am_hash_source] == :member_record
   parsed[:ccb].members_hash[assigned_member_id]
@@ -256,25 +270,44 @@ end
 # 'bot_dm_channel_id']
 # 'bot_user_id']
 # 'bot_msg_id']
+# Returns: am_hash{}
 def am_hash_from_member_record(parsed, assigned_member_id)
-  mcb = Member.find_from(
-    source: :slack,
-    slack_team_id: parsed[:url_params]['team_id'],
-    slack_user_id: assigned_member_id)
-  return nil if mcb.nil?
+  if parsed[:mcb] && parsed[:mcb].slack_user_id == assigned_member_id
+    mcb = parsed[:mcb]
+  else
+    mcb = Member.find_from(
+      source: :slack,
+      slack_team_id: parsed[:url_params]['team_id'],
+      slack_user_id: assigned_member_id)
+    return nil if mcb.nil?
+  end
+  tcb = parsed[:tcb] if parsed[:tcb] && (parsed[:tcb].slack_channel_id == mcb.bot_dm_channel_id)
+  tcb = find_or_create_taskbot_channel(mcb: mcb) unless parsed[:tcb] && parsed[:tcb].slack_channel_id == mcb.bot_dm_channel_id
+  list_scope = nil
+  # list_scope = tcb.after_action_parse_hash['list_scope'] if tcb.after_action_parse_hash &&
+  #                                                          tcb.after_action_parse_hash.key?('func') &&
+  #                                                          tcb.after_action_parse_hash['func'] == 'list'
+  list_scope = tcb.after_action_parse_hash['list_scope'] if tcb.after_action_parse_hash &&
+                                                            tcb.after_action_parse_hash.key?('list_scope') &&
+                                                            (tcb.last_activity_type == 'msg_update - taskbot_msgs' ||
+                                                             tcb.last_activity_type == 'button_action - list')
   { 'mcb' => mcb,
+    'tcb' => tcb,
     'bot_dm_channel_id' => mcb.bot_dm_channel_id,
     'slack_user_name' => mcb.slack_user_name,
     'slack_user_id' => mcb.slack_user_id,
     'slack_user_api_token' => mcb.slack_user_api_token,
     'bot_api_token' => mcb.bot_api_token,
     'bot_user_id' => mcb.bot_user_id,
-    'bot_msgs' => mcb.bot_msgs_json
+    'bot_msgs' => mcb.bot_msgs_json,
+    'list_scope' => list_scope
   }
 end
 
 # Inputs: am_hash, OPTIONAL: parsed
+# Returns: [ impacted_member_id, impacted_member{} ]
 def build_one_impacted_member(options)
+  return [] if options[:am_hash]['list_scope'].nil?
   impacted_member =
     { name: options[:parsed][:assigned_member_name],
       id: options[:parsed][:assigned_member_id] } if options.key?(:parsed)
@@ -293,11 +326,14 @@ def build_one_impacted_member(options)
   [impacted_member[:id], impacted_member]
 end
 
+# Returns: [ impacted_member_id, impacted_member{} ]
 def build_many_impacted_members(parsed)
   impacted_members = []
   parsed[:list_action_item_info].each do |task_info|
     am_hash = am_hash_from_assigned_member_id(parsed, task_info[:assigned_member_id])
-    next if impacted_members.include?(am_hash['slack_user_id'])
+    next if am_hash.nil? ||
+            impacted_members.include?(am_hash['slack_user_id']) ||
+            am_hash['list_scope'].nil?
     impacted_member_id, impacted_member = build_one_impacted_member(am_hash: am_hash)
     impacted_members << impacted_member_id
     impacted_members << impacted_member
@@ -308,6 +344,7 @@ end
 # same as for add for new command and same as for delete for
 # the task being deleted. So the delete could impact one member and the
 # add could impact another.
+# Returns: [ impacted_member_id, impacted_member{} ]
 def build_redo_impacted_members(parsed)
   deleted_member_id = parsed[:list_action_item_info][0][:assigned_member_id]
   added_member_id = parsed[:assigned_member_id]
@@ -340,6 +377,23 @@ def build_redo_only_added_task(parsed)
   build_one_impacted_member(parsed: parsed, am_hash: added_task_hash)
 end
 
+# If taskbot button done: user is looking at list. If the user's task, then
+#    update the user's/assigned_member_id's list dm. If someone else's task,
+#    then update both someone else's list dm and the user's list dm.
+# Returns: [ impacted_member_id, impacted_member{} ]
+def build_taskbot_button_done_impacted_members(parsed, done_task_am_hash)
+  # 1) the owner of the done task is impacted.
+  impacted_members = build_one_impacted_member(am_hash: done_task_am_hash)
+  return impacted_members if parsed[:url_params][:user_id] == done_task_am_hash['slack_user_id']
+  # 2) the user clicking the done button is also impacted if not the owner of the done task.
+  taskbot_user_hash = am_hash_from_assigned_member_id(parsed, parsed[:url_params][:user_id])
+  impacted_member_id, impacted_member = build_one_impacted_member(am_hash: taskbot_user_hash)
+  impacted_members << impacted_member_id
+  impacted_members << impacted_member
+  impacted_members
+end
+
+# Returns: [ chat_msg{} ]
 def generate_task_list_msgs(parsed, list_cmds)
   chat_msgs = []
   list_cmds.each do |cmd_hash|
@@ -480,7 +534,7 @@ def update_via_im_history(options)
   clear_taskbot_msg_channel(options)
   api_resp = send_msg_to_taskbot_channel(options)
   update_taskbot_ccb_channel(options, 'msg_update')
-  update_ccb_channel(api_resp, options)
+  update_ccb_chan_taskbot_msg_info(api_resp, options)
   api_resp
 end
 
@@ -491,7 +545,7 @@ def update_via_rtm_data(options)
   options[:bot_api_token] = options[:p_hash][:ccb].bot_api_token
   clear_taskbot_msg_channel(options)
   api_resp = send_msg_to_taskbot_channel(options)
-  update_ccb_channel(api_resp, options)
+  update_ccb_chan_taskbot_msg_info(api_resp, options)
   api_resp
 end
 
@@ -510,7 +564,7 @@ def update_via_taskbot_channel(options)
   # am_hash['bot_messages'] = taskbot_channel_ccb.bot_messages
   clear_taskbot_msg_channel(options)
   api_resp = send_msg_to_taskbot_channel(options)
-  update_ccb_channel(api_resp, options)
+  update_ccb_chan_taskbot_msg_info(api_resp, options)
   update_taskbot_channel(api_resp, options)
   api_resp
 end
@@ -526,7 +580,7 @@ def update_via_update_msg(options)
   # a taskbot msg to the same Other member but have nil in their ccb. MsgId
   # needs to propagate to all other members, also on reinstall.
   remember_taskbot_msg_id(api_resp, options)
-  update_ccb_channel(api_resp, options)
+  update_ccb_chan_taskbot_msg_info(api_resp, options)
   api_resp
 end
 
@@ -537,7 +591,7 @@ def update_experiments(options)
   # api_resp = send_msg_to_taskbot_channel(options)
   # Now that we know the taskbot msg id, save it for all members.
   # remember_taskbot_msg_id(api_resp, options)
-  # update_ccb_channel(api_resp, options)
+  # update_ccb_chan_taskbot_msg_info(api_resp, options)
   # api_resp
 end
 =end
@@ -549,15 +603,15 @@ def update_via_member_record(options)
   clear_taskbot_msg_channel(options)
   api_resp = send_msg_to_taskbot_channel(options)
   remember_taskbot_msg_id(api_resp, options)
-  update_taskbot_ccb_channel(options, 'msg_update')
-  update_ccb_channel(api_resp, options)
+  update_taskbot_ccb_channel(options, 'msg_update - taskbot_msgs')
+  update_ccb_chan_taskbot_msg_info(api_resp, options)
   update_member_record(options)
   api_resp
 end
 
 # p_hash[:ccb] --> channel of the member who typed in the slash cmd that caused
 # us to be here.
-def update_ccb_channel(api_resp, options)
+def update_ccb_chan_taskbot_msg_info(api_resp, options)
   return if options[:p_hash][:ccb].nil?
   options[:p_hash][:ccb].update(
     taskbot_msg_to_slack_id: api_resp['ok'] ? options[:member_id] : "*failed*: #{api_resp['error']}",
@@ -570,14 +624,6 @@ def update_taskbot_ccb_channel(options_or_parsed, activity_type)
   taskbot_ccb = options_or_parsed[:tcb] if options_or_parsed.key?(:tcb)
   taskbot_ccb ||= find_or_create_taskbot_channel(options_or_parsed)
   update_channel_activity(taskbot_ccb, activity_type)
-end
-
-def update_channel_activity(cb, activity_type, after_action_parse_hash = nil)
-  return cb.update(last_activity_type: activity_type,
-                   last_activity_date: DateTime.current) if after_action_parse_hash.nil?
-  cb.update(after_action_parse_hash: after_action_parse_hash,
-            last_activity_type: activity_type,
-            last_activity_date: DateTime.current)
 end
 
 def find_or_create_taskbot_channel(options_or_parsed)
@@ -619,10 +665,7 @@ end
 
 def update_member_record(options)
   options[:taskbot_msgs].delete_if { |m| m['deleted'] == true }
-  options[:member_mcb].update(
-    bot_msgs_json: options[:taskbot_msgs],
-    last_activity_type: 'update_taskbot_msgs',
-    last_activity_date: DateTime.current)
+  update_member_record_activity(options, 'msg_update - taskbot_msgs', options[:taskbot_msgs])
 end
 
 # Returns: text status msg. 'ok' or err msg.

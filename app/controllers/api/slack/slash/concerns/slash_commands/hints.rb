@@ -2,9 +2,7 @@
 # Returns: [text, attachments, response_options]
 def hints_command(parsed)
   text, attachments, options = hints(parsed)
-  @view.channel.last_activity_type = 'slash_command - hints'
-  @view.channel.last_activity_date = DateTime.current
-  @view.channel.save
+  update_channel_activity(parsed)
   [text, attachments, options]
 end
 

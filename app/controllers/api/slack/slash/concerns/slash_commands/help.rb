@@ -2,9 +2,7 @@
 def help_command(parsed)
   text, attachments, response_options = help_header(parsed)
   help_body(parsed, text, attachments)
-  @view.channel.last_activity_type = 'slash_command - help'
-  @view.channel.last_activity_date = DateTime.current
-  @view.channel.save
+  update_channel_activity(parsed)
   [text, attachments, response_options]
 end
 

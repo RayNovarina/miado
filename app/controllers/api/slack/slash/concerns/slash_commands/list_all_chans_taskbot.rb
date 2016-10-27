@@ -9,7 +9,7 @@ end
 # Returns: [text, attachments]
 def all_chans_taskbot_header(parsed, _context, list_of_records)
   text = ''
-  attachments = list_button_taskbot_headline_replacement(
+  attachments = list_button_taskbot_headline_replacement( # in list_button_taskbot.rb
     parsed, format_all_chans_taskbot_header(parsed, parsed[:channel_scope], list_of_records))
   [text, attachments]
 end
@@ -91,49 +91,3 @@ def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, 
       ]
     }
 end
-
-=begin
-
-# attachments = [add_response_attachments(parsed[:response_headline], item.id)]
-# Returns: [text, attachments]
-def all_chans_taskbot_header(parsed, _context, _list_of_records)
-  rpt_headline = format_all_chans_taskbot_header(parsed, parsed[:channel_scope])
-  text = ''
-  attachments =
-    [{ text: '',
-       fallback: 'Do not view list',
-       callback_id: { id: 'taskbot' }.to_json,
-       color: 'ffffff',
-       actions: [
-         { name: 'list',
-           text: 'Your Tasks',
-           type: 'button',
-           value: { command: '@me all' }.to_json,
-           style: 'default'
-         },
-         { name: 'list',
-           text: 'Team Tasks',
-           type: 'button',
-           value: { command: 'team all' }.to_json,
-           style: 'primary'
-         },
-         { name: 'feedback',
-           text: 'Feedback',
-           type: 'button',
-           value: {}.to_json
-         },
-         { name: 'hints',
-           text: 'Hints',
-           type: 'button',
-           value: {}.to_json
-         }
-       ]
-     },
-     { pretext: rpt_headline,
-       text: '',
-       color: 'ffffff',
-       mrkdwn_in: ['pretext']
-     }]
-  [text, attachments]
-end
-=end

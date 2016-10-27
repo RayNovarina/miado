@@ -83,7 +83,8 @@ def save_item_info(parsed, id)
   unless item.nil?
     parsed[:list_action_item_info] << {
       db_id: item.id,
-      assigned_member_id: item.assigned_member_id
+      assigned_member_id: item.assigned_member_id,
+      done: item.done
     }
   end
   item
@@ -142,13 +143,30 @@ def mentioned_member_not_found(parsed, name)
   [member.slack_user_id, name]
 end
 
-# p_hash[:ccb] --> channel of the member who typed in the slash cmd that caused
-# us to be here.
-def update_ccb_channel_activity(parsed, activity_type)
-  return if parsed[:ccb].nil?
-  parsed[:ccb].update(
-    last_activity_type: activity_type,
-    last_activity_date: DateTime.current)
+# Inputs: Flexible - 1) parsed only implies channel = parsed[:ccb] and that
+#                       activity_type is implied.
+#                    2) cb, activity_type = explicit context.
+def update_channel_activity(parsed_or_cb, activity_type = nil, after_action_parse_hash = nil)
+  parsed = parsed_or_cb if parsed_or_cb.is_a?(Hash)
+  cb = parsed[:ccb] if parsed_or_cb.is_a?(Hash)
+  cb = parsed_or_cb unless parsed_or_cb.is_a?(Hash)
+  activity_type = "#{parsed[:button_actions].any? ? 'button_action' : 'slash_command'} - #{parsed[:func]}" if activity_type.nil?
+  return cb.update(last_activity_type: activity_type,
+                   last_activity_date: DateTime.current) if after_action_parse_hash.nil?
+  cb.update(after_action_parse_hash: after_action_parse_hash,
+            last_activity_type: activity_type,
+            last_activity_date: DateTime.current)
+end
+
+def update_member_record_activity(options_or_mcb, activity_type, bot_msgs_json = nil)
+  options = options_or_mcb if options_or_mcb.is_a?(Hash)
+  mcb = options[:member_mcb] if options_or_mcb.is_a?(Hash)
+  mcb = options_or_mcb unless options_or_mcb.is_a?(Hash)
+  return mcb.update(last_activity_type: activity_type,
+                    last_activity_date: DateTime.current) if bot_msgs_json.nil?
+  mcb.update(bot_msgs_json: bot_msgs_json,
+             last_activity_type: activity_type,
+             last_activity_date: DateTime.current)
 end
 
 def lib_slack_api(method_name, api_token)
