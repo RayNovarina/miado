@@ -37,6 +37,10 @@ module ChannelExtensions
       return create_from_omniauth_callback(options) if options[:source] == :omniauth_callback
     end
 
+    def find_taskbot_channel_from(options)
+      return find_taskbot_channel_from_slack(options) if options[:source] == :slack
+    end
+
     def find_or_create_taskbot_channel_from(options)
       return find_or_create_taskbot_channel_from_slack(options) if options[:source] == :slack
       return find_or_create_taskbot_channel_from_installation(options) if options[:source] == :installation
@@ -228,6 +232,13 @@ module ChannelExtensions
 
     # Return: new Channel record
     def create_from_slack(options)
+      # Can not happen if normal install/not in dev testing but a taskbot
+      # channel can be detected if we look it up in the installation.rtm_start
+      # data?
+      # slack_channel_name: "directmessage",
+      # slack_channel_id: "D18FG2WUQ",
+      # return create_taskbot_channel_from_slack(options) if options[:slash_url_params]['channel_name'] == 'directmessage' &&
+      #                                                      it is a taskbot channel.
       @view ||= options[:view]
       Channel.new(
         slack_channel_name: options[:slash_url_params]['channel_name'],
@@ -303,7 +314,10 @@ module ChannelExtensions
 
     # Return: new Channel record
     def create_taskbot_channel_from_slack(options)
-      installation = Installation.find_from_slack(options)
+      installation = Installation.find_from_slack(
+        source: :slack, view: @view,
+        slack_user_id: options[:slash_url_params]['user_id'],
+        slack_team_id: options[:slash_url_params]['team_id'])
       create_taskbot_channel_from_installation(installation: installation)
     end
 

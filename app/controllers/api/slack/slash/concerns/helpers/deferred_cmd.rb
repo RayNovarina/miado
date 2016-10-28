@@ -4,9 +4,9 @@ def after_action_deferred_logic(def_cmds)
   if def_cmds[0][:p_hash][:expedite_deferred_cmd]
     send_after_action_deferred_cmds(def_cmds)
   else
-    # Thread.new do
+    Thread.new do
       send_after_action_deferred_cmds(def_cmds)
-    # end
+    end
   end
 end
 
@@ -281,16 +281,26 @@ def am_hash_from_member_record(options)
       slack_user_id: options[:slack_user_id])
     return nil if mcb.nil?
   end
-  tcb = options[:tcb] if options.key?(:tcb) && (options[:tcb].slack_channel_id == mcb.bot_dm_channel_id)
-  tcb = find_or_create_taskbot_channel(mcb: mcb) unless options.key?(:tcb) && (options[:tcb].slack_channel_id == mcb.bot_dm_channel_id)
+  if options.key?(:tcb) && (options[:tcb].slack_channel_id == mcb.bot_dm_channel_id)
+    tcb = options[:tcb]
+  else
+    # tcb = find_or_create_taskbot_channel(mcb: mcb) unless options.key?(:tcb) && (options[:tcb].slack_channel_id == mcb.bot_dm_channel_id)
+    tcb = Channel.find_taskbot_channel_from(
+      source: :slack,
+      slash_url_params: { 'user_id' => options[:slack_user_id],
+                          'team_id' => options[:slack_team_id]
+                        })
+  end
   list_scope = nil
   # list_scope = tcb.after_action_parse_hash['list_scope'] if tcb.after_action_parse_hash &&
   #                                                          tcb.after_action_parse_hash.key?('func') &&
   #                                                          tcb.after_action_parse_hash['func'] == 'list'
-  list_scope = tcb.after_action_parse_hash['list_scope'] if tcb.after_action_parse_hash &&
+  list_scope = tcb.after_action_parse_hash['list_scope'] if tcb && tcb.after_action_parse_hash &&
                                                             tcb.after_action_parse_hash.key?('list_scope') &&
                                                             (tcb.last_activity_type == 'msg_update - taskbot_msgs' ||
                                                              tcb.last_activity_type == 'button_action - list')
+  list_scope = 'empty' if mcb.bot_msgs_json.nil? || mcb.bot_msgs_json.empty?
+
   { 'mcb' => mcb,
     'tcb' => tcb,
     'bot_dm_channel_id' => mcb.bot_dm_channel_id,
@@ -343,6 +353,7 @@ def build_impacted_team_members(parsed, task_am_hash)
             am_hash['taskbot_list_scope'].nil?
     # skip if impacted task is not on this member's displayed taskbot list.
     next unless am_hash['taskbot_list_scope'] == 'team' ||
+                am_hash['taskbot_list_scope'] == 'empty' ||
                 (am_hash['slack_user_id'] == task_am_hash['slack_user_id'])
     impacted_member_id, impacted_member = build_one_impacted_member(am_hash: am_hash)
     impacted_members << impacted_member_id
@@ -469,7 +480,8 @@ end
 # After the list command is run on the taskbot channel, its
 # Channel.after_action_parse_hash is updated via the list command.
 def taskbot_rpts(parsed, chat_msg)
-  list_cmd = "list_taskbot @#{chat_msg[:member_name]} all due_first" if chat_msg[:taskbot_list_scope] == 'one_member'
+  list_cmd = "list_taskbot @#{chat_msg[:member_name]} all due_first" if chat_msg[:taskbot_list_scope] == 'one_member' ||
+                                                                        chat_msg[:taskbot_list_scope] == 'empty'
   list_cmd = 'list_taskbot team all due_first' if chat_msg[:taskbot_list_scope] == 'team'
   url_params = {
     channel_id: chat_msg[:member_tcb].slack_channel_id,
