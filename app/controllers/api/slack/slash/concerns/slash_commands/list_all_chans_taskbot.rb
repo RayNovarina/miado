@@ -19,9 +19,9 @@ end
 def format_all_chans_taskbot_header(parsed, channel_scope, list_of_records)
   empty_text = ' *empty*' if list_of_records.empty?
   empty_text = '' unless list_of_records.empty?
-  channel_text = 'all Team channels' if channel_scope == :all_channels
+  channel_text = 'all channels' if channel_scope == :all_channels
   channel_text = "##{parsed[:url_params]['channel_name']}" if channel_scope == :one_channel
-  member_text = "Current" if parsed[:mentioned_member_name].nil?
+  member_text = "TEAM's current" if parsed[:mentioned_member_name].nil?
   member_text = "@#{parsed[:mentioned_member_name]}'s current" unless parsed[:mentioned_member_name].nil?
   options_text = ''
   options_text.concat('Open') if parsed[:open_option]
