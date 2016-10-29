@@ -44,10 +44,14 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
     return [err_resp(params, err_msg, nil), nil] unless err_msg.empty?
     # Note: ccb.previous_action_list_context: {} becomes our
     # BEFORE action list(mine) or list(team) or list(all)
-    parsed = parse_slash_cmd(params, ccb, ccb.after_action_parse_hash)
-    return [err_resp(params, "`MiaDo ERROR: #{parsed[:err_msg]}`", nil), parsed] unless parsed[:err_msg].empty?
     # tcb = Taskbot Channel.
-    parsed[:tcb] = parsed[:ccb] if parsed[:ccb].is_taskbot
+    tcb = nil unless ccb.is_taskbot
+    tcb = ccb if ccb.is_taskbot
+    # mcb = Member record. We ALWAYS want to create a Member record for anyone
+    #       who is using the slash command.
+    mcb = Member.find_or_create_from(source: :slack, view: @view, slash_url_params: params)
+    parsed = parse_slash_cmd(params, ccb, mcb, tcb, ccb.after_action_parse_hash)
+    return [err_resp(params, "`MiaDo ERROR: #{parsed[:err_msg]}`", nil), parsed] unless parsed[:err_msg].empty?
     text, attachments, options = process_cmd(parsed)
     # after_action_list_context: {} is AFTER action list(mine) or
     # list(team) or list(all)

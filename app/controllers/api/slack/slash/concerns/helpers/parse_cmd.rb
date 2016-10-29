@@ -14,8 +14,8 @@ user_id	U0VLZ5P51
 user_name	ray
 =end
 
-def parse_slash_cmd(params, ccb, previous_action_parse_hash)
-  p_hash = new_parse_hash(params, ccb, previous_action_parse_hash)
+def parse_slash_cmd(params, ccb, mcb, tcb, previous_action_parse_hash)
+  p_hash = new_parse_hash(params, ccb, mcb, tcb, previous_action_parse_hash)
   scan4_command_func(p_hash)
   return p_hash unless p_hash[:err_msg].empty?
   perform_scans_for_functions(p_hash)

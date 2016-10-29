@@ -1,6 +1,11 @@
-def new_parse_hash(params, ccb, previous_action_parse_hash)
+def new_parse_hash(params, ccb, mcb, tcb, previous_action_parse_hash)
   p_hash = make_parse_hash
   # Initialize to defaults.
+  p_hash[:ccb] = ccb
+  # tcb = Taskbot Channel.
+  p_hash[:tcb] = tcb
+  # mcb = Member record.
+  p_hash[:mcb] = mcb
   p_hash[:previous_action_list_context] = context_from_ccb_hash(previous_action_parse_hash)
   slash_cmd_from_buttons(params, p_hash) if params.key?('payload')
   slash_cmd_from_event(params, p_hash) if params.key?('event')
@@ -9,7 +14,6 @@ def new_parse_hash(params, ccb, previous_action_parse_hash)
   p_hash[:command] = String.new(p_hash[:original_command])
   p_hash[:cmd_splits] = p_hash[:command].split
   p_hash[:url_params] = params
-  p_hash[:ccb] = ccb
   p_hash
 end
 

@@ -23,6 +23,7 @@ module MemberExtensions
     def find_or_create_from(options)
       return find_or_create_from_installation(options) if options[:source] == :installation
       return find_or_create_from_rtm_data(options) if options[:source] == :rtm_data
+      return find_or_create_from_slack(options) if options[:source] == :slack
     end
 
     def find_from(options)
@@ -67,6 +68,18 @@ module MemberExtensions
       member = find_from_installation(options)
       return member unless member.nil?
       create_from_installation(options)
+    end
+
+    # Returns: Member record or nil
+    def find_or_create_from_slack(options)
+      member = find_from_slack(
+        slack_user_id: options[:slash_url_params]['user_id'],
+        slack_team_id: options[:slash_url_params]['team_id'])
+      return member unless member.nil?
+      create_from_rtm_data(
+        installation_slack_user_id: options[:slash_url_params]['user_id'],
+        slack_team_id: options[:slash_url_params]['team_id'],
+        slack_user_name: options[:slash_url_params]['user_name'])
     end
 
     # Returns: Member record or nil
@@ -142,6 +155,7 @@ member = Member.find_or_create_from(
   slack_team_id: parsed[:url_params][:team_id]
 )
 =end
+    # Inputs: options = { :installation_slack_user_id, :slack_team_id, :slack_user_name }
     # Returns: member record or nil
     # Case1: ray installs, mentions @dawnnova: look her up in ray's install rec.
     # Case2: dawn has not installed, uses /do @sue: look her up in any team member's install rec.
@@ -156,8 +170,8 @@ member = Member.find_or_create_from(
         slack_user_id: options[:installation_slack_user_id],
         slack_team_id: options[:slack_team_id])
       if installation.nil?
-        # Person using slash cmd has not installed the app but someone one their
-        # team has. i.e. Case2.
+        # Person using slash cmd has not installed the app but someone one
+        # on their team has. i.e. Case2.
         # Get install record of anyone on team who has installed app.
         installation = Installation.find_from(
           source: :slack,
