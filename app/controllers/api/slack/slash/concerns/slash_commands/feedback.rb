@@ -25,7 +25,7 @@ end
 def feedback_button_add_task(parsed)
   text = ''
   attachments =
-    list_button_public_headline_replacement(parsed) # in list_button_public.rb
+    list_button_public_headline_replacement(parsed, 'feedback') # in list_button_public.rb
     .concat([pretext: 'Please use the MiaDo `/do feedback` command to email ' \
                       "MiaDo product support.\n" \
                       "Example: `/do feedback This is my suggestion. [enter]`\n\n",
@@ -37,7 +37,7 @@ end
 def feedback_button_taskbot_rpts(parsed)
   text = ''
   attachments =
-    list_button_taskbot_headline_replacement(parsed) # in list_button_taskbot.rb
+    list_button_taskbot_headline_replacement(parsed, '', 'feedback') # in list_button_taskbot.rb
     .concat([pretext: "Ok, type in a comment.\n" \
                       "\nWhen done, hit [enter] and it will be emailed to " \
                       "MiaDo product support.\n\n",

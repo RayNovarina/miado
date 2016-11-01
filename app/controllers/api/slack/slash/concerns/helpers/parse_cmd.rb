@@ -65,8 +65,6 @@ def perform_scans_for_functions(p_hash)
     scan4_options(p_hash)
   when :message_event
     # nothing to do.
-  when :post_comment
-    # nothing to do.
   when :taskbot_rpts
     scan4_mentioned_member(p_hash)
     scan4_options(p_hash)
@@ -115,12 +113,16 @@ end
 
 # Returns: p_hash[:func]
 def command_func_from_help_button(p_hash)
-  p_hash[:func] = :help
+  return p_hash[:func] = :help unless p_hash[:button_actions].first['name'] == 'lists'
+  p_hash[:func] = :list # if p_hash[:button_actions].first['name'] == 'lists'
+  p_hash[:command] = p_hash[:first_button_value][:command]
+  p_hash[:cmd_splits] = p_hash[:command].split
 end
 
 # Returns: p_hash[:func]
 def command_func_from_add_task_button(p_hash)
-  return p_hash[:func] = :hints if p_hash[:button_actions].first['name'] == 'hints'
+  # return p_hash[:func] = :hints if p_hash[:button_actions].first['name'] == 'hints'
+  return p_hash[:func] = :help if p_hash[:button_actions].first['name'] == 'help'
   return p_hash[:func] = :feedback if p_hash[:button_actions].first['name'] == 'feedback'
   p_hash[:func] = :list # if p_hash[:button_actions].first['name'] == 'list'
   p_hash[:command] = p_hash[:first_button_value][:command]

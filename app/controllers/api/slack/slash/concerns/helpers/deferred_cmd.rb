@@ -18,7 +18,7 @@ end
 
 CMD_FUNCS_IGNORED_BY_AFTER_ACTION_DEFERRED =
   [:discuss, :feedback, :hints, :help, :last_action_list, :list,
-   :post_comment, :taskbot_rpts].freeze
+   :taskbot_rpts].freeze
 #
 # if a member's taskbot lists could be changed, then we need to update em.
 # Returns: [ deferred_cmd{} ]
@@ -941,7 +941,7 @@ end
 # Delete event msg and display taskbot button header and response msg.
 def delete_event_msg_and_update_taskbot_msg(parsed, text_msg)
   delete_event_msg(parsed)
-  attachments = list_button_taskbot_headline_replacement(parsed, text_msg) # in list_button_taskbot.rb
+  attachments = list_button_taskbot_headline_replacement(parsed, text_msg, 'list') # in list_button_taskbot.rb
   # NOTE: should not need parsed[:button_callback_id]['payload_message_ts']
   # message.ts to edit is in parsed[:mcb].bot_msgs_json - should be first
   # and only taskbot msg.

@@ -10,7 +10,8 @@ end
 def all_chans_taskbot_header(parsed, _context, list_of_records)
   text = ''
   attachments = list_button_taskbot_headline_replacement( # in list_button_taskbot.rb
-    parsed, format_all_chans_taskbot_header(parsed, parsed[:channel_scope], list_of_records))
+    parsed, format_all_chans_taskbot_header(parsed, parsed[:channel_scope], list_of_records),
+    'list')
   [text, attachments]
 end
 
@@ -55,7 +56,7 @@ def all_chans_taskbot_body(parsed, _text, attachments, list_of_records)
 end
 
 def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, tasknum)
-  attachment_text = list_add_attachment_text(parsed, item, nil)
+  attachment_text = list_add_attachment_text(parsed, item, tasknum) # in list.rb
   attachments <<
     { response_type: 'ephemeral',
       text: attachment_text,
@@ -87,7 +88,7 @@ def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, 
           text: 'Discuss',
           type: 'button',
           value: { command: tasknum.to_s }.to_json
-        }
+       }
       ]
     }
 end

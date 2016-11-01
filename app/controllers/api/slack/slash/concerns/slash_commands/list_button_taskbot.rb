@@ -10,7 +10,8 @@ end
 def button_taskbot_lists_header(parsed, list_of_records)
   text = ''
   attachments = list_button_taskbot_headline_replacement(
-    parsed, format_all_chans_taskbot_header(parsed, parsed[:channel_scope], list_of_records)) # in: list_all_chans_taskbot.rb
+    parsed, format_all_chans_taskbot_header(parsed, parsed[:channel_scope], list_of_records),
+    'list')
   # attachments << {
   #  color: '#3AA3E3',
   #  text: "#{list_chan_header(parsed, parsed, list_of_records, true)}\n",
@@ -21,14 +22,14 @@ end
 
 # Top of report buttons and headline.
 # Returns: Replacement taskbot headline [attachment{}]
-def list_button_taskbot_headline_replacement(parsed, rpt_headline = '')
+def list_button_taskbot_headline_replacement(parsed, rpt_headline = '', caller_id = 'list')
   # Set color of list buttons.
   style_your_tasks, style_team_tasks = list_button_taskbot_headline_colors(parsed)
   [{ text: '',
      fallback: 'Do not view list',
-     callback_id: { id: 'taskbot' }.to_json,
+     callback_id: { id: 'taskbot', caller_id: caller_id }.to_json,
      color: 'ffffff',
-     actions: [
+     actions: [ # 'Your Tasks' 'Team's' 'All' 'Feedback' 'Hints' 'Reset'
        { name: 'list',
          text: 'Your Tasks',
          type: 'button',
@@ -36,9 +37,15 @@ def list_button_taskbot_headline_replacement(parsed, rpt_headline = '')
          style: style_your_tasks
        },
        { name: 'list',
-         text: 'Team Tasks',
+         text: 'Team\'s',
          type: 'button',
          value: { command: 'team all' }.to_json,
+         style: style_team_tasks
+       },
+       { name: 'list',
+         text: 'All',
+         type: 'button',
+         value: { command: 'all' }.to_json,
          style: style_team_tasks
        },
        { name: 'feedback',

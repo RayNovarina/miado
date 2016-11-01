@@ -17,7 +17,7 @@ end
 def discuss_button_taskbot(parsed)
   text = ''
   attachments =
-    list_button_taskbot_headline_replacement(parsed) # in list_button_taskbot.rb
+    list_button_taskbot_headline_replacement(parsed, '', 'discuss') # in list_button_taskbot.rb
     .concat([pretext: "Ok, type in a comment for the task:`#{parsed[:button_callback_id][:task_desc].delete('|')}`" \
                       "\nWhen done, hit [enter] and it will be posted as " \
                       "a team message in your `##{parsed[:button_callback_id][:slack_chan_name]}` channel.\n\n",

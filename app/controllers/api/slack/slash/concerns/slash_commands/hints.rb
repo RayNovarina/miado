@@ -17,7 +17,7 @@ end
 def hints_button_add_task(parsed)
   text = ''
   attachments =
-    list_button_public_headline_replacement(parsed) # in list_button_public.rb
+    list_button_public_headline_replacement(parsed, 'hints') # in list_button_public.rb
     .concat(hints_add_task_headline(parsed))
     .concat(hints_add_task_subsection1(parsed))
     .concat(hints_add_task_footer(parsed))
@@ -49,7 +49,7 @@ end
 def hints_button_taskbot_rpts(parsed)
   text = ''
   attachments =
-    list_button_taskbot_headline_replacement(parsed) # in list_button_taskbot.rb
+    list_button_taskbot_headline_replacement(parsed, '', 'hints') # in list_button_taskbot.rb
     .concat(hints_taskbot_rpts_headline(parsed))
     .concat(hints_taskbot_rpts_subsection1(parsed))
     .concat(hints_taskbot_rpts_footer(parsed))

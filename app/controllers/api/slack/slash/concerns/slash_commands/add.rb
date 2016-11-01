@@ -49,7 +49,7 @@ def add_command(parsed)
     parsed[:response_headline] =
       "#{task_num_clause} as: `#{description_clause}` #{assigned_to_clause} " \
       "#{due_date_clause}"
-    attachments = add_response_headline_attachments(parsed, parsed[:response_headline], item.id)
+    attachments = add_response_headline_attachments(parsed, parsed[:response_headline], item.id, 'add')
     # Special case: just doing an add task for the redo command.
     parsed[:list] = list if parsed[:on_behalf_of_redo_cmd]
     return [text, attachments] if parsed[:on_behalf_of_redo_cmd]
@@ -89,18 +89,19 @@ def add_description(parsed)
 end
 
 # Returns: [attachment{}]
-def add_response_headline_attachments(_parsed, response_text = '', item_db_id = '')
+def add_response_headline_attachments(_parsed, response_text = '', item_db_id = '', caller_id = 'add')
   [{ response_type: 'ephemeral',
      text: response_text,
-     fallback: 'Do not view list',
+     fallback: 'A task has been added.',
      callback_id: { id: 'add task',
                     item_db_id: item_db_id,
-                    response_headline: response_text
+                    response_headline: response_text,
+                    caller_id: caller_id
                   }.to_json,
      color: '#3AA3E3',
      mrkdwn_in: ['text'],
      attachment_type: 'default',
-     actions: [
+     actions: [ # Your Tasks Team's All Feedback Hints
        { name: 'list',
          text: 'Your Tasks',
          style: 'primary',
@@ -108,17 +109,22 @@ def add_response_headline_attachments(_parsed, response_text = '', item_db_id = 
          value: { command: '@me' }.to_json
        },
        { name: 'list',
-         text: 'Team Tasks',
+         text: 'Team\'s',
          type: 'button',
          value: { command: 'team' }.to_json
+       },
+       { name: 'list',
+         text: 'All',
+         type: 'button',
+         value: { command: 'all' }.to_json
        },
        { name: 'feedback',
          text: 'Feedback',
          type: 'button',
          value: { resp_options: { replace_original: false } }.to_json
        },
-       { name: 'hints',
-         text: 'Hints',
+       { name: 'help',
+         text: 'Help',
          type: 'button',
          value: {}.to_json
        }
