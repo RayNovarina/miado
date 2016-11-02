@@ -1,14 +1,16 @@
-# Returns: [text, attachments]
-def all_channels_display(parsed, context, list_of_records)
-  text, attachments = all_chans_header(parsed, context, list_of_records)
+# Returns: [text, attachments, list_ids]
+def all_channels_display(parsed, context, list_of_records, caller_id = 'list')
+  text, attachments = all_chans_header(parsed, context, list_of_records, caller_id)
   list_ids = all_chans_body(parsed, text, attachments, list_of_records)
   # list_chan_footer(parsed, context, list_of_records, text, attachments)
   [text, attachments, list_ids]
 end
 
 # Returns: [text, attachments]
-def all_chans_header(parsed, context, list_of_records)
-  [list_chan_header(parsed, context, list_of_records, '#all-channels '), []] # in list.rb
+def all_chans_header(parsed, context, list_of_records, caller_id)
+  parsed[:response_headline] = list_format_headline_text(parsed, context, list_of_records, true) # in list.rb
+  # [list_chan_header(parsed, context, list_of_records, '#all-channels '), []] # in list.rb
+  ['', list_chan_headline_replacement(parsed, parsed[:response_headline], caller_id)] # in list.rb
 end
 
 # Returns: list_ids[]

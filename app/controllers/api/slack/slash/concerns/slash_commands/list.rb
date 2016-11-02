@@ -87,19 +87,19 @@ def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list'
        { name: 'list',
          text: 'Your Tasks',
          type: 'button',
-         value: { command: '@me' }.to_json,
+         value: { command: '$@me' }.to_json,
          style: style_your_tasks
        },
        { name: 'list',
          text: 'Team\'s',
          type: 'button',
-         value: { command: 'team' }.to_json,
+         value: { command: '$team assigned' }.to_json,
          style: style_team_tasks
        },
        { name: 'list',
          text: 'All',
          type: 'button',
-         value: { command: 'all' }.to_json
+         value: { command: '$team all open done' }.to_json
        },
        { name: 'feedback',
          text: 'Feedback',
@@ -168,6 +168,8 @@ end
 def list_format_owner_title(context)
   subtitle = ''
   subtitle.concat(' all') if context[:channel_scope] == :all_channels
+  subtitle.concat(' assigned') if context[:assigned_option]
+  subtitle.concat(' unassigned') if context[:unassigned_option]
   subtitle.concat(' open') if context[:open_option]
   subtitle.concat(' due') if context[:due_option]
   subtitle.concat(' done') if context[:done_option]

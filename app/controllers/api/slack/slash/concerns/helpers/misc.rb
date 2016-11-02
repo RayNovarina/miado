@@ -40,9 +40,11 @@ def debug_headers(parsed)
     "`               [mentioned_member_name: #{parsed[:mentioned_member_name]}] " \
     "   options:  [team: #{parsed[:team_option]}]  " \
     "[all: #{parsed[:all_option]}]  " \
+    "[assigned: #{parsed[:assigned_option]}]  " \
+    "[done: #{parsed[:done_option]}] `\n" \
+    "`               [due: #{parsed[:due_option]}]  " \
     "[open: #{parsed[:open_option]}]  " \
-    "[done: #{parsed[:done_option]}]  " \
-    "[due: #{parsed[:due_option]}] `\n"
+    "[unassigned: #{parsed[:unassigned_option]}] `\n"
   query_info =
     "`  query via: #{parsed[:list_query_trace_info]}" \
     "(team_id: #{params[:team_id]}  " \

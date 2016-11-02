@@ -48,6 +48,7 @@ def list_from_parsed(parsed)
 end
 
 #------------------ assigned tasks for mentioned member --------------------
+
 def list_of_assigned_tasks_for_one_member_in_one_channel(parsed, params)
   parsed[:list_query_trace_info] = 'list_of_assigned_tasks_for_one_member_in_one_channel' if parsed[:debug]
   # For specified member in this channel.

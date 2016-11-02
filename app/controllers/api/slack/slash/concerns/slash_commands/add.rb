@@ -101,22 +101,22 @@ def add_response_headline_attachments(_parsed, response_text = '', item_db_id = 
      color: '#3AA3E3',
      mrkdwn_in: ['text'],
      attachment_type: 'default',
-     actions: [ # Your Tasks Team's All Feedback Hints
+     actions: [
        { name: 'list',
          text: 'Your Tasks',
          style: 'primary',
          type: 'button',
-         value: { command: '@me' }.to_json
+         value: { command: '$@me' }.to_json
        },
        { name: 'list',
          text: 'Team\'s',
          type: 'button',
-         value: { command: 'team' }.to_json
+         value: { command: '$team assigned' }.to_json
        },
        { name: 'list',
          text: 'All',
          type: 'button',
-         value: { command: 'all' }.to_json
+         value: { command: '$team all open done' }.to_json
        },
        { name: 'feedback',
          text: 'Feedback',

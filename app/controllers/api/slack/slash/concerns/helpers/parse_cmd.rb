@@ -148,7 +148,14 @@ def command_func_from_lists_button(p_hash)
 end
 
 def command_text_from_button(p_hash)
-  p_hash[:command] = p_hash[:first_button_value][:command]
+  command_without_func = p_hash[:first_button_value][:command]
+  debug = command_without_func.starts_with?('$')
+  command_without_func = command_without_func.slice(1, command_without_func.length).lstrip if debug
+  debug_char = '$' if debug
+  debug_char = '' unless debug
+  p_hash[:url_params][:text] = "#{debug_char}#{p_hash[:func]} #{command_without_func}"
+  p_hash[:original_command], p_hash[:debug] = check_for_debug(params)
+  p_hash[:command] = command_without_func
   p_hash[:cmd_splits] = p_hash[:command].split
 end
 
@@ -177,11 +184,11 @@ end
 #       'open' was 'list open', '' was 'list ', '4' was 'delete team 4',
 #       'open team' was 'list open team', 'team all' was 'list team all',
 #       'all open tasks for @susan is a new task' was 'delete all open tasks for @susan is a new task'
-CMD_OPTIONS = %w(open due due_first done all team).freeze
+CMD_OPTIONS = %w(all assigned done due due_first open team unassigned).freeze
 def scan4_options(p_hash)
   return unless p_hash[:err_msg].empty?
-  # Have to be adding task if command is longer than options allow.
-  return p_hash[:func] = :add if p_hash[:cmd_splits].length > CMD_OPTIONS.length - 1
+  # Have to be adding task if command is longer than a reasonable number of options.
+  return p_hash[:func] = :add if p_hash[:cmd_splits].length > 5 # CMD_OPTIONS.length - 1
   CMD_OPTIONS.each_with_index do |option, _index|
     next unless p_hash[:cmd_splits].include?(option)
     p_hash[''.concat(option).concat('_option').to_sym] = true
@@ -195,14 +202,17 @@ end
 def adjust_cmd_options_for_add_cmd(p_hash)
   # OR?? remove each option as it is processed and see if anything left over.
   #      task num, due date and mentioned_member_name removed too?
-  # Have to be adding task if command is longer than options specified.
+  # Have to be adding task if command is longer than a "reasonable" numboer of
+  # options.
   num_options = 0
-  num_options += 1 if p_hash[:team_option]
   num_options += 1 if p_hash[:all_option]
-  num_options += 1 if p_hash[:open_option]
+  num_options += 1 if p_hash[:assigned_option]
+  num_options += 1 if p_hash[:done_option]
   num_options += 1 if p_hash[:due_option]
   num_options += 1 if p_hash[:due_first_option]
-  num_options += 1 if p_hash[:done_option]
+  num_options += 1 if p_hash[:open_option]
+  num_options += 1 if p_hash[:team_option]
+  num_options += 1 if p_hash[:unassigned_option]
   num_options += 1 unless p_hash[:task_num].nil?
   num_options += 1 unless p_hash[:mentioned_member_id].nil?
   p_hash[:func] = :add if p_hash[:cmd_splits].length > num_options
