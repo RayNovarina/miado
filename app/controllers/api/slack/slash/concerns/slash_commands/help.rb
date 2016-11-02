@@ -9,7 +9,8 @@ end
 # Returns [text, attachments, response_options]
 def help_header(parsed)
   text = ''
-  caller_id = parsed[:button_callback_id]['caller_id']
+  caller_id = 'help' if parsed[:button_callback_id].nil?
+  caller_id = parsed[:button_callback_id]['caller_id'] unless parsed[:button_callback_id].nil?
   response_text = nil unless caller_id == 'add'
   response_text = parsed[:button_callback_id]['response_headline'] if caller_id == 'add'
   attachments, resp_options = help_headline_replacement(parsed, response_text, caller_id)
@@ -18,45 +19,51 @@ end
 
 # Top of report buttons and headline.
 # Returns: Replacement help headline [attachment{}] if specified.
-def help_headline_replacement(_parsed, response_text = '', caller_id = 'help')
+def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
   # response_options = { replace_original: false } unless caller_id == 'add'
   response_options = { replace_original: true } # if caller_id == 'add'
-  attachments =
-    [{ fallback: 'Help',
-       text: response_text,
-       color: '#f8f8f8',
-       callback_id: { id: 'help', caller_id: caller_id }.to_json,
-       color: '#3AA3E3',
-       mrkdwn_in: ['text'],
-       actions: [
-         { name: 'faqs',
-           text: 'FAQs',
-           type: 'button',
-           value: {}.to_json
-         },
-         { name: 'best',
-           text: 'Best Practices',
-           type: 'button',
-           value: {}.to_json
-         },
-         { name: 'online',
-           text: 'Online Doc',
-           type: 'button',
-           value: {}.to_json
-         },
-         { name: 'help',
-           text: 'Help',
-           type: 'button',
-           value: {}.to_json
-         },
-         { name: 'lists',
-           text: 'Task Lists',
-           type: 'button',
-           value: { command: '@me' }.to_json,
-           style: 'primary'
-         }
-       ]
-      }]
+  attachments = []
+  attachments << {
+    fallback: 'Help',
+    text: response_text,
+    color: '#3AA3E3',
+    mrkdwn_in: ['text'] } unless response_text.nil?
+
+  attachments <<
+    { fallback: 'Help',
+      text: '',
+      color: '#f8f8f8',
+      callback_id: { id: 'help', caller_id: caller_id }.to_json,
+      mrkdwn_in: ['text'],
+      actions: [
+        { name: 'faqs',
+          text: 'FAQs',
+          type: 'button',
+          value: {}.to_json
+        },
+        { name: 'best',
+          text: 'Best Practices',
+          type: 'button',
+          value: {}.to_json
+        },
+        { name: 'online',
+          text: 'Online Doc',
+          type: 'button',
+          value: {}.to_json
+        },
+        { name: 'help',
+          text: 'Help',
+          type: 'button',
+          value: {}.to_json
+        },
+        { name: 'lists',
+          text: 'Task Lists',
+          type: 'button',
+          value: { command: '@me' }.to_json,
+          style: 'primary'
+        }
+      ]
+    }
   [attachments, response_options]
 end
 

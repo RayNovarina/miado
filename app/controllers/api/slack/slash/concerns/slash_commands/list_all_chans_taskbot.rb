@@ -60,7 +60,7 @@ def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, 
   attachments <<
     { response_type: 'ephemeral',
       text: attachment_text,
-      fallback: 'not done',
+      fallback: 'Taskbot list',
       callback_id: { id: 'taskbot',
                      attch_idx: attch_idx,
                      tasknum: tasknum,

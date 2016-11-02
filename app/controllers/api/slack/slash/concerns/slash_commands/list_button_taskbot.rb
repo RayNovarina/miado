@@ -26,10 +26,10 @@ def list_button_taskbot_headline_replacement(parsed, rpt_headline = '', caller_i
   # Set color of list buttons.
   style_your_tasks, style_team_tasks = list_button_taskbot_headline_colors(parsed)
   [{ text: '',
-     fallback: 'Do not view list',
+     fallback: 'Taskbot lists',
      callback_id: { id: 'taskbot', caller_id: caller_id }.to_json,
      color: 'ffffff',
-     actions: [ # 'Your Tasks' 'Team's' 'All' 'Feedback' 'Hints' 'Reset'
+     actions: [
        { name: 'list',
          text: 'Your Tasks',
          type: 'button',

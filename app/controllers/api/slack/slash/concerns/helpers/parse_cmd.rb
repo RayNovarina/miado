@@ -85,7 +85,7 @@ end
 #       'delete all open tasks for @susan is a new task'
 # Case: command is as entered from command line.
 #       'a new task', 'list team'
-CMD_FUNCS = %w(append assign delete done due feedback help hints list list_taskbot redo unassign).freeze
+CMD_FUNCS = %w(append assign delete done due feedback help hints list lists list_taskbot redo unassign).freeze
 def scan4_command_func(p_hash)
   return command_func_from_button(p_hash) if p_hash[:button_actions].any?
   return command_func_from_event(p_hash) unless p_hash[:event_type].empty?
@@ -99,6 +99,7 @@ def scan4_command_func(p_hash)
   # discard/consume func word if we have one.
   p_hash[:cmd_splits].shift unless p_hash[:func].nil?
   p_hash[:taskbot_rpt] = true if p_hash[:func] == :list_taskbot
+  p_hash[:func] = :list if p_hash[:func] == :lists
   p_hash[:func] = :list if p_hash[:func] == :list_taskbot
   # Default to add cmd if no func specified or implied.
   p_hash[:func] = :add if p_hash[:func].nil?
@@ -109,14 +110,14 @@ def command_func_from_button(p_hash)
   return command_func_from_help_button(p_hash) if p_hash[:button_callback_id][:id] == 'help'
   return command_func_from_add_task_button(p_hash) if p_hash[:button_callback_id][:id] == 'add task'
   return command_func_from_taskbot_button(p_hash) if p_hash[:button_callback_id][:id] == 'taskbot'
+  return command_func_from_lists_button(p_hash) if p_hash[:button_callback_id][:id] == 'lists'
 end
 
 # Returns: p_hash[:func]
 def command_func_from_help_button(p_hash)
   return p_hash[:func] = :help unless p_hash[:button_actions].first['name'] == 'lists'
   p_hash[:func] = :list # if p_hash[:button_actions].first['name'] == 'lists'
-  p_hash[:command] = p_hash[:first_button_value][:command]
-  p_hash[:cmd_splits] = p_hash[:command].split
+  command_text_from_button(p_hash)
 end
 
 # Returns: p_hash[:func]
@@ -125,8 +126,7 @@ def command_func_from_add_task_button(p_hash)
   return p_hash[:func] = :help if p_hash[:button_actions].first['name'] == 'help'
   return p_hash[:func] = :feedback if p_hash[:button_actions].first['name'] == 'feedback'
   p_hash[:func] = :list # if p_hash[:button_actions].first['name'] == 'list'
-  p_hash[:command] = p_hash[:first_button_value][:command]
-  p_hash[:cmd_splits] = p_hash[:command].split
+  command_text_from_button(p_hash)
 end
 
 # Returns: p_hash[:func]
@@ -137,6 +137,17 @@ def command_func_from_taskbot_button(p_hash)
   p_hash[:func] = :list if p_hash[:button_actions].first['name'] == 'list'
   p_hash[:func] = :done if p_hash[:button_actions].first['name'] == 'done' || p_hash[:button_actions].first['name'] == 'done and delete'
   p_hash[:func] = :discuss if p_hash[:button_actions].first['name'] == 'discuss'
+  command_text_from_button(p_hash)
+end
+
+def command_func_from_lists_button(p_hash)
+  return p_hash[:func] = :help if p_hash[:button_actions].first['name'] == 'help'
+  return p_hash[:func] = :feedback if p_hash[:button_actions].first['name'] == 'feedback'
+  p_hash[:func] = :list
+  command_text_from_button(p_hash)
+end
+
+def command_text_from_button(p_hash)
   p_hash[:command] = p_hash[:first_button_value][:command]
   p_hash[:cmd_splits] = p_hash[:command].split
 end

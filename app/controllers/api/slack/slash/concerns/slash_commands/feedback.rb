@@ -1,13 +1,19 @@
 
 # Returns: [text, attachments, response_options]
 def feedback_command(parsed)
-  return feedback_button_add_task(parsed) if !parsed[:button_callback_id].nil? && parsed[:button_callback_id][:id] == 'add task'
   return feedback_button_taskbot_rpts(parsed) if !parsed[:button_callback_id].nil? && parsed[:button_callback_id][:id] == 'taskbot'
+  return feedback_button_public_chan(parsed) unless parsed[:button_callback_id].nil?
   submitted_comment = comment_from_slash_feedback(parsed)
   update_channel_activity(parsed)
   if submitted_comment.valid?
     CommentMailer.new_comment(@view, submitted_comment).deliver_now
     return ['Thank you, we appreciate your input.', []]
+    # text = ''
+    # attachments =
+    #  list_chan_headline_replacement(parsed, nil, 'feedback') # in list.rb
+    #  .concat([pretext: 'Thank you, we appreciate your input.',
+    #           mrkdwn_in: ['pretext']])
+    # return [text, attachments]
   end
   parsed[:err_msg] = 'Error: Feedback message is empty.'
 end
@@ -22,10 +28,11 @@ def comment_from_slash_feedback(parsed)
 end
 
 # Returns: [text, attachments, response_options]
-def feedback_button_add_task(parsed)
+def feedback_button_public_chan(parsed)
   text = ''
   attachments =
-    list_button_public_headline_replacement(parsed, 'feedback') # in list_button_public.rb
+    # list_button_public_headline_replacement(parsed, 'feedback') # in list_button_public.rb
+    list_chan_headline_replacement(parsed, nil, 'feedback') # in list.rb
     .concat([pretext: 'Please use the MiaDo `/do feedback` command to email ' \
                       "MiaDo product support.\n" \
                       "Example: `/do feedback This is my suggestion. [enter]`\n\n",

@@ -70,8 +70,80 @@ def list_formats(parsed, context, list_of_records)
   all_channels_display(parsed, context, list_of_records) # list_all_chans.rb
 end
 
+# Top of report buttons and headline.
+# Returns: Replacement list headline [attachment{}]
+def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list')
+  # Set color of list buttons.
+  style_your_tasks, style_team_tasks = list_button_headline_colors(parsed)
+  [{ text: '',
+     fallback: 'Task list',
+     callback_id: { id: 'lists',
+                    response_headline: rpt_headline,
+                    caller_id: caller_id
+                  }.to_json,
+     color: 'ffffff',
+     attachment_type: 'default',
+     actions: [
+       { name: 'list',
+         text: 'Your Tasks',
+         type: 'button',
+         value: { command: '@me' }.to_json,
+         style: style_your_tasks
+       },
+       { name: 'list',
+         text: 'Team\'s',
+         type: 'button',
+         value: { command: 'team' }.to_json,
+         style: style_team_tasks
+       },
+       { name: 'list',
+         text: 'All',
+         type: 'button',
+         value: { command: 'all' }.to_json
+       },
+       { name: 'feedback',
+         text: 'Feedback',
+         type: 'button',
+         # value: { resp_options: { replace_original: false } }.to_json
+         value: {}.to_json
+       },
+       { name: 'help',
+         text: 'Help',
+         type: 'button',
+         value: {}.to_json
+       }
+     ]
+   },
+   { pretext: rpt_headline,
+     text: '',
+     color: 'ffffff',
+     mrkdwn_in: ['pretext']
+   }]
+end
+
+# Returns: [style_your_tasks, style_team_tasks]
+def list_button_headline_colors(parsed)
+  # Set color of list buttons.
+  style_your_tasks = 'primary' if parsed[:func] == :message_event
+  unless parsed[:func] == :message_event
+    style_your_tasks = 'default'
+    if !parsed[:button_callback_id].nil? &&
+       parsed[:button_callback_id][:id] == 'taskbot'
+      # A taskbot channel button has been clicked. We toggle between my lists
+      # and team lists as button default. (Green button means recommended one)
+      if !(parsed[:button_actions].first['name'] == 'list') ||
+         parsed[:list_scope] == :team
+        style_your_tasks = 'primary'
+      end
+    end
+  end
+  style_team_tasks = 'primary' if style_your_tasks == 'default'
+  style_team_tasks = 'default' unless style_your_tasks == 'default'
+  [style_your_tasks, style_team_tasks]
+end
+
 # Returns: text
-def list_chan_header(parsed, context, list_of_records, add_chan_name = false)
+def list_format_headline_text(parsed, context, list_of_records, add_chan_name = false)
   if add_chan_name.respond_to? :to_str
     channel_name = add_chan_name
   else
@@ -104,7 +176,7 @@ def list_format_owner_title(context)
 end
 
 # Make a list of tasks as multiple lines of text.
-# Returns: updated attachments array.
+# Returns: updated [attachments{}]
 def list_add_item_to_display_list(parsed, attachments, attch_idx, item, tasknum)
   # Create a new attachment for the task list, if needed.
   attachments << { color: '#3AA3E3', text: '', mrkdwn_in: ['text'] } if attachments.empty? || attch_idx == 'new'
