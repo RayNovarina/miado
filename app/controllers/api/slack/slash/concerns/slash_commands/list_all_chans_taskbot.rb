@@ -83,12 +83,13 @@ def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, 
           type: 'button',
           value: { command: tasknum.to_s }.to_json,
           style: 'danger'
-        },
-        { name: 'discuss',
-          text: 'Discuss',
-          type: 'button',
-          value: { command: tasknum.to_s }.to_json
-       }
+        }
+        # ,
+        # { name: 'discuss',
+        # text: 'Discuss',
+        # type: 'button',
+        # value: { command: tasknum.to_s }.to_json
+        # }
       ]
     }
 end

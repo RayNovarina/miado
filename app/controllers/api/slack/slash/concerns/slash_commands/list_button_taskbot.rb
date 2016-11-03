@@ -27,36 +27,49 @@ def list_button_taskbot_headline_replacement(parsed, rpt_headline = '', caller_i
   style_your_tasks, style_team_tasks = list_button_taskbot_headline_colors(parsed)
   [{ text: '',
      fallback: 'Taskbot lists',
-     callback_id: { id: 'taskbot', caller_id: caller_id }.to_json,
+     callback_id: { id: 'taskbot',
+                    caller_id: caller_id,
+                    debug: false
+                  }.to_json,
      color: 'ffffff',
      actions: [
        { name: 'list',
-         text: 'Your Tasks',
+         text: 'Your To-Do\'s',
          type: 'button',
          value: { command: '@me all' }.to_json,
          style: style_your_tasks
        },
        { name: 'list',
-         text: 'Team\'s',
+         text: 'Team To-Do\'s',
          type: 'button',
          value: { command: 'team all' }.to_json,
          style: style_team_tasks
        },
        { name: 'list',
-         text: 'All',
+         text: 'All Tasks',
          type: 'button',
-         value: { command: 'all' }.to_json,
+         value: { command: 'team all open done' }.to_json,
          style: style_team_tasks
        },
-       { name: 'feedback',
-         text: 'Feedback',
+       # { name: 'feedback',
+       # text: 'Feedback',
+       # type: 'button',
+       # value: {}.to_json
+       # },
+       # { name: 'hints',
+       # text: 'Hints',
+       # type: 'button',
+       # value: {}.to_json
+       # }
+       { name: 'reset',
+         text: 'Reset',
          type: 'button',
          value: {}.to_json
        },
-       { name: 'hints',
-         text: 'Hints',
+       { name: 'help',
+         text: 'Help',
          type: 'button',
-         value: {}.to_json
+         value: { command: 'buttons' }.to_json
        }
      ]
    },
