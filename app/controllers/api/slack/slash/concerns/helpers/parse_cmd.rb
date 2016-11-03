@@ -149,10 +149,8 @@ end
 
 def command_text_from_button(p_hash)
   command_without_func = p_hash[:first_button_value][:command]
-  debug = command_without_func.starts_with?('$')
-  command_without_func = command_without_func.slice(1, command_without_func.length).lstrip if debug
-  debug_char = '$' if debug
-  debug_char = '' unless debug
+  debug_char = '$' if p_hash[:button_callback_id][:debug]
+  debug_char = '' unless debug_char
   p_hash[:url_params][:text] = "#{debug_char}#{p_hash[:func]} #{command_without_func}"
   p_hash[:original_command], p_hash[:debug] = check_for_debug(params)
   p_hash[:command] = command_without_func

@@ -96,27 +96,28 @@ def add_response_headline_attachments(_parsed, response_text = '', item_db_id = 
      callback_id: { id: 'add task',
                     item_db_id: item_db_id,
                     response_headline: response_text,
-                    caller_id: caller_id
+                    caller_id: caller_id,
+                    debug: false
                   }.to_json,
      color: '#3AA3E3',
      mrkdwn_in: ['text'],
      attachment_type: 'default',
      actions: [
        { name: 'list',
-         text: 'Your Tasks',
+         text: 'Your To-Do\'s',
          style: 'primary',
          type: 'button',
-         value: { command: '$@me' }.to_json
+         value: { command: '@me open' }.to_json
        },
        { name: 'list',
-         text: 'Team\'s',
+         text: 'Team To-Do\'s',
          type: 'button',
-         value: { command: '$team assigned' }.to_json
+         value: { command: 'team open assigned' }.to_json
        },
        { name: 'list',
-         text: 'All',
+         text: 'All Tasks',
          type: 'button',
-         value: { command: '$team all open done' }.to_json
+         value: { command: 'team all open done' }.to_json
        },
        { name: 'feedback',
          text: 'Feedback',
@@ -126,10 +127,36 @@ def add_response_headline_attachments(_parsed, response_text = '', item_db_id = 
        { name: 'help',
          text: 'Help',
          type: 'button',
-         value: {}.to_json
+         value: { command: 'buttons' }.to_json
        }
      ]
   }]
+end
+
+ADD_RESP_BUTTONS_HLP_TEXT =
+  "Button: Your To-Do\'s generates the command \'/do list @me open\' and \n" \
+  "Lists your ASSIGNED and OPEN tasks for THIS channel. \n" \
+  'Button: Team To-Do\'s generates the command \'/do list team open ' \
+  "assigned\' and \n" \
+  "Lists all TEAM tasks that are ASSIGNED and OPEN for THIS channel.\n" \
+  "Button: All Tasks generates the command \'/do list team all open done\' \n" \
+  'and Lists all TEAM tasks, both OPEN and DONE, for ALL channels.' \
+  "\n\n".freeze
+
+# Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], response_options]
+def add_response_buttons_help(parsed)
+  title = 'Add Task'
+  replacement_buttons_attachments =
+    add_response_headline_attachments(parsed,
+                                      parsed[:button_callback_id][:response_headline],
+                                      parsed[:button_callback_id][:item_db_id],
+                                      parsed[:button_callback_id][:caller_id])
+  button_help_attachments =
+    [{ pretext: ADD_RESP_BUTTONS_HLP_TEXT,
+       mrkdwn_in: ['pretext']
+     }
+    ]
+  [title, replacement_buttons_attachments, button_help_attachments, parsed[:first_button_value][:resp_options]]
 end
 
 def adjust_add_cmd_action_context(parsed)

@@ -79,27 +79,28 @@ def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list'
      fallback: 'Task list',
      callback_id: { id: 'lists',
                     response_headline: rpt_headline,
-                    caller_id: caller_id
+                    caller_id: caller_id,
+                    debug: false
                   }.to_json,
      color: 'ffffff',
      attachment_type: 'default',
      actions: [
        { name: 'list',
-         text: 'Your Tasks',
+         text: 'Your To-Do\'s',
          type: 'button',
-         value: { command: '$@me' }.to_json,
+         value: { command: '@me open' }.to_json,
          style: style_your_tasks
        },
        { name: 'list',
-         text: 'Team\'s',
+         text: 'Team To-Do\'s',
          type: 'button',
-         value: { command: '$team assigned' }.to_json,
+         value: { command: 'team open assigned' }.to_json,
          style: style_team_tasks
        },
        { name: 'list',
-         text: 'All',
+         text: 'All Tasks',
          type: 'button',
-         value: { command: '$team all open done' }.to_json
+         value: { command: 'team all open done' }.to_json
        },
        { name: 'feedback',
          text: 'Feedback',
@@ -110,7 +111,7 @@ def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list'
        { name: 'help',
          text: 'Help',
          type: 'button',
-         value: {}.to_json
+         value: { command: 'buttons' }.to_json
        }
      ]
    },
@@ -119,6 +120,22 @@ def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list'
      color: 'ffffff',
      mrkdwn_in: ['pretext']
    }]
+end
+
+# Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], response_options]
+def list_response_buttons_help(parsed)
+  title = 'List Tasks'
+  replacement_buttons_attachments =
+    add_response_headline_attachments(parsed,
+                                      parsed[:button_callback_id][:response_headline],
+                                      parsed[:button_callback_id][:item_db_id],
+                                      parsed[:button_callback_id][:caller_id])
+  button_help_attachments =
+    [{ pretext: ADD_RESP_BUTTONS_HLP_TEXT,
+       mrkdwn_in: ['pretext']
+     }
+    ]
+  [title, replacement_buttons_attachments, button_help_attachments, parsed[:first_button_value][:resp_options]]
 end
 
 # Returns: [style_your_tasks, style_team_tasks]
@@ -210,8 +227,9 @@ def list_cmd_task_completed_clause(item)
 end
 
 def adjust_list_cmd_action_context(parsed)
-  # list command defaults to OPEN tasks.
+  # list command defaults to OPEN  and ASSIGNED tasks.
   parsed[:open_option] = true unless parsed[:done_option] == true
+  parsed[:assigned_option] = true unless parsed[:unassigned_option] == true
   adjust_list_cmd_list_scope(parsed)
   adjust_list_cmd_channel_scope(parsed)
   implied_mentioned_member(parsed)

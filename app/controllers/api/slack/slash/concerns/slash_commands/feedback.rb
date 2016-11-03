@@ -31,7 +31,6 @@ end
 def feedback_button_public_chan(parsed)
   text = ''
   attachments =
-    # list_button_public_headline_replacement(parsed, 'feedback') # in list_button_public.rb
     list_chan_headline_replacement(parsed, nil, 'feedback') # in list.rb
     .concat([pretext: 'Please use the MiaDo `/do feedback` command to email ' \
                       "MiaDo product support.\n" \

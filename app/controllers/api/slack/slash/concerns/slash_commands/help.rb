@@ -1,19 +1,64 @@
 # Returns: [text, attachments{}, response_options{}]
 def help_command(parsed)
+  # Case: asking for help about what do the buttons do for a miado command.
+  return help_for_buttons(parsed) if !parsed[:button_callback_id].nil? &&
+                                     parsed[:first_button_value][:command] == 'buttons'
+  # Case: someone has clicked one the the buttons in the help command header.
+  #       Exception: someone clicked the "MiaDo Help" button which really means
+  #       get the regular full help.
+  return help_button_actions(parsed) unless parsed[:button_callback_id].nil? ||
+                                            parsed[:first_button_value][:command] == 'app'
+  # Case: display full MiaDo help.
   text, attachments, response_options = help_header(parsed)
   help_body(parsed, text, attachments)
   update_channel_activity(parsed)
   [text, attachments, response_options]
 end
 
+HELP_MORE_HLP_TEXT =
+  "For MiaDo Help use the \'/do help\' command or click on the button below:" \
+  .freeze
+
+# Returns: [text, attachments{}, response_options{}]
+def help_for_buttons(parsed)
+  # parsed[:first_button_value][:command] == 'buttons'
+  title, replacement_buttons_attachments, button_help_attachments, _response_options =
+    add_response_buttons_help(parsed) if parsed[:button_callback_id][:id] == 'add task'
+  title, replacement_buttons_attachments, button_help_attachments, _response_options =
+    list_response_buttons_help(parsed) if parsed[:button_callback_id][:id] == 'lists'
+  title, replacement_buttons_attachments, button_help_attachments, _response_options =
+    help_response_buttons_help(parsed) if parsed[:button_callback_id][:id] == 'help'
+
+  text = ''
+  title_attachment = [{ pretext: "*#{title}*", mrkdwn_in: ['pretext'] }]
+  # more_help_attachment = [{ pretext: "\n*#{HELP_MORE_HLP_TEXT}*", mrkdwn_in: ['pretext'] }]
+  more_help_attachment =
+    [{ fallback: 'Help',
+       text: "\n*#{HELP_MORE_HLP_TEXT}*",
+       color: '#f8f8f8',
+       callback_id: { id: 'help',
+                      caller_id: parsed[:button_callback_id][:caller_id],
+                      debug: false }.to_json,
+       mrkdwn_in: ['text'],
+       actions: [
+         { name: 'help',
+           text: 'MiaDo Help',
+           type: 'button',
+           value: { command: 'app' }.to_json
+         }
+       ]
+    }]
+  attachments = replacement_buttons_attachments
+                .concat(title_attachment)
+                .concat(button_help_attachments)
+                .concat(more_help_attachment)
+  [text, attachments, parsed[:first_button_value][:resp_options]]
+end
+
 # Returns [text, attachments, response_options]
 def help_header(parsed)
   text = ''
-  caller_id = 'help' if parsed[:button_callback_id].nil?
-  caller_id = parsed[:button_callback_id]['caller_id'] unless parsed[:button_callback_id].nil?
-  response_text = nil unless caller_id == 'add'
-  response_text = parsed[:button_callback_id]['response_headline'] if caller_id == 'add'
-  attachments, resp_options = help_headline_replacement(parsed, response_text, caller_id)
+  attachments, resp_options = help_headline_replacement(parsed, nil, 'help')
   [text, attachments, resp_options]
 end
 
@@ -33,7 +78,9 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
     { fallback: 'Help',
       text: '',
       color: '#f8f8f8',
-      callback_id: { id: 'help', caller_id: caller_id }.to_json,
+      callback_id: { id: 'help',
+                     caller_id: caller_id,
+                     debug: false }.to_json,
       mrkdwn_in: ['text'],
       actions: [
         { name: 'faqs',
@@ -54,12 +101,12 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
         { name: 'help',
           text: 'Help',
           type: 'button',
-          value: {}.to_json
+          value: { command: 'buttons' }.to_json
         },
         { name: 'lists',
           text: 'Task Lists',
           type: 'button',
-          value: { command: '$@me' }.to_json,
+          value: { command: '@me open' }.to_json,
           style: 'primary'
         }
       ]
@@ -67,18 +114,41 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
   [attachments, response_options]
 end
 
+HELP_RESP_BUTTONS_HLP_TEXT =
+  "Button: FAQs \n" \
+  "Button: Best Practices \n" \
+  "Button: Online Doc \n" \
+  "Button: Help \n" \
+  "Button: Task Lists \n" \
+  "\n\n".freeze
+
+# Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], response_options]
+def help_response_buttons_help(parsed)
+  title = 'MiaDo Help'
+  replacement_buttons_attachments =
+    help_headline_replacement(parsed, nil, 'help')
+  button_help_attachments =
+    [{ pretext: HELP_RESP_BUTTONS_HLP_TEXT,
+       mrkdwn_in: ['pretext']
+     }
+    ]
+  [title, replacement_buttons_attachments, button_help_attachments, parsed[:first_button_value][:resp_options]]
+end
+
 # Add to the existing test, attachments[]
 # Returns: [text, attachments]
 def help_body(parsed, text, attachments)
-  return help_button_actions(parsed, text, attachments) if parsed[:button_actions].any?
   help_body_basic(parsed, text, attachments)
 end
 
-def help_button_actions(parsed, text, attachments)
+def help_button_actions(parsed)
+  text, attachments, _response_options = help_header(parsed)
   return help_button_faqs(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'faqs'
   return help_button_best_practices(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'best'
   return help_button_online_doc(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'online'
-  return help_body_basic(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'help'
+  return help_body_basic(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'help' &&
+                                                       parsed[:first_button_value][:command] == 'app'
+  help_buttons_help(parsed, text, attachments)
 end
 
 # Returns: [text, attachments]
@@ -88,6 +158,7 @@ def help_body_basic(parsed, text, attachments)
     .concat(help_subsection1(parsed))
     .concat(help_subsection2(parsed))
     .concat(help_subsection3(parsed))
+    .concat(help_subsection4(parsed))
     .concat(help_footer(parsed))
   [text, attachments]
 end
@@ -115,6 +186,9 @@ ADDING_TASKS_HLP_TEXT =
   '• `/do update product meeting agenda. @me /today`' \
   ' Adds task to this channel, assigns it to you,' \
   " due date is today's date.\n" \
+  '• `/do rev 1 spec `' \
+  ' Adds "rev 1 spec" task to this channel. It can later be ' \
+  ' updated via the assign, append or redo commands.' \
   "\n".freeze
 
 # Returns: [attachment{}]
@@ -150,34 +224,60 @@ UPDATE_DEL_TASKS_HLP_TEXT =
 def help_subsection2(_parsed)
   msg = 'Update and delete tasks'
   [{ fallback: 'help_subsection2',
-    title: msg,
-    text: UPDATE_DEL_TASKS_HLP_TEXT,
-    color: '#3AA3E3',
-    mrkdwn_in: ['text']
+     title: msg,
+     text: UPDATE_DEL_TASKS_HLP_TEXT,
+     color: '#3AA3E3',
+     mrkdwn_in: ['text']
   }]
 end
 
-LIST_TASKS_HLP_TEXT =
+LIST_YOUR_TASKS_HLP_TEXT =
   '• `/do list`' \
   " Lists your ASSIGNED and OPEN tasks for THIS channel.\n" \
   '• `/do list done`' \
-  " Lists your ASSIGNED tasks which are DONE for THIS channel.\n" \
+  " Lists your ASSIGNED and OPEN tasks which are DONE for THIS channel.\n" \
   '• `/do list due`' \
   " Lists your ASSIGNED and OPEN tasks with a due date for THIS channel.\n" \
   '• `/do list all`' \
   " Lists your ASSIGNED and OPEN tasks for ALL channels.\n" \
-  '• `/do list team`' \
-  " Lists all TEAM tasks that are OPEN for THIS channel.\n" \
-  '• `/do list team all`' \
-  " Lists all TEAM tasks that are OPEN for ALL channels.\n" \
+  '• `/do list open done`' \
+  " Lists your ASSIGNED tasks, both OPEN and DONE, for THIS channel.\n" \
+  '• `/do list unassigned`' \
+  " Lists tasks that are NOT ASSIGNED for THIS channel.\n" \
   "\n".freeze
 
 # Returns: [attachment{}]
 def help_subsection3(_parsed)
-  msg = 'List tasks'
+  msg = 'List your tasks'
   [{ fallback: 'help_subsection3',
      title: msg,
-     text: LIST_TASKS_HLP_TEXT,
+     text: LIST_YOUR_TASKS_HLP_TEXT,
+     color: '#3AA3E3',
+     mrkdwn_in: ['text']
+  }]
+end
+
+LIST_TEAM_TASKS_HLP_TEXT =
+  '• `/do list team`' \
+  " Lists all TEAM tasks that are ASSIGNED and OPEN for THIS channel.\n" \
+  '• `/do list team done`' \
+  " Lists all TEAM tasks that are ASSIGNED and DONE for THIS channel.\n" \
+  '• `/do list team all`' \
+  " Lists all TEAM tasks that are ASSIGNED and OPEN for ALL channels.\n" \
+  '• `/do list team open done`' \
+  " Lists all TEAM tasks that are ASSIGNED, both OPEN and DONE, for THIS channel.\n" \
+  '• `/do list team all open done`' \
+  " Lists all TEAM tasks, both OPEN and DONE, for ALL channels.\n" \
+  '• `/do list team all unassigned`' \
+  " Lists all TEAM tasks that are NOT ASSIGNED for ALL channels.\n" \
+  "\n".freeze
+
+# Returns: [attachment{}]
+def help_subsection4(_parsed)
+  msg = 'List team tasks'
+  [{ fallback: 'help_subsection4',
+     title: msg,
+     text: LIST_TEAM_TASKS_HLP_TEXT,
      color: '#3AA3E3',
      mrkdwn_in: ['text']
   }]
