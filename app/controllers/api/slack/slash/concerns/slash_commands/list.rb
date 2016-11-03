@@ -122,7 +122,7 @@ def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list'
    }]
 end
 
-# Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], response_options]
+# Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], display_options]
 def list_response_buttons_help(parsed)
   title = 'List Tasks'
   replacement_buttons_attachments =

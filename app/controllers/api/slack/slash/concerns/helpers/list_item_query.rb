@@ -46,8 +46,16 @@ def list_from_parsed(parsed)
 
     elsif parsed[:channel_scope] == :all_channels
       if parsed[:mentioned_member_id].nil?
-        # could be all assigned or all unassigned or ALL
-        list_of_all_tasks_for_all_team_members_in_all_channels(parsed, params)
+        #------------------------------------
+        if parsed[:assigned_option] && parsed[:unassigned_option]
+          list_of_all_tasks_for_all_team_members_in_all_channels(parsed, params)
+
+        elsif parsed[:assigned_option]
+          list_of_all_assigned_tasks_for_all_team_members_in_all_channels(parsed, params)
+
+        else # unless parsed[:unassigned_option]
+          list_of_all_unassigned_tasks_for_all_team_members_in_all_channels(parsed, params)
+        end
 
       else # unless parsed[:mentioned_member_id]
 
@@ -128,6 +136,22 @@ end
 
 # --------------- all tasks for team or mentioned member -------------------
 
+#=====================================
+=begin
+list_of_all_tasks_for_all_team_members_in_one_channel(parsed, params)
+list_of_all_tasks_for_all_team_members_in_all_channels(parsed, params)
+
+list_of_all_assigned_tasks_for_one_team_member_in_one_channel(parsed, params)
+list_of_all_assigned_tasks_for_one_team_member_in_all_channels(parsed, params)
+list_of_all_assigned_tasks_for_all_team_members_in_all_channels(parsed, params)
+
+list_of_all_unassigned_tasks_for_all_team_members_in_one_channel(parsed, params)
+list_of_all_unassigned_tasks_for_all_team_members_in_all_channels(parsed, params)
+
+
+=end
+#=====================================
+
 def list_of_all_assigned_tasks_for_one_team_member_in_one_channel(parsed, params)
   parsed[:list_query_trace_info] = 'list_of_all_assigned_tasks_for_one_team_member_in_one_channel' if parsed[:debug]
   # For specified team member in this channel.
@@ -163,10 +187,43 @@ def list_of_all_assigned_tasks_for_one_team_member_in_one_channel(parsed, params
   end
 end
 
+def list_of_all_assigned_tasks_for_all_team_members_in_one_channel(parsed, params)
+  parsed[:list_query_trace_info] = 'list_of_all_assigned_tasks_for_all_team_members_in_one_channel' if parsed[:debug]
+  # For all team members in this channel.
+  # team: All assigned list items for this Team Channel.
+
+  if parsed[:due_option]
+    # due: All assigned with a due date.
+    ListItem.where(channel_id: params[:channel_id])
+            .where.not(assigned_due_date: nil)
+            .where.not(assigned_member_id: nil)
+            .reorder('channel_name ASC, created_at ASC')
+  elsif parsed[:open_option] && parsed[:done_option]
+    # All assigned tasks.
+    ListItem.where(channel_id: params[:channel_id])
+            .where.not(assigned_member_id: nil)
+            .reorder('channel_name ASC, created_at ASC')
+  elsif parsed[:open_option]
+    # open: All assigned which are not done.
+    ListItem.where(channel_id: params[:channel_id], done: false)
+            .where.not(assigned_member_id: nil)
+            .reorder('channel_name ASC, created_at ASC')
+  elsif parsed[:done_option]
+    # open: All assigned which are done.
+    ListItem.where(channel_id: params[:channel_id], done: true)
+            .where.not(assigned_member_id: nil)
+            .reorder('channel_name ASC, created_at ASC')
+  else # All assigned tasks.
+    ListItem.where(channel_id: params[:channel_id])
+            .where.not(assigned_member_id: nil)
+            .reorder('channel_name ASC, created_at ASC')
+  end
+end
+
 def list_of_all_unassigned_tasks_for_all_team_members_in_one_channel(parsed, params)
   parsed[:list_query_trace_info] = 'list_of_all_unassigned_tasks_for_all_team_members_in_one_channel' if parsed[:debug]
   # For all team members in this channel.
-  # team: All list items for this Team Channel.
+  # team: All unassigned list items for this Team Channel.
 
   if parsed[:due_option]
     # due: All unassigned with a due date.
@@ -196,34 +253,36 @@ def list_of_all_unassigned_tasks_for_all_team_members_in_one_channel(parsed, par
   end
 end
 
-def list_of_all_assigned_tasks_for_all_team_members_in_one_channel(parsed, params)
-  parsed[:list_query_trace_info] = 'list_of_all_assigned_tasks_for_all_team_members_in_one_channel' if parsed[:debug]
-  # For all team members in this channel.
-  # team: All list items for this Team Channel.
+def list_of_all_assigned_tasks_for_all_team_members_in_all_channels(parsed, params)
+  parsed[:list_query_trace_info] = 'list_of_all_assigned_tasks_for_all_team_members_in_all_channels(parsed, params)' if parsed[:debug]
+  # For all team members with assigned tasks in all channels clumped by
+  # channel name and creation date.
 
   if parsed[:due_option]
-    # due: All assigned with a due date.
-    ListItem.where(channel_id: params[:channel_id])
+    # due: All with a due date.
+    ListItem.where(team_id: params[:team_id])
             .where.not(assigned_due_date: nil)
             .where.not(assigned_member_id: nil)
             .reorder('channel_name ASC, created_at ASC')
   elsif parsed[:open_option] && parsed[:done_option]
-    # All assigned tasks.
-    ListItem.where(channel_id: params[:channel_id])
+    # open and done: All tasks.
+    ListItem.where(team_id: params[:team_id])
             .where.not(assigned_member_id: nil)
             .reorder('channel_name ASC, created_at ASC')
   elsif parsed[:open_option]
-    # open: All assigned which are not done.
-    ListItem.where(channel_id: params[:channel_id], done: false)
+    # open: All which are not done.
+    ListItem.where(team_id: params[:team_id],
+                   done: false)
             .where.not(assigned_member_id: nil)
             .reorder('channel_name ASC, created_at ASC')
   elsif parsed[:done_option]
-    # open: All assigned which are done.
-    ListItem.where(channel_id: params[:channel_id], done: true)
+    # open: All which are done.
+    ListItem.where(team_id: params[:team_id],
+                   done: true)
             .where.not(assigned_member_id: nil)
             .reorder('channel_name ASC, created_at ASC')
-  else # All assigned tasks.
-    ListItem.where(channel_id: params[:channel_id])
+  else # All tasks.
+    ListItem.where(team_id: params[:team_id])
             .where.not(assigned_member_id: nil)
             .reorder('channel_name ASC, created_at ASC')
   end

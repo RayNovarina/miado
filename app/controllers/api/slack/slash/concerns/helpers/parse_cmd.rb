@@ -65,14 +65,16 @@ def perform_scans_for_functions(p_hash)
     scan4_options(p_hash)
   when :message_event
     # nothing to do.
-  when :taskbot_rpts
-    scan4_mentioned_member(p_hash)
-    scan4_options(p_hash)
   when :redo
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
     scan4_mentioned_member(p_hash)
     scan4_due_date(p_hash)
+  when :reset
+    # nothing to do.
+  when :taskbot_rpts
+    scan4_mentioned_member(p_hash)
+    scan4_options(p_hash)
   when :unassign
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
@@ -131,12 +133,13 @@ end
 
 # Returns: p_hash[:func]
 def command_func_from_taskbot_button(p_hash)
-  return p_hash[:func] = :hints if p_hash[:button_actions].first['name'] == 'hints'
+  return p_hash[:func] = :help if p_hash[:button_actions].first['name'] == 'help'
   return p_hash[:func] = :feedback if p_hash[:button_actions].first['name'] == 'feedback'
+  return p_hash[:func] = :reset if p_hash[:button_actions].first['name'] == 'reset'
   p_hash[:taskbot_rpt] = true if p_hash[:button_actions].first['name'] == 'list'
   p_hash[:func] = :list if p_hash[:button_actions].first['name'] == 'list'
   p_hash[:func] = :done if p_hash[:button_actions].first['name'] == 'done' || p_hash[:button_actions].first['name'] == 'done and delete'
-  p_hash[:func] = :discuss if p_hash[:button_actions].first['name'] == 'discuss'
+  # p_hash[:func] = :discuss if p_hash[:button_actions].first['name'] == 'discuss'
   command_text_from_button(p_hash)
 end
 
@@ -185,8 +188,9 @@ end
 CMD_OPTIONS = %w(all assigned done due due_first open team unassigned).freeze
 def scan4_options(p_hash)
   return unless p_hash[:err_msg].empty?
-  # Have to be adding task if command is longer than a reasonable number of options.
-  return p_hash[:func] = :add if p_hash[:cmd_splits].length > 5 # CMD_OPTIONS.length - 1
+  # Have to be adding task if command is longer than a reasonable number of
+  # options. i.e. 'list team all assigned unassigned open done'
+  return p_hash[:func] = :add if p_hash[:cmd_splits].length > 6 # CMD_OPTIONS.length - 1
   CMD_OPTIONS.each_with_index do |option, _index|
     next unless p_hash[:cmd_splits].include?(option)
     p_hash[''.concat(option).concat('_option').to_sym] = true

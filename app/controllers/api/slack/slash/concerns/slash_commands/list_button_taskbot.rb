@@ -28,8 +28,9 @@ def list_button_taskbot_headline_replacement(parsed, rpt_headline = '', caller_i
   [{ text: '',
      fallback: 'Taskbot lists',
      callback_id: { id: 'taskbot',
+                    response_headline: 'rpt_headline',
                     caller_id: caller_id,
-                    debug: false
+                    debug: true
                   }.to_json,
      color: 'ffffff',
      actions: [
@@ -48,7 +49,7 @@ def list_button_taskbot_headline_replacement(parsed, rpt_headline = '', caller_i
        { name: 'list',
          text: 'All Tasks',
          type: 'button',
-         value: { command: 'team all open done' }.to_json,
+         value: { command: 'team all assigned unassigned open done' }.to_json,
          style: style_team_tasks
        },
        # { name: 'feedback',
@@ -78,6 +79,37 @@ def list_button_taskbot_headline_replacement(parsed, rpt_headline = '', caller_i
      color: 'ffffff',
      mrkdwn_in: ['pretext']
    }]
+end
+
+TASKBOT_RESP_BUTTONS_HLP_TEXT =
+  "Button: Your To-Do\'s generates the command \'/do list @me open\' and \n" \
+  "        Lists your ASSIGNED and OPEN tasks for THIS channel. \n" \
+  'Button: Team To-Do\'s generates the command \'/do list team open ' \
+  "assigned\' and \n" \
+  "        Lists all TEAM tasks that are ASSIGNED and OPEN for THIS channel.\n" \
+  "Button: All Tasks generates the command \'/do list team all assigned " \
+  "unassigned open done\' and \n" \
+  '        Lists all TEAM tasks, both ASSIGNED and UNASSIGNED, both OPEN and ' \
+  "DONE, for ALL channels. \n" \
+  'Button: Reset erases taskbot channel, displays default lists, restores ' \
+  "channel buttons, resets \n" \
+  "        message tracking. Resets channel and member activity fields?\n" \
+  "Button: Help displays tooltips about these buttons. \n" \
+  "\n\n".freeze
+
+# Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], display_options]
+def taskbot_response_buttons_help(parsed)
+  title = 'Taskbot Reports'
+  replacement_buttons_attachments =
+    list_button_taskbot_headline_replacement(parsed,
+                                             parsed[:button_callback_id][:response_headline],
+                                             parsed[:button_callback_id][:caller_id])
+  button_help_attachments =
+    [{ pretext: TASKBOT_RESP_BUTTONS_HLP_TEXT,
+       mrkdwn_in: ['pretext']
+     }
+    ]
+  [title, replacement_buttons_attachments, button_help_attachments, app_help: false]
 end
 
 # Returns: [style_your_tasks, style_team_tasks]

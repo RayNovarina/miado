@@ -135,15 +135,16 @@ end
 
 ADD_RESP_BUTTONS_HLP_TEXT =
   "Button: Your To-Do\'s generates the command \'/do list @me open\' and \n" \
-  "Lists your ASSIGNED and OPEN tasks for THIS channel. \n" \
+  "        Lists your ASSIGNED and OPEN tasks for THIS channel. \n" \
   'Button: Team To-Do\'s generates the command \'/do list team open ' \
   "assigned\' and \n" \
-  "Lists all TEAM tasks that are ASSIGNED and OPEN for THIS channel.\n" \
-  "Button: All Tasks generates the command \'/do list team all open done\' \n" \
-  'and Lists all TEAM tasks, both OPEN and DONE, for ALL channels.' \
+  "        Lists all TEAM tasks that are ASSIGNED and OPEN for THIS channel.\n" \
+  "Button: All Tasks generates the command \'/do list team all open done\' and \n" \
+  '        Lists all TEAM tasks that are ASSIGNED and both OPEN and DONE, for ALL channels.' \
+  "Button: Help displays tooltips about these buttons. \n" \
   "\n\n".freeze
 
-# Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], response_options]
+# Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], display_options]
 def add_response_buttons_help(parsed)
   title = 'Add Task'
   replacement_buttons_attachments =

@@ -22,12 +22,14 @@ HELP_MORE_HLP_TEXT =
 # Returns: [text, attachments{}, response_options{}]
 def help_for_buttons(parsed)
   # parsed[:first_button_value][:command] == 'buttons'
-  title, replacement_buttons_attachments, button_help_attachments, _response_options =
+  title, replacement_buttons_attachments, button_help_attachments, display_options =
     add_response_buttons_help(parsed) if parsed[:button_callback_id][:id] == 'add task'
-  title, replacement_buttons_attachments, button_help_attachments, _response_options =
+  title, replacement_buttons_attachments, button_help_attachments, display_options =
     list_response_buttons_help(parsed) if parsed[:button_callback_id][:id] == 'lists'
-  title, replacement_buttons_attachments, button_help_attachments, _response_options =
+  title, replacement_buttons_attachments, button_help_attachments, display_options =
     help_response_buttons_help(parsed) if parsed[:button_callback_id][:id] == 'help'
+  title, replacement_buttons_attachments, button_help_attachments, display_options =
+    taskbot_response_buttons_help(parsed) if parsed[:button_callback_id][:id] == 'taskbot'
 
   text = ''
   title_attachment = [{ pretext: "*#{title}*", mrkdwn_in: ['pretext'] }]
@@ -51,7 +53,10 @@ def help_for_buttons(parsed)
   attachments = replacement_buttons_attachments
                 .concat(title_attachment)
                 .concat(button_help_attachments)
-                .concat(more_help_attachment)
+  # Add "click MiaDo Help button" unless override.
+  attachments.concat(more_help_attachment) unless display_options &&
+                                                  display_options.key?(:app_help) &&
+                                                  !display_options[:app_help]
   [text, attachments, parsed[:first_button_value][:resp_options]]
 end
 

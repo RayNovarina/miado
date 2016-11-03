@@ -54,6 +54,7 @@ DEFERRED_EVENT_CMD_FUNCS = [:message_event].freeze
 def send_after_action_deferred_cmds(cmds)
   cmds.each do |d_hash|
     parsed = d_hash[:p_hash]
+    deferred_reset if parsed[:func] == :reset
     send_deferred_event_cmds(d_hash, parsed) if DEFERRED_EVENT_CMD_FUNCS.include?(parsed[:func])
     send_deferred_list_cmds(d_hash, parsed) unless DEFERRED_EVENT_CMD_FUNCS.include?(parsed[:func])
   end
