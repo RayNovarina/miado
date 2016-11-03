@@ -117,7 +117,7 @@ def add_response_headline_attachments(_parsed, response_text = '', item_db_id = 
        { name: 'list',
          text: 'All Tasks',
          type: 'button',
-         value: { command: 'team all open done' }.to_json
+         value: { command: 'team all assigned unassigned open done' }.to_json
        },
        { name: 'feedback',
          text: 'Feedback',
@@ -138,9 +138,10 @@ ADD_RESP_BUTTONS_HLP_TEXT =
   "        Lists your ASSIGNED and OPEN tasks for THIS channel. \n" \
   'Button: Team To-Do\'s generates the command \'/do list team open ' \
   "assigned\' and \n" \
-  "        Lists all TEAM tasks that are ASSIGNED and OPEN for THIS channel.\n" \
-  "Button: All Tasks generates the command \'/do list team all open done\' and \n" \
-  '        Lists all TEAM tasks that are ASSIGNED and both OPEN and DONE, for ALL channels.' \
+  "        Lists all tasks that are ASSIGNED and OPEN for THIS channel.\n" \
+  "Button: All Tasks generates the command \'/do list team all assigned " \
+  "unassigned open done\' and \n" \
+  "        Lists all tasks for ALL channels. \n" \
   "Button: Help displays tooltips about these buttons. \n" \
   "\n\n".freeze
 

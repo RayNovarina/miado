@@ -2,7 +2,7 @@
 def all_channels_taskbot_format(parsed, context, list_of_records)
   text, attachments = all_chans_taskbot_header(parsed, context, list_of_records)
   list_ids = all_chans_taskbot_body(parsed, text, attachments, list_of_records)
-  list_chan_footer(parsed, context, list_of_records, text, attachments)
+  # list_chan_footer(parsed, context, list_of_records, text, attachments)
   [text, attachments, list_ids]
 end
 

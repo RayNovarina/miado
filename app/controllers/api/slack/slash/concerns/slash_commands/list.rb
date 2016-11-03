@@ -100,7 +100,7 @@ def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list'
        { name: 'list',
          text: 'All Tasks',
          type: 'button',
-         value: { command: 'team all open done' }.to_json
+         value: { command: 'team all assigned unassigned open done' }.to_json
        },
        { name: 'feedback',
          text: 'Feedback',

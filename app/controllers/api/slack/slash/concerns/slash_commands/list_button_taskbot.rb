@@ -30,7 +30,7 @@ def list_button_taskbot_headline_replacement(parsed, rpt_headline = '', caller_i
      callback_id: { id: 'taskbot',
                     response_headline: 'rpt_headline',
                     caller_id: caller_id,
-                    debug: true
+                    debug: false
                   }.to_json,
      color: 'ffffff',
      actions: [
@@ -86,11 +86,10 @@ TASKBOT_RESP_BUTTONS_HLP_TEXT =
   "        Lists your ASSIGNED and OPEN tasks for THIS channel. \n" \
   'Button: Team To-Do\'s generates the command \'/do list team open ' \
   "assigned\' and \n" \
-  "        Lists all TEAM tasks that are ASSIGNED and OPEN for THIS channel.\n" \
+  "        Lists all tasks that are ASSIGNED and OPEN for THIS channel.\n" \
   "Button: All Tasks generates the command \'/do list team all assigned " \
   "unassigned open done\' and \n" \
-  '        Lists all TEAM tasks, both ASSIGNED and UNASSIGNED, both OPEN and ' \
-  "DONE, for ALL channels. \n" \
+  "        Lists all tasks for ALL channels. \n" \
   'Button: Reset erases taskbot channel, displays default lists, restores ' \
   "channel buttons, resets \n" \
   "        message tracking. Resets channel and member activity fields?\n" \
