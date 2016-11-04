@@ -79,7 +79,7 @@ def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, 
           value: { command: tasknum.to_s }.to_json
         },
         { name: 'done and delete',
-          text: 'Done and Delete',
+          text: 'Delete',
           type: 'button',
           value: { command: tasknum.to_s }.to_json,
           style: 'danger'

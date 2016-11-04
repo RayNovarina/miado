@@ -54,7 +54,6 @@ DEFERRED_EVENT_CMD_FUNCS = [:message_event].freeze
 def send_after_action_deferred_cmds(cmds)
   cmds.each do |d_hash|
     parsed = d_hash[:p_hash]
-    deferred_reset if parsed[:func] == :reset
     send_deferred_event_cmds(d_hash, parsed) if DEFERRED_EVENT_CMD_FUNCS.include?(parsed[:func])
     send_deferred_list_cmds(d_hash, parsed) unless DEFERRED_EVENT_CMD_FUNCS.include?(parsed[:func])
   end
@@ -94,26 +93,6 @@ def send_deferred_list_cmds(d_hash, parsed)
   end
 end
 
-# command = 'new weekly task 1 for dawn @dawnnova'
-#----------------------------------------
-# Team shadowhtracteam Member ray:
-#   slack user_id: U0VLZ5P51
-#   slack member name: ray
-#   dm channel_id for dev-bot-4rnova: D18E3GH2P
-#   slack_api_token: xoxp-29753209748-29713193171-42883411315-2e51ed8aee
-#   bot_user_id:
-#   bot_api_token: xoxb-42517920580-HXGx9p6Z5Ng6t6j5sTxbpiCl
-# Team shadowhtracteam Member ray:
-#   dm channel_id for dev-bot-4rnova: D18E3GH2P
-#   slack_api_token:
-#   bot_user_id:
-#   bot_api_token:
-# Team shadowhtracteam Member ray:
-#   dm channel_id for dev-bot-4rnova: D18E3GH2P
-#   slack_api_token:
-#   bot_user_id:
-#   bot_api_token:
-#-------------------------------------
 # Returns: [ list_cmd{} ]
 def generate_list_commands(parsed, deferred_cmd)
   # return [] if parsed[:func] == :done && parsed[:button_actions].any? && parsed[:button_actions].first['name'] == 'done'
@@ -142,12 +121,6 @@ def generate_list_commands(parsed, deferred_cmd)
         taskbot_list_scope: i_item[:taskbot_list_scope],
         taskbot_username: 'MiaDo Taskbot'
       }
-    # ,
-    # { type: 'all due',
-    #  cmd: "taskbot_rpts @#{parsed[:mentioned_member_name]} team all due",
-    #  bot_dm_channel_id: 'D18E3GH2P',
-    #  bot_username: 'Taskbot'
-    # }
   end
   list_cmds
 end
@@ -190,12 +163,13 @@ end
 
 # If redo tasknum, same as for add for new command and same as for delete for
 # the task being deleted.
-
+#-------------------------------------------------------------------------
 # Note: deferred_cmd[:impacted_task] is optional logic for here or has already
 # been done.
 #   {} means we did not look OR commented out the method call.
 #   ListItem record means we have an updated task to process
 #     that may require the taskbot list to be updated.
+
 # Returns: [ impacted_member_id, impacted_member{} ]
 def determine_impacted_members(parsed, deferred_cmd)
   func = parsed[:func]
@@ -231,6 +205,31 @@ def determine_impacted_members(parsed, deferred_cmd)
       p_hash: { ccb: parsed[:ccb] }) if impacted_task[:done]
     return [] if impacted_task[:done]
     return build_impacted_team_members(parsed, am_hash)
+  when :reset
+    # reset taskbot channel. Regenerate the default reports for @me.
+    # Reset: Erase ALL taskbot channel msgs.
+    #       Reset message tracking (Member.bot_msgs_json to nil).
+    #       Display 'Your To-Do's list'. This will:
+    #               Restore channel buttons.  Track one msg.
+    #               Set channel and member activity fields to 'list'
+    update_member_record_activity(parsed[:mcb], 'reset', {})
+    am_hash['mcb'] = parsed[:mcb]
+    # Flow 2: Deletes all msgs in bot dm channel.
+    #         requires chat:write:bot scope.
+    # def update_via_rtm_data(options)
+    #  options[:message_source] = :rtm_data
+    #  options[:bot_api_token] = options[:p_hash][:ccb].bot_api_token
+    #  clear_taskbot_msg_channel(options)
+    #  api_resp = send_msg_to_taskbot_channel(options)
+    #  update_ccb_chan_taskbot_msg_info(api_resp, options)
+    #  api_resp
+    # end
+    # clear_taskbot_msg_channel(
+    #  message_source: :rtm_data,
+    #  bot_api_token: parsed[:ccb].bot_api_token)
+    # NOTE: our clear_taskbot_msg_channel method will delete msgs from fresh
+    # rtm_start msgs because func = :reset
+    return build_one_impacted_member(am_hash: am_hash)
   end
   []
 end
@@ -275,7 +274,8 @@ end
 
 # Returns: am_hash{}
 def am_hash_from_assigned_member_id(parsed, assigned_member_id)
-  return am_hash_from_member_record(slack_user_id: assigned_member_id,
+  return am_hash_from_member_record(parsed: parsed,
+                                    slack_user_id: assigned_member_id,
                                     slack_team_id: parsed[:url_params]['team_id']
                                    ) if parsed[:am_hash_source] == :member_record
   parsed[:ccb].members_hash[assigned_member_id]
@@ -312,6 +312,8 @@ def am_hash_from_member_record(options)
   # HACK: we can't be sure what is in the channel unless we monitor message
   # events. User can delete all messages.
   # list_scope = 'empty' if list_scope.nil?
+  # Special case: if resetting taskbot channel, default to 'Your To-Do's' list
+  list_scope = 'one_member' if options[:parsed][:func] == :reset
   { 'mcb' => mcb,
     'tcb' => tcb,
     'bot_dm_channel_id' => mcb.bot_dm_channel_id,
@@ -362,6 +364,7 @@ def build_impacted_team_members(parsed, task_am_hash)
   impacted_members = []
   Member.team_members(slack_team_id: parsed[:ccb].slack_team_id).each do |member|
     am_hash = am_hash_from_member_record(
+      parsed: parsed,
       mcb: member,
       slack_user_id: member.slack_user_id,
       slack_team_id: member.slack_team_id)
@@ -481,6 +484,7 @@ def generate_task_list_msgs(parsed, list_cmds)
     chat_msgs << { as_user: false,
                    member_mcb: cmd_hash[:member_mcb],
                    member_tcb: cmd_hash[:member_tcb],
+                   taskbot_api_token: cmd_hash[:taskbot_api_token],
                    taskbot_channel_id: cmd_hash[:taskbot_channel_id],
                    taskbot_user_id: cmd_hash[:taskbot_user_id],
                    taskbot_msg_id: cmd_hash[:taskbot_msg_id],
@@ -529,6 +533,7 @@ def taskbot_rpts(parsed, chat_msg)
                                                                         chat_msg[:taskbot_list_scope] == 'empty' ||
                                                                         chat_msg[:taskbot_list_scope].nil?
   list_cmd = 'list_taskbot team all due_first' if chat_msg[:taskbot_list_scope] == 'team'
+  list_cmd = 'list_taskbot team all assigned unassigned open done' if chat_msg[:taskbot_list_scope] == 'all'
   url_params = {
     channel_id: chat_msg[:member_tcb].slack_channel_id,
     channel_name: chat_msg[:member_tcb].slack_channel_name,
@@ -685,8 +690,15 @@ end
 # Flow 3: Deletes all msgs in bot dm channel.
 #         requires chat:write:bot scope.
 def update_via_member_record(options)
-  options[:message_source] = :member_record
-  clear_taskbot_msg_channel(options)
+  # HACK: Also we are using user_token for im_history AND we dont have permission?
+  if options[:p_hash][:func] == :reset
+    options[:message_source] = :im_history # :rtm_data # do we need to get fresh data?
+    clear_taskbot_msg_channel(options)
+    options[:message_source] = :member_record
+  else
+    options[:message_source] = :member_record
+    clear_taskbot_msg_channel(options)
+  end
   api_resp = send_msg_to_taskbot_channel(options)
   remember_taskbot_msg_id(api_resp, options)
   update_taskbot_ccb_channel(options, 'msg_update - taskbot_msgs')
@@ -768,6 +780,9 @@ def clear_taskbot_msg_channel(options)
                        type: :direct,
                        api_client: options[:api_client],
                        bot_api_token: options[:taskbot_api_token],
+                       slack_team_id: options[:member_mcb].slack_team_id,
+                       slack_user_id: options[:member_mcb].slack_user_id,
+                       taskbot_user_id: options[:taskbot_user_id],
                        bot_msgs: options[:taskbot_msgs],
                        channel_id: options[:taskbot_channel_id],
                        time_range: { start_ts: 0, end_ts: 0 },
@@ -910,6 +925,7 @@ def send_deferred_event_cmds(_d_hash, parsed)
   parsed[:api_client_user] = make_web_client(parsed[:ccb].slack_user_api_token)
   parsed[:api_client_bot] = make_web_client(parsed[:ccb].bot_api_token)
   parsed[:button_callback_id] = parsed[:ccb].after_action_parse_hash['button_callback_id']
+  # return respond_to_reset_button_event(parsed) if parsed[:button_actions].first['name'] == 'reset'
   return respond_to_discuss_msg_event(parsed) if parsed[:ccb]['last_activity_type'] == 'button_action - discuss'
   respond_to_feedback_msg_event(parsed) if parsed[:ccb]['last_activity_type'] == 'button_action - feedback'
 end

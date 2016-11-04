@@ -52,6 +52,19 @@ module MemberExtensions
       Member.all.reorder('slack_team_id ASC, slack_user_name ASC')
     end
 
+    # Returns: slackUserObj{}
+    def slack_user_from_rtm_start(options)
+      options[:rtm_start]['users'].each do |user|
+        if options.key?(:slack_user_id)
+          next unless user['id'] == options[:slack_user_id]
+        elsif options.key?(:slack_user_name)
+          next unless user['name'] == options[:slack_user_name]
+        end
+        return user
+      end
+      nil
+    end
+
     private
 
     # Returns: Member record or nil
@@ -240,19 +253,6 @@ member = Member.find_or_create_from(
         }
       end
       msgs
-    end
-
-    # Returns: slackUserObj{}
-    def slack_user_from_rtm_start(options)
-      options[:rtm_start]['users'].each do |user|
-        if options.key?(:slack_user_id)
-          next unless user['id'] == options[:slack_user_id]
-        elsif options.key?(:slack_user_name)
-          next unless user['name'] == options[:slack_user_name]
-        end
-        return user
-      end
-      nil
     end
 
     # Returns: String

@@ -160,12 +160,14 @@ def update_channel_activity(parsed_or_cb, activity_type = nil, after_action_pars
             last_activity_date: DateTime.current)
 end
 
+# Inputs: HACK - if {}, we use it to update db with nil.
 def update_member_record_activity(options_or_mcb, activity_type, bot_msgs_json = nil)
   options = options_or_mcb if options_or_mcb.is_a?(Hash)
   mcb = options[:member_mcb] if options_or_mcb.is_a?(Hash)
   mcb = options_or_mcb unless options_or_mcb.is_a?(Hash)
   return mcb.update(last_activity_type: activity_type,
                     last_activity_date: DateTime.current) if bot_msgs_json.nil?
+  bot_msgs_json = nil if bot_msgs_json == {}
   mcb.update(bot_msgs_json: bot_msgs_json,
              last_activity_type: activity_type,
              last_activity_date: DateTime.current)

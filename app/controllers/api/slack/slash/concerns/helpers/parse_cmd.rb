@@ -71,7 +71,8 @@ def perform_scans_for_functions(p_hash)
     scan4_mentioned_member(p_hash)
     scan4_due_date(p_hash)
   when :reset
-    # nothing to do.
+    # Makes this a reset @me command.
+    scan4_mentioned_member(p_hash)
   when :taskbot_rpts
     scan4_mentioned_member(p_hash)
     scan4_options(p_hash)
@@ -133,14 +134,14 @@ end
 
 # Returns: p_hash[:func]
 def command_func_from_taskbot_button(p_hash)
-  return p_hash[:func] = :help if p_hash[:button_actions].first['name'] == 'help'
-  return p_hash[:func] = :feedback if p_hash[:button_actions].first['name'] == 'feedback'
-  return p_hash[:func] = :reset if p_hash[:button_actions].first['name'] == 'reset'
+  p_hash[:func] = :help if p_hash[:button_actions].first['name'] == 'help'
+  # p_hash[:func] = :feedback if p_hash[:button_actions].first['name'] == 'feedback'
+  p_hash[:func] = :reset if p_hash[:button_actions].first['name'] == 'reset'
   p_hash[:taskbot_rpt] = true if p_hash[:button_actions].first['name'] == 'list'
   p_hash[:func] = :list if p_hash[:button_actions].first['name'] == 'list'
   p_hash[:func] = :done if p_hash[:button_actions].first['name'] == 'done' || p_hash[:button_actions].first['name'] == 'done and delete'
   # p_hash[:func] = :discuss if p_hash[:button_actions].first['name'] == 'discuss'
-  command_text_from_button(p_hash)
+  command_text_from_button(p_hash) if p_hash[:first_button_value].key?(:command)
 end
 
 def command_func_from_lists_button(p_hash)

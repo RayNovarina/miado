@@ -94,6 +94,18 @@ module InstallationExtensions
                   .reorder('slack_team_id ASC')
     end
 
+    # Get a new copy of the rtm_start data from Slack for this team.
+    # Returns: [rtm_start_json, Installation record]
+    def refresh_rtm_start_data(options)
+      return nil if (installation = installations(options).first).nil?
+      return nil if (rtm_start_json = start_data_from_rtm_start(options[:bot_api_token])).nil?
+      installation.update(
+        rtm_start_json: rtm_start_json,
+        last_activity_type: 'refresh rtm_start_data',
+        last_activity_date: DateTime.current)
+      [rtm_start_json, installation]
+    end
+
     private
 
     # Returns: Installation record or nil

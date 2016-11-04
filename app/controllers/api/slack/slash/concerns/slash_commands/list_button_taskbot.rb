@@ -65,7 +65,7 @@ def list_button_taskbot_headline_replacement(parsed, rpt_headline = '', caller_i
        { name: 'reset',
          text: 'Reset',
          type: 'button',
-         value: {}.to_json
+         value: { command: '@me' }.to_json
        },
        { name: 'help',
          text: 'Help',
