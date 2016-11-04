@@ -28,7 +28,7 @@ def list_button_taskbot_headline_replacement(parsed, rpt_headline = '', caller_i
   [{ text: '',
      fallback: 'Taskbot lists',
      callback_id: { id: 'taskbot',
-                    response_headline: 'rpt_headline',
+                    response_headline: rpt_headline,
                     caller_id: caller_id,
                     debug: false
                   }.to_json,
@@ -49,8 +49,7 @@ def list_button_taskbot_headline_replacement(parsed, rpt_headline = '', caller_i
        { name: 'list',
          text: 'All Tasks',
          type: 'button',
-         value: { command: 'team all assigned unassigned open done' }.to_json,
-         style: style_team_tasks
+         value: { command: 'team all assigned unassigned open done' }.to_json
        },
        # { name: 'feedback',
        # text: 'Feedback',
@@ -90,9 +89,7 @@ TASKBOT_RESP_BUTTONS_HLP_TEXT =
   "Button: All Tasks generates the command \'/do list team all assigned " \
   "unassigned open done\' and \n" \
   "        Lists all tasks for ALL channels. \n" \
-  'Button: Reset erases taskbot channel, displays default lists, restores ' \
-  "channel buttons, resets \n" \
-  "        message tracking. Resets channel and member activity fields?\n" \
+  "Button: Reset erases taskbot messages, displays default lists\n" \
   "Button: Help displays tooltips about these buttons. \n" \
   "\n\n".freeze
 
@@ -101,7 +98,8 @@ def taskbot_response_buttons_help(parsed)
   title = 'Taskbot Reports'
   replacement_buttons_attachments =
     list_button_taskbot_headline_replacement(parsed,
-                                             parsed[:button_callback_id][:response_headline],
+                                             # parsed[:button_callback_id][:response_headline],
+                                             '',
                                              parsed[:button_callback_id][:caller_id])
   button_help_attachments =
     [{ pretext: TASKBOT_RESP_BUTTONS_HLP_TEXT,
@@ -119,8 +117,9 @@ def list_button_taskbot_headline_colors(parsed)
     style_your_tasks = 'default'
     if !parsed[:button_callback_id].nil? &&
        parsed[:button_callback_id][:id] == 'taskbot'
-      # A taskbot channel button has been clicked. We toggle between my lists
-      # and team lists as button default. (Green button means recommended one)
+      # A taskbot channel button has been clicked. We toggle between My To-Do's,
+      # Team To-Do's and All Tasks lists as button default.
+      # (Green button means recommended one)
       if !(parsed[:button_actions].first['name'] == 'list') ||
          parsed[:list_scope] == :team
         style_your_tasks = 'primary'

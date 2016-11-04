@@ -65,7 +65,7 @@ def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, 
                      attch_idx: attch_idx,
                      tasknum: tasknum,
                      item_db_id: item.id,
-                     task_desc: attachment_text.slice(2..-1),
+                     task_desc: attachment_text.slice(1..-1),
                      slack_chan_id: item.channel_id,
                      slack_chan_name: item.channel_name
                    }.to_json,
