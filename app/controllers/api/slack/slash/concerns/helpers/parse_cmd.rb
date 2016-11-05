@@ -65,6 +65,8 @@ def perform_scans_for_functions(p_hash)
     scan4_options(p_hash)
   when :message_event
     # nothing to do.
+  when :picklist
+    # nothing to do.
   when :redo
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
@@ -137,6 +139,7 @@ def command_func_from_taskbot_button(p_hash)
   p_hash[:func] = :help if p_hash[:button_actions].first['name'] == 'help'
   # p_hash[:func] = :feedback if p_hash[:button_actions].first['name'] == 'feedback'
   p_hash[:func] = :reset if p_hash[:button_actions].first['name'] == 'reset'
+  return p_hash[:func] = :picklist if p_hash[:button_actions].first['name'] == 'picklist'
   p_hash[:taskbot_rpt] = true if p_hash[:button_actions].first['name'] == 'list'
   p_hash[:func] = :list if p_hash[:button_actions].first['name'] == 'list'
   p_hash[:func] = :done if p_hash[:button_actions].first['name'] == 'done' || p_hash[:button_actions].first['name'] == 'done and delete'

@@ -26,7 +26,7 @@ def all_chans_body(parsed, _text, attachments, list_of_records, options = { new_
         mrkdwn_in: ['text']
       }
     end
-    list_add_item_to_display_list(
+    list_add_item_to_display_list(  # in list.rb
       parsed,
       attachments,
       options[:new_attachment] && index == 0 ? 'new' : 'last',

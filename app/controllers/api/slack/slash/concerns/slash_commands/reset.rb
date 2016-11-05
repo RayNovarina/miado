@@ -3,7 +3,7 @@
 #-------------------------------------------------
 def reset_command(parsed)
   adjust_reset_cmd_action_context(parsed)
-  # Ack the slack server ASAP. We have the parsed{} info. Handle the real_name
+  # Ack the slack server ASAP. We have the parsed{} info. Handle the real
   # response work as a deferred command. It has most of our useful Slack API
   # lib methods.
   parsed[:expedite_deferred_cmd] = false
@@ -11,6 +11,6 @@ def reset_command(parsed)
 end
 
 def adjust_reset_cmd_action_context(parsed)
-  # Reset list user is looking at.
+  # Reset list that user is looking at. (update parsed[:list_ids])
   adjust_inherited_cmd_action_context(parsed)
 end

@@ -4,9 +4,9 @@ def after_action_deferred_logic(def_cmds)
   if def_cmds[0][:p_hash][:expedite_deferred_cmd]
     send_after_action_deferred_cmds(def_cmds)
   else
-    Thread.new do
+    # Thread.new do
       send_after_action_deferred_cmds(def_cmds)
-    end
+    # end
   end
 end
 
@@ -48,7 +48,7 @@ end
 # The chat_msgs{} contains the context of the member receiving the
 # msg, one hash per member, different member record, taskbot channel record.
 
-DEFERRED_EVENT_CMD_FUNCS = [:message_event].freeze
+DEFERRED_EVENT_CMD_FUNCS = [:message_event, :picklist].freeze
 # Route deferred command to proper handler.
 # Returns: nothing. Cmd will send msgs, etc.
 def send_after_action_deferred_cmds(cmds)
@@ -923,6 +923,7 @@ end
 # Process deferred event.
 # Returns: nothing
 def send_deferred_event_cmds(_d_hash, parsed)
+  return respond_to_picklist_button_event(parsed) if parsed[:button_actions].first['name'] == 'picklist'
   parsed[:mcb] = Member.find_from(
     source: :slack,
     slack_user_id: parsed[:url_params][:user_id],
@@ -931,6 +932,7 @@ def send_deferred_event_cmds(_d_hash, parsed)
   parsed[:api_client_bot] = make_web_client(parsed[:ccb].bot_api_token)
   parsed[:button_callback_id] = parsed[:ccb].after_action_parse_hash['button_callback_id']
   # return respond_to_reset_button_event(parsed) if parsed[:button_actions].first['name'] == 'reset'
+  return respond_to_picklist_button_event(parsed) if parsed[:button_actions].first['name'] == 'picklist'
   return respond_to_discuss_msg_event(parsed) if parsed[:ccb]['last_activity_type'] == 'button_action - discuss'
   respond_to_feedback_msg_event(parsed) if parsed[:ccb]['last_activity_type'] == 'button_action - feedback'
 end
@@ -1082,4 +1084,9 @@ rescue Slack::Web::Api::Error => e # (not_authed)
     "token: #{options[:api_client].token.nil? ? '*EMPTY!*' : options[:api_client].token}\n"
   options[:api_client].logger.error(err_msg)
   return { 'ok' => false, error: err_msg }
+end
+
+# Returns: nothing
+def respond_to_picklist_button_event(parsed)
+   # parsed[:button_callback_id]
 end

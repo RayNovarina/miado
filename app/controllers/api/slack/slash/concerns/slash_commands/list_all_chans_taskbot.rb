@@ -2,7 +2,7 @@
 def all_channels_taskbot_format(parsed, context, list_of_records)
   text, attachments = all_chans_taskbot_header(parsed, context, list_of_records)
   list_ids = all_chans_taskbot_body(parsed, text, attachments, list_of_records)
-  # list_chan_footer(parsed, context, list_of_records, text, attachments)
+  all_channels_taskbot_footer(parsed, text, attachments, list_ids)
   [text, attachments, list_ids]
 end
 
@@ -36,7 +36,7 @@ def format_all_chans_taskbot_header(parsed, channel_scope, list_of_records)
   # rpt_type = "`Your #{parsed[:list_owner_name] == 'team' ? 'team\'s ' : ''}current (open) tasks in All channels:`\n"
 end
 
-# Returns: list_ids[], updated attachments[]
+# Returns: list_ids[], [updated attachments{}]
 def all_chans_taskbot_body(parsed, _text, attachments, list_of_records)
   list_ids = []
   current_channel_id = ''
@@ -49,12 +49,14 @@ def all_chans_taskbot_body(parsed, _text, attachments, list_of_records)
         mrkdwn_in: ['text']
       }
     end
-    list_add_item_to_taskbot_display_list(parsed, attachments, attachments.size - 1, item, index + 1)
+    # list_add_item_to_taskbot_display_list(parsed, attachments, attachments.size - 1, item, index + 1)
+    list_add_item_to_display_list(parsed, attachments, attachments.size - 1, item, index + 1)  # in list.rb
     list_ids << item.id
   end
   list_ids
 end
 
+=begin
 def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, tasknum)
   attachment_text = list_add_attachment_text(parsed, item, tasknum) # in list.rb
   attachments <<
@@ -92,4 +94,86 @@ def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, 
         # }
       ]
     }
+end
+=end
+
+# Returns: Nothing but updates attachments{}
+def all_channels_taskbot_footer(parsed, _text, attachments, list_ids)
+  attachments <<
+    list_button_taskbot_footer_replacement(parsed, list_ids, 'list')
+end
+
+# Bottom of report buttons.
+# Returns: Replacement taskbot footer buttons attachment{}
+def list_button_taskbot_footer_replacement(_parsed, list_ids, caller_id = 'list')
+  { text: '',
+    fallback: 'Taskbot list',
+    callback_id: { id: 'taskbot',
+                   caller_id: caller_id,
+                   header_buttons_attch_idx: 1,
+                   body_attch_idx: 2,
+                   footer_buttons_attch_idx: 3,
+                   first_task_select_attch_idx: 4,
+                   tasks: list_ids.to_json
+                 }.to_json,
+    color: 'ffffff',
+    attachment_type: 'default',
+    actions: [
+      { name: 'picklist',
+        text: 'Mark Task as Done',
+        style: 'primary',
+        type: 'button',
+        value: { id: 'done' }.to_json
+      },
+      { name: 'picklist',
+        text: 'Delete Task',
+        type: 'button',
+        value: { id: 'done and delete' }.to_json,
+        style: 'danger'
+      }
+    ]
+  }
+end
+
+def task_select_buttons_replacement(parsed, caller_id = 'taskbot footer')
+  button_name = parsed[:first_button_value][:id]
+  button_style = 'primary' if parsed[:first_button_value][:id] == 'done'
+  button_style = 'danger' if parsed[:first_button_value][:id] == 'done and delete'
+  task_select_attachments = []
+  task_select_attachments <<
+    { text: '',
+      fallback: 'Task select buttons',
+      callback_id: { id: 'taskbot',
+                     caller_id: caller_id
+                   }.to_json,
+      color: '#3AA3E3',
+      attachment_type: 'default',
+      actions: [
+        { name: button_name,
+          text: '1',
+          type: 'button',
+          style: button_style,
+          value: {}.to_json
+        },
+        { name: button_name,
+          text: '2',
+          type: 'button',
+          style: button_style,
+          value: {}.to_json
+        },
+        { name: button_name,
+          text: '3',
+          type: 'button',
+          style: button_style,
+          value: {}.to_json
+        },
+        { name: button_name,
+          text: '4',
+          type: 'button',
+          style: button_style,
+          value: {}.to_json
+        }
+      ]
+    }
+  task_select_attachments
 end

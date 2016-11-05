@@ -236,6 +236,7 @@ def create_from_slack(options)
     return hints_command(parsed) if parsed[:func] == :hints
     return list_command(parsed) if parsed[:func] == :list
     return message_event_command(parsed) if parsed[:func] == :message_event
+    return picklist_command(parsed) if parsed[:func] == :picklist
     return redo_command(parsed) if parsed[:func] == :redo
     return reset_command(parsed) if parsed[:func] == :reset
     return unassign_command(parsed) if parsed[:func] == :unassign
