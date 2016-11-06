@@ -595,18 +595,18 @@ end
 
 # Returns: api response{} from send_taskbot_update_msg()
 def edit_taskbot_msg_for_taskbot_done_button(options)
-  # options[:text] =
-  #  options[:p_hash][:url_params][:payload][:original_message][:text]
-  #  .concat("#{options[:p_hash][:button_actions].first['name'] == 'done and delete' ? 'Deleted: ' : 'Closed'}" \
-  #          "~#{options[:p_hash][:button_callback_id]['id']}~\n")
-  #          # "~#{options[:p_hash][:button_callback_id]['task_desc']}~\n")
-  options[:text] = options[:p_hash][:url_params][:payload][:original_message][:text]
-                  .concat(options[:p_hash][:button_actions].first['name'] == 'done and delete' ? 'Deleted: ' : 'Closed:    ')
+  require 'pry'
+  binding.pry
+  options[:text] = options[:p_hash][:button_actions].first['name'] == 'done and delete' ? 'Deleted: ' : 'Closed:    '
                   .concat("~#{options[:p_hash][:button_callback_id]['task_desc']}~\n")
-
-  options[:attachments] = []
-  options[:attachment_id_to_remove] = options[:p_hash][:url_params][:payload][:attachment_id]
+  # Remove task selection button for Done task and replace current Task
+  # selection button strip attachments.
+  options[:attachments] = task_select_buttons_replacement(
+    parsed: options[:p_hash], cmd: 'delete',
+    button_num: options[:p_hash][:first_button_value][:command])
   options[:taskbot_msg_id] = options[:p_hash][:url_params][:payload]['message_ts']
+  require 'pry'
+  binding.pry
   edit_and_send_taskbot_update_msg(options)
 end
 
