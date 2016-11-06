@@ -1,5 +1,11 @@
 # Returns: [text, attachments{}, list_ids[], response_options{}]
 def button_lists_taskbot_chan(parsed, list_of_records)
+  all_channels_taskbot_format(parsed, parsed, list_of_records)
+end
+
+=begin
+# Returns: [text, attachments{}, list_ids[], response_options{}]
+def button_lists_taskbot_chan(parsed, list_of_records)
   text, attachments, response_options = button_taskbot_lists_header(parsed, list_of_records)
   list_ids = all_chans_taskbot_body(parsed, text, attachments, list_of_records) # in: list_all_chans_taskbot.rb
   # list_chan_footer(parsed, parsed, list_of_records, text, attachments)
@@ -25,6 +31,7 @@ def button_taskbot_lists_header(parsed, list_of_records)
   # }
   [text, attachments, parsed[:first_button_value][:resp_options]]
 end
+=end
 
 # Top of report buttons and headline.
 # Inputs: options{ parsed, rpt_headline, caller_id }
@@ -109,11 +116,18 @@ TASKBOT_RESP_BUTTONS_HLP_TEXT =
 # Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], display_options]
 def taskbot_response_buttons_help(parsed)
   title = 'Taskbot Reports'
-  replacement_buttons_attachments =
-    list_button_taskbot_headline_replacement(parsed,
-                                             # parsed[:button_callback_id][:response_headline],
-                                             '',
-                                             parsed[:button_callback_id][:caller_id])
+  # replacement_buttons_attachments =
+  #  list_button_taskbot_header_replacement(parsed,
+  #                                           # parsed[:button_callback_id][:response_headline],
+  #                                           '',
+  #                                           parsed[:button_callback_id][:caller_id])
+
+  replacement_buttons_attachments, _header_attch_idx, _header_num_attch =
+    list_button_taskbot_header_replacement(
+      parsed: parsed,
+      rpt_headline: parsed[:button_callback_id][:response_headline],
+      caller_id: parsed[:button_callback_id][:caller_id])
+
   button_help_attachments =
     [{ pretext: TASKBOT_RESP_BUTTONS_HLP_TEXT,
        mrkdwn_in: ['pretext']

@@ -1,4 +1,4 @@
-# Returns: [text, attachments{}, list_ids[]]
+# Returns: [text, attachments{}, list_ids[], response_options{}]
 def all_channels_taskbot_format(parsed, _context, list_of_records)
   options = { parsed: parsed, num_tasks: list_of_records.length,
               channel_scope: parsed[:channel_scope]
@@ -7,9 +7,12 @@ def all_channels_taskbot_format(parsed, _context, list_of_records)
   options.merge!(all_chans_taskbot_header(options))
   # updates: options[:attachments, :body_attch_idx, body_num_attch, :list_ids]
   options.merge!(all_chans_taskbot_body(options, list_of_records))
-  # updates: options[:attachments, :footer_buttons_attch_idx, footer_num_attch]
+  # updates: options[:attachments, :footer_buttons_attch_idx, footer_buttons_num_attch]
   options.merge!(all_chans_taskbot_footer(options))
-  [options[:text], options[:attachments], options[:list_ids]]
+  [options[:text],
+   options[:attachments],
+   options[:list_ids],
+   parsed[:first_button_value].nil? ? nil : parsed[:first_button_value][:resp_options]]
 end
 
 # Inputs: options{parsed, channel_scope, num_tasks}
@@ -75,19 +78,19 @@ end
 
 # Inputs: options{parsed, attachments}
 # Returns: hash of options{} fields to add, update:
-#          attachments, footer_buttons_attch_idx, footer_num_attch
+#          attachments, footer_buttons_attch_idx, footer_buttons_num_attch
 def all_chans_taskbot_footer(options)
-  taskbot_footer_attachments, footer_buttons_attch_idx, footer_num_attch =
+  taskbot_footer_attachments, footer_buttons_attch_idx, footer_buttons_num_attch =
     list_button_taskbot_footer_replacement(options)
   options[:attachments].concat(taskbot_footer_attachments)
   { attachments: options[:attachments],
     footer_buttons_attch_idx: footer_buttons_attch_idx,
-    footer_num_attch: footer_num_attch }
+    footer_buttons_num_attch: footer_buttons_num_attch }
 end
 
 # Bottom of report buttons.
 # Inputs: options{parsed, cmd, attachments, caller_id, body_attch_idx, list_ids}
-# Returns: [taskbot_footer_attachments, footer_buttons_attch_idx, footer_num_attch]
+# Returns: [taskbot_footer_attachments, footer_buttons_attch_idx, footer_buttons_num_attch]
 def list_button_taskbot_footer_replacement(options)
   footer_buttons_attch_idx = options[:attachments].length + 1
   taskbot_footer_attachments =
@@ -98,12 +101,12 @@ def list_button_taskbot_footer_replacement(options)
                       body_attch_idx: options[:body_attch_idx],
                       body_num_attch: options[:body_num_attch],
                       footer_buttons_attch_idx: footer_buttons_attch_idx,
-                      footer_num_attch: 1,
-                      footer_prompt_attch_idx: nil,
-                      footer_prompt_attch: nil,
-                      task_select_attch_idx: nil,
-                      task_select_num_attch: nil,
-                      tasks: nil # options[:list_ids].to_json
+                      footer_buttons_num_attch: 1,
+                      footer_prompt_attch_idx: options[:footer_prompt_attch_idx] || nil,
+                      footer_prompt_num_attch: options[:footer_prompt_num_attch] || nil,
+                      task_select_attch_idx: options[:task_select_attch_idx] || nil,
+                      task_select_num_attch: options[:task_select_num_attch] || nil,
+                      # tasks: nil # options[:list_ids].to_json
                     }.to_json,
        color: 'ffffff',
        attachment_type: 'default',
