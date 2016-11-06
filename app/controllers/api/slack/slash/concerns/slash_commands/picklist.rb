@@ -75,8 +75,7 @@ def picklist_button_taskbot(parsed)
                                            footer_prompt_num_attch: footer_prompt_num_attch,
                                            task_select_attch_idx: task_select_attch_idx,
                                            task_select_num_attch: task_select_num_attch,
-                                           # tasks: parsed[:button_callback_id][:list_ids])
-                                           )
+                                           list_ids: parsed[:button_callback_id][:list_ids])
 
   # Now add the footer buttons, prompt and select attachments to the body of the taskbot msg.
   attachments.concat(footer_buttons_attachments)

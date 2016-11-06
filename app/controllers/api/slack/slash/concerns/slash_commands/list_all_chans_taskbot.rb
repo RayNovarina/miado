@@ -97,7 +97,7 @@ def list_button_taskbot_footer_replacement(options)
     [{ text: '',
        fallback: 'Taskbot list',
        callback_id: { id: 'taskbot',
-                      caller_id: options[:caller_id] || 'taskbot',
+                      caller_id: '', # options[:caller_id] || 'taskbot',
                       body_attch_idx: options[:body_attch_idx],
                       body_num_attch: options[:body_num_attch],
                       footer_buttons_attch_idx: footer_buttons_attch_idx,
@@ -105,8 +105,7 @@ def list_button_taskbot_footer_replacement(options)
                       footer_prompt_attch_idx: options[:footer_prompt_attch_idx] || nil,
                       footer_prompt_num_attch: options[:footer_prompt_num_attch] || nil,
                       task_select_attch_idx: options[:task_select_attch_idx] || nil,
-                      task_select_num_attch: options[:task_select_num_attch] || nil,
-                      # tasks: nil # options[:list_ids].to_json
+                      task_select_num_attch: options[:task_select_num_attch] || nil
                     }.to_json,
        color: 'ffffff',
        attachment_type: 'default',
