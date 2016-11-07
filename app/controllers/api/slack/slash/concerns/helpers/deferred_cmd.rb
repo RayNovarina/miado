@@ -593,44 +593,6 @@ def edit_taskbot_msg(options)
   edit_taskbot_msg_for_taskbot_done_button(options) if options[:p_hash][:func] == :done
 end
 
-# Returns: api response{} from send_taskbot_update_msg()
-def edit_taskbot_msg_for_taskbot_done_button(options)
-=begin
-  # Note: attachments = header, body, footer, maybe task select attachments.
-  attachments = parsed[:url_params][:payload][:original_message][:attachments]
-  rpt_body_attachments =
-    attachments.slice(parsed[:button_callback_id][:body_idx] - 1,
-                      parsed[:button_callback_id][:body_num])
-
-  options[:text] = options[:p_hash][:button_actions].first['name'] == 'done and delete' ? 'Deleted: ' : 'Closed:    '
-                  .concat("~#{options[:p_hash][:button_callback_id]['task_desc']}~\n")
-  # Remove task selection button for Done task and replace current Task
-  # selection button strip attachments.
-  options[:attachments] = task_select_buttons_replacement(
-    parsed: options[:p_hash], cmd: 'delete',
-    button_num: options[:p_hash][:first_button_value][:command])
-  options[:taskbot_msg_id] = options[:p_hash][:url_params][:payload]['message_ts']
-=end
-  options[:text] =
-    (options[:p_hash][:button_actions].first['name'] == 'done and delete' ? 'Deleted: ' : 'Closed:    ')
-    .concat("~Task #{options[:p_hash][:first_button_value][:command]}~\n")
-  options[:attachments] = options[:p_hash][:url_params][:payload][:original_message][:attachments]
-  options[:taskbot_msg_id] = options[:p_hash][:url_params][:payload]['message_ts']
-  edit_and_send_taskbot_update_msg(options)
-end
-
-# Given the attachment number in the button payload, remove that attachment
-# and write back the msg via chat_update
-# Returns: api response{} from send_taskbot_update_msg()
-def edit_and_send_taskbot_update_msg(options)
-  if options[:attachments].empty? && options.key?(:attachment_id_to_remove)
-    options[:attachments] = options[:p_hash][:url_params][:payload][:original_message][:attachments]
-    # attachment_to_edit = attachments[attachment_id_to_remove].to_i - 1]
-    options[:attachments].delete_at(options[:attachment_id_to_remove].to_i - 1)
-  end
-  update_msg_in_taskbot_channel(options)
-end
-
 =begin
 # Flow 1: Deletes all msgs in bot dm channel.
 #         requires im_history, chat:write:bot scopes.
@@ -941,7 +903,6 @@ def send_deferred_event_cmds(_d_hash, parsed)
   parsed[:api_client_bot] = make_web_client(parsed[:ccb].bot_api_token)
   parsed[:button_callback_id] = parsed[:ccb].after_action_parse_hash['button_callback_id']
   # return respond_to_reset_button_event(parsed) if parsed[:button_actions].first['name'] == 'reset'
-  return respond_to_picklist_button_event(parsed) if parsed[:button_actions].first['name'] == 'picklist'
   return respond_to_discuss_msg_event(parsed) if parsed[:ccb]['last_activity_type'] == 'button_action - discuss'
   respond_to_feedback_msg_event(parsed) if parsed[:ccb]['last_activity_type'] == 'button_action - feedback'
 end
@@ -1098,4 +1059,135 @@ end
 # Returns: nothing
 def respond_to_picklist_button_event(parsed)
    # parsed[:button_callback_id]
+end
+
+# Click done button. Regular done logic runs, db is updated.
+# Remove button from task_select list:
+# Attachment is republished with one less button.
+# If attachment is empty, then remove attachment, adjust caller_id.
+# If all select attachments removed, then remove the promp attachment and
+#    adjust caller_id.
+#
+# Returns: api response{} from send_taskbot_update_msg()
+def edit_taskbot_msg_for_taskbot_done_button(options)
+  options[:org_attachments] = options[:p_hash][:url_params][:payload][:original_message][:attachments]
+  taskbot_done_remove_done_task(options)
+  taskbot_done_button_remove_button(options)
+  options[:text] = taskbot_done_button_response_msg(options)
+  options[:attachments] = taskbot_done_button_rebuild_attachments(options)
+  options[:taskbot_msg_id] = options[:p_hash][:url_params][:payload]['message_ts']
+  edit_and_send_taskbot_update_msg(options)
+end
+
+=begin
+  # Note: attachments = header, body, footer, maybe task select attachments.
+  attachments = parsed[:url_params][:payload][:original_message][:attachments]
+  rpt_body_attachments =
+    attachments.slice(parsed[:button_callback_id][:body_idx] - 1,
+                      parsed[:button_callback_id][:body_num])
+
+  options[:text] = options[:p_hash][:button_actions].first['name'] == 'done and delete' ? 'Deleted: ' : 'Closed:    '
+                  .concat("~#{options[:p_hash][:button_callback_id]['task_desc']}~\n")
+  # Remove task selection button for Done task and replace current Task
+  # selection button strip attachments.
+  options[:attachments] = task_select_buttons_replacement(
+    parsed: options[:p_hash], cmd: 'delete',
+    button_num: options[:p_hash][:first_button_value][:command])
+  options[:taskbot_msg_id] = options[:p_hash][:url_params][:payload]['message_ts']
+
+    # Make new task select button attachments with updated caller_id info.
+    task_select_attachments, task_select_num_attch =
+      task_select_buttons_replacement(parsed: parsed, cmd: 'new', # in list_all_chans_taskbot.rb
+                                      attachments: attachments,
+                                      caller_id: parsed[:button_callback_id][:caller],
+                                      body_attch_idx: parsed[:button_callback_id][:body_idx],
+                                      body_num_attch: parsed[:button_callback_id][:body_num],
+                                      footer_buttons_attch_idx: footer_buttons_attch_idx,
+                                      footer_buttons_num_attch: footer_buttons_num_attch,
+                                      footer_prompt_attch_idx: footer_prompt_attch_idx,
+                                      footer_prompt_num_attch: footer_prompt_num_attch,
+                                      num_tasks: parsed[:button_callback_id][:num_tasks])
+
+task_description = options[:p_hash][:first_button_value][:command]
+options[:text] =
+  (options[:p_hash][:button_actions].first['name'] == 'done and delete' ? 'Deleted: ' : 'Closed:    ')
+  .concat("~Task #{task_description}~\n")
+
+  options[:attachments] = options[:p_hash][:url_params][:payload][:original_message][:attachments]
+
+
+  options[:taskbot_msg_id] = options[:p_hash][:url_params][:payload]['message_ts']
+  edit_and_send_taskbot_update_msg(options)
+end
+=end
+def taskbot_done_remove_done_task(options)
+  options[:body_attachments] =
+    options[:org_attachments].slice(
+      options[:p_hash][:button_callback_id][:body_idx] - 1,
+      options[:p_hash][:button_callback_id][:body_num])
+  taskbot_remove_body_attachment(options) if options[:p_hash][:button_callback_id][:num_buttons] == 1
+
+  options[:task_description] =
+    "#{options[:p_hash][:first_button_value][:command]}) Task is going to be " \
+    "#{options[:p_hash][:button_actions].first['name'] == 'done and delete' ? 'Deleted' : 'Closed'}."
+end
+
+def taskbot_remove_body_attachment(options)
+  # options[:body_attachments].delete_at()
+=begin
+# Delete existing footer prompt msg attachments, we will be replacing em.
+attachments.slice!(
+  parsed[:button_callback_id][:footer_pmt_idx] - 1,
+  parsed[:button_callback_id][:footer_pmt_num])
+# Adjust following attachment indexes.
+parsed[:button_callback_id][:task_sel_idx] -= parsed[:button_callback_id][:footer_pmt_num]
+# Make sure our callback_id info is accurate, just in case.
+parsed[:button_callback_id][:footer_pmt_idx] = nil
+parsed[:button_callback_id][:footer_pmt_num] = nil
+=end
+end
+
+def taskbot_done_button_response_msg(options)
+  (options[:p_hash][:button_actions].first['name'] == 'done and delete' ? 'Deleted: ' : 'Closed:    ')
+    .concat("~Task #{options[:task_description]}~\n")
+end
+
+def taskbot_done_button_remove_button(options)
+  options[:task_select_attachments] =
+    options[:org_attachments].slice(
+      options[:p_hash][:button_callback_id][:task_sel_idx] - 1,
+      options[:p_hash][:button_callback_id][:task_sel_num])
+end
+
+def taskbot_done_button_rebuild_attachments(options)
+  attachments = options[:p_hash][:url_params][:payload][:original_message][:attachments]
+  # remove footer_buttons if options[:remove_footer_button_attachments]
+  # remove footer prompt if ....
+  # concat task_select_attachments unless options[:task_sel_num] == 0
+  attachments
+end
+
+def taskbot_done_button_select_attachments(options)
+
+end
+
+def taskbot_done_button_prompt_attachments(options)
+
+end
+
+def taskbot_done_button_footer_attachments(options)
+
+end
+
+
+# Given the attachment number in the button payload, remove that attachment
+# and write back the msg via chat_update
+# Returns: api response{} from send_taskbot_update_msg()
+def edit_and_send_taskbot_update_msg(options)
+  if options[:attachments].empty? && options.key?(:attachment_id_to_remove)
+    options[:attachments] = options[:p_hash][:url_params][:payload][:original_message][:attachments]
+    # attachment_to_edit = attachments[attachment_id_to_remove].to_i - 1]
+    options[:attachments].delete_at(options[:attachment_id_to_remove].to_i - 1)
+  end
+  update_msg_in_taskbot_channel(options)
 end

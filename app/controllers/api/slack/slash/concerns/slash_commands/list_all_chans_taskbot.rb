@@ -1,7 +1,8 @@
 # Returns: [text, attachments{}, list_ids[], response_options{}]
 def all_channels_taskbot_format(parsed, _context, list_of_records)
   options = { parsed: parsed, num_tasks: list_of_records.length,
-              channel_scope: parsed[:channel_scope]
+              channel_scope: parsed[:channel_scope],
+              attachment_info: []
             }
   # updates: options[:text, :attachments, :header_attch_idx, header_num_attch]
   options.merge!(all_chans_taskbot_header(options))
@@ -65,11 +66,18 @@ def all_chans_taskbot_body(options, list_of_records)
         text: "---- ##{item.channel_name} channel ----------",
         mrkdwn_in: ['text']
       }
+      options[:attachment_info] << {
+        type: 'body', attch_idx: options[:attachments].length,
+        channel_txt_begin: 0,
+        channel_txt_len: options[:attachments].last[:text].length,
+        task_text_info: []
+      }
     end
     # list_add_item_to_taskbot_display_list(parsed, attachments, attachments.size - 1, item, index + 1)
-    list_add_item_to_display_list(
+    task_text_len = list_add_item_to_display_list(
       parsed, options[:attachments], options[:attachments].size - 1, item, index + 1) # in list.rb
     list_ids << item.id
+    options[:attachment_info].last[:task_text_info] << { len: task_text_len }
   end
   { attachments: options[:attachments], body_attch_idx: body_attch_idx,
     body_num_attch: options[:attachments].size + 1 - body_attch_idx,
@@ -187,7 +195,7 @@ def task_select_new_attachment(options)
                      footer_pmt_num: options[:footer_prompt_num_attch] || nil,
                      task_sel_idx: options[:task_sel_idx],
                      task_sel_num: 1,
-                     num_tasks: options[:num_tasks]
+                     num_buttons: options[:group].size
                    }.to_json,
       color: options[:parsed][:first_button_value][:id] == 'done' ? '#00B300' : '#FF8080', # slack blue: '#3AA3E3', css light_green: #90EE90
       attachment_type: 'default',
@@ -195,6 +203,9 @@ def task_select_new_attachment(options)
       ]
     }
   options[:group].each do |tasknum|
+    # body_attachment instance for the task referenced by this button.
+    # 0 if first one.
+    options[:body_attch_frame] = 0
     options[:tasknum] = tasknum
     task_select_attachment[:actions] << task_select_new_button(options)
   end
@@ -206,7 +217,9 @@ def task_select_new_button(options)
     text: options[:tasknum].to_s,
     type: 'button',
     style: options[:button_style],
-    value: { command: options[:tasknum].to_s }.to_json
+    value: { command: options[:tasknum].to_s,
+             b_idx: options[:body_attch_idx]
+           }.to_json
   }
 end
 

@@ -195,12 +195,15 @@ def list_format_owner_title(context)
 end
 
 # Make a list of tasks as multiple lines of text.
-# Returns: updated [attachments{}]
+# Returns: length of text added to attachment.
+#          updates [attachments{}]
 def list_add_item_to_display_list(parsed, attachments, attch_idx, item, tasknum)
   # Create a new attachment for the task list, if needed.
   attachments << { color: '#3AA3E3', text: '', mrkdwn_in: ['text'] } if attachments.empty? || attch_idx == 'new'
   # Add task as another line of text in the specified attachment (usually the last one)
-  attachments[(attch_idx == 'last' || attch_idx == 'new') ? attachments.length - 1 : attch_idx][:text].concat(list_add_attachment_text(parsed, item, tasknum))
+  task_desc = list_add_attachment_text(parsed, item, tasknum)
+  attachments[(attch_idx == 'last' || attch_idx == 'new') ? attachments.length - 1 : attch_idx][:text].concat(task_desc)
+  task_desc.length
 end
 
 def list_add_attachment_text(parsed, item, tasknum)
