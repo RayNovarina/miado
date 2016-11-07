@@ -311,7 +311,7 @@ def am_hash_from_member_record(options)
   list_scope = 'empty' if mcb.bot_msgs_json.nil? || mcb.bot_msgs_json.empty?
   # HACK: we can't be sure what is in the channel unless we monitor message
   # events. User can delete all messages.
-  # list_scope = 'empty' if list_scope.nil?
+  list_scope = 'team' if list_scope.nil?
   # Special case: if resetting taskbot channel, default to 'Your To-Do's' list
   list_scope = 'one_member' if options[:parsed][:func] == :reset
   { 'mcb' => mcb,
