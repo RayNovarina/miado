@@ -58,24 +58,32 @@ def picklist_button_taskbot(parsed)
   footer_prompt_num_attch = footer_prompt_attachments.size
 
   # Make new task select button attachments with updated caller_id info.
+  # HACK - we need our select button caller_id to have correct task_select_attch_idx
+  #        and we want to know the correct task_select_num_attch before we make
+  #        the footer_buttons_attchments caller_id info.
+  task_select_attch_idx = footer_prompt_attch_idx + footer_prompt_num_attch
   task_select_attachments, task_select_num_attch =
     task_select_buttons_replacement(parsed: parsed, cmd: 'new', # in list_all_chans_taskbot.rb
                                     attachments: attachments,
                                     caller_id: parsed[:button_callback_id][:caller],
+                                    header_attch_idx: parsed[:button_callback_id][:header_idx],
+                                    header_num_attch: parsed[:button_callback_id][:header_num],
                                     body_attch_idx: parsed[:button_callback_id][:body_idx],
                                     body_num_attch: parsed[:button_callback_id][:body_num],
                                     footer_buttons_attch_idx: footer_buttons_attch_idx,
                                     footer_buttons_num_attch: footer_buttons_num_attch,
                                     footer_prompt_attch_idx: footer_prompt_attch_idx,
                                     footer_prompt_num_attch: footer_prompt_num_attch,
+                                    task_select_attch_idx: task_select_attch_idx,
                                     num_tasks: parsed[:button_callback_id][:num_tasks])
-  task_select_attch_idx = footer_prompt_attch_idx + footer_prompt_num_attch
 
   # Make new footer button attachments with updated caller_id info.
   footer_buttons_attachments, _footer_buttons_attch_idx, _footer_buttons_num_attch =
     list_button_taskbot_footer_replacement(parsed: parsed, cmd: 'new',
                                            attachments: attachments,
-                                           caller_id: parsed[:button_callback_id][:caller],
+                                           caller_id: 'picklist',
+                                           header_attch_idx: parsed[:button_callback_id][:header_idx],
+                                           header_num_attch: parsed[:button_callback_id][:header_num],
                                            body_attch_idx: parsed[:button_callback_id][:body_idx],
                                            body_num_attch: parsed[:button_callback_id][:body_num],
                                            footer_buttons_attch_idx: footer_buttons_attch_idx,

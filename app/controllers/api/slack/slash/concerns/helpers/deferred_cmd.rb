@@ -1070,13 +1070,47 @@ end
 #
 # Returns: api response{} from send_taskbot_update_msg()
 def edit_taskbot_msg_for_taskbot_done_button(options)
-  options[:org_attachments] = options[:p_hash][:url_params][:payload][:original_message][:attachments]
-  taskbot_done_remove_done_task(options)
+  taskbot_burst_attachments(options)
   taskbot_done_button_remove_button(options)
-  options[:text] = taskbot_done_button_response_msg(options)
+  taskbot_done_remove_done_task(options)
+  options[:text] = taskbot_done_button_response_text(options)
   options[:attachments] = taskbot_done_button_rebuild_attachments(options)
   options[:taskbot_msg_id] = options[:p_hash][:url_params][:payload]['message_ts']
   edit_and_send_taskbot_update_msg(options)
+end
+
+def taskbot_burst_attachments(options)
+  options[:org_attachments] = options[:p_hash][:url_params][:payload][:original_message][:attachments]
+
+  options[:header_attachments] =
+    options[:org_attachments].slice(
+      options[:p_hash][:button_callback_id][:header_idx] - 1,
+      options[:p_hash][:button_callback_id][:header_num])
+
+  options[:headline_attachments] =
+    options[:org_attachments].slice(
+      options[:p_hash][:button_callback_id][:header_idx],
+      1)
+
+  options[:body_attachments] =
+    options[:org_attachments].slice(
+      options[:p_hash][:button_callback_id][:body_idx] - 1,
+      options[:p_hash][:button_callback_id][:body_num])
+
+  options[:footer_buttons_attachments] =
+    options[:org_attachments].slice(
+      options[:p_hash][:button_callback_id][:footer_but_idx] - 1,
+      options[:p_hash][:button_callback_id][:footer_but_num])
+
+  options[:footer_prompt_attachments] =
+    options[:org_attachments].slice(
+      options[:p_hash][:button_callback_id][:footer_pmt_idx] - 1,
+      options[:p_hash][:button_callback_id][:footer_pmt_num])
+
+  options[:task_select_attachments] =
+    options[:org_attachments].slice(
+      options[:p_hash][:button_callback_id][:task_sel_idx] - 1,
+      options[:p_hash][:button_callback_id][:task_sel_num])
 end
 
 =begin
@@ -1121,15 +1155,18 @@ options[:text] =
 end
 =end
 def taskbot_done_remove_done_task(options)
-  options[:body_attachments] =
-    options[:org_attachments].slice(
-      options[:p_hash][:button_callback_id][:body_idx] - 1,
-      options[:p_hash][:button_callback_id][:body_num])
   taskbot_remove_body_attachment(options) if options[:p_hash][:button_callback_id][:num_buttons] == 1
+  taskbot_remove_footer_attachments(options) if options[:body_attachments].empty?
+  taskbot_update_headline_attachments(options) if options[:body_attachments].empty?
+  options[:task_description] = 'options[:task_description]'
+end
 
-  options[:task_description] =
-    "#{options[:p_hash][:first_button_value][:command]}) Task is going to be " \
-    "#{options[:p_hash][:button_actions].first['name'] == 'done and delete' ? 'Deleted' : 'Closed'}."
+def taskbot_remove_footer_attachments(options)
+
+end
+
+def taskbot_update_headline_attachments(options)
+  # pretext: options[:rpt_headline] || '',
 end
 
 def taskbot_remove_body_attachment(options)
@@ -1147,23 +1184,25 @@ parsed[:button_callback_id][:footer_pmt_num] = nil
 =end
 end
 
-def taskbot_done_button_response_msg(options)
+def taskbot_done_button_response_text(options)
   (options[:p_hash][:button_actions].first['name'] == 'done and delete' ? 'Deleted: ' : 'Closed:    ')
-    .concat("~Task #{options[:task_description]}~\n")
+    .concat("Task #{options[:p_hash][:first_button_value][:command]}(##{options[:p_hash][:first_button_value][:chan_name]}) ")
+    .concat("~#{options[:task_description]}~\n")
 end
 
 def taskbot_done_button_remove_button(options)
-  options[:task_select_attachments] =
-    options[:org_attachments].slice(
-      options[:p_hash][:button_callback_id][:task_sel_idx] - 1,
-      options[:p_hash][:button_callback_id][:task_sel_num])
+
 end
 
 def taskbot_done_button_rebuild_attachments(options)
-  attachments = options[:p_hash][:url_params][:payload][:original_message][:attachments]
-  # remove footer_buttons if options[:remove_footer_button_attachments]
-  # remove footer prompt if ....
-  # concat task_select_attachments unless options[:task_sel_num] == 0
+  # Start with header attachments and add others.
+  attachments =
+    options[:header_attachments]
+    .concat(options[:headline_attachments])
+    .concat(options[:body_attachments])
+    .concat(options[:footer_buttons_attachments])
+    .concat(options[:footer_prompt_attachments])
+    .concat(options[:task_select_attachments])
   attachments
 end
 

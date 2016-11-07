@@ -2,11 +2,12 @@
 def all_channels_taskbot_format(parsed, _context, list_of_records)
   options = { parsed: parsed, num_tasks: list_of_records.length,
               channel_scope: parsed[:channel_scope],
+              caller_id: 'list: taskbot',
               attachment_info: []
             }
   # updates: options[:text, :attachments, :header_attch_idx, header_num_attch]
   options.merge!(all_chans_taskbot_header(options))
-  # updates: options[:attachments, :body_attch_idx, body_num_attch, :list_ids]
+  # updates: options[:attachments, :body_attch_idx, body_num_attch, :list_ids, attachment_info]
   options.merge!(all_chans_taskbot_body(options, list_of_records))
   # updates: options[:attachments, :footer_buttons_attch_idx, footer_buttons_num_attch]
   options.merge!(all_chans_taskbot_footer(options))
@@ -63,25 +64,33 @@ def all_chans_taskbot_body(options, list_of_records)
       current_channel_id = item.channel_id
       options[:attachments] << {
         color: 'f8f8f8',
-        text: "---- ##{item.channel_name} channel ----------",
+        text: "---- ##{item.channel_name} channel (1st tasknum: #{index + 1})----------",
         mrkdwn_in: ['text']
       }
+      options[:attachment_info].last[:channel_last_tasknum] = index unless options[:attachment_info].empty?
       options[:attachment_info] << {
         type: 'body', attch_idx: options[:attachments].length,
         channel_txt_begin: 0,
         channel_txt_len: options[:attachments].last[:text].length,
-        task_text_info: []
+        channel_1st_tasknum: index + 1,
+        channel_last_tasknum: 0,
+        channel_name: item.channel_name
+        # task_info: []
       }
     end
     # list_add_item_to_taskbot_display_list(parsed, attachments, attachments.size - 1, item, index + 1)
-    task_text_len = list_add_item_to_display_list(
+    list_add_item_to_display_list(
       parsed, options[:attachments], options[:attachments].size - 1, item, index + 1) # in list.rb
+    # task_text_len = list_add_item_to_display_list(
+    #  parsed, options[:attachments], options[:attachments].size - 1, item, index + 1) # in list.rb
     list_ids << item.id
-    options[:attachment_info].last[:task_text_info] << { len: task_text_len }
+    # options[:attachment_info].last[:task_text_info] << { len: task_text_len }
   end
+  options[:attachment_info].last[:channel_last_tasknum] = list_ids.size unless options[:attachment_info].empty?
   { attachments: options[:attachments], body_attch_idx: body_attch_idx,
     body_num_attch: options[:attachments].size + 1 - body_attch_idx,
-    list_ids: list_ids, num_tasks: list_ids.size }
+    list_ids: list_ids, num_tasks: list_ids.size
+  }
 end
 
 # Inputs: options{parsed, attachments, num_tasks}
@@ -106,7 +115,9 @@ def list_button_taskbot_footer_replacement(options)
     [{ text: '',
        fallback: 'Taskbot list',
        callback_id: { id: 'taskbot',
-                      caller: options[:caller_id] || 'taskbot',
+                      caller: options[:caller_id] || 'list: taskbot',
+                      header_idx: options[:header_attch_idx],
+                      header_num: options[:header_num_attch],
                       body_idx: options[:body_attch_idx],
                       body_num: options[:body_num_attch],
                       footer_but_idx: footer_buttons_attch_idx,
@@ -126,27 +137,46 @@ def list_button_taskbot_footer_replacement(options)
   unless options[:parsed][:button_actions].any? &&
          options[:cmd] == 'toggle' &&
          options[:parsed][:first_button_value][:id] == 'done'
-    taskbot_footer_attachments.first[:actions] <<
-      { name: 'picklist',
-        text: 'Mark Task as Done',
-        style: 'primary',
-        type: 'button',
-        value: { id: 'done' }.to_json
-      }
+    taskbot_footer_attachments.first[:actions] << task_footer_new_button(
+      options, text: 'Mark Task as Done', style: 'primary', id: 'done')
   end
   unless options[:parsed][:button_actions].any? &&
          options[:cmd] == 'toggle' &&
          options[:parsed][:first_button_value][:id] == 'done and delete'
-    taskbot_footer_attachments.first[:actions] <<
-      { name: 'picklist',
-        text: 'Delete Task',
-        type: 'button',
-        value: { id: 'done and delete' }.to_json,
-        style: 'danger'
-      }
+    taskbot_footer_attachments.first[:actions] << task_footer_new_button(
+      options, text: 'Delete Task', style: 'danger', id: 'done and delete')
   end
   [taskbot_footer_attachments, footer_buttons_attch_idx,
    taskbot_footer_attachments.size]
+end
+
+def task_footer_new_button(options, props)
+  { name: 'picklist',
+    text: props[:text],
+    style: props[:style],
+    type: 'button',
+    value: { id: props[:id],
+             ba_info: task_footer_button_attch_info(options)
+           }.to_json
+  }
+end
+
+# Note: source of body_attachment_info array differs:
+#       IF we are being generated from a report, then get from
+#       options[:attachment_info] as rpt is generated and persist on
+#       button value.
+#       IF picklist button click, we already have the info embedded in the
+#       button value.
+def task_footer_button_attch_info(options)
+  return options[:parsed][:first_button_value][:ba_info] if options[:parsed][:first_button_value] &&
+                                                            options[:parsed][:first_button_value][:ba_info]
+  return options[:attachment_info].map { |attachment_info|
+           { c_name: attachment_info[:channel_name],
+             t_1st: attachment_info[:channel_1st_tasknum],
+             t_last: attachment_info[:channel_last_tasknum]
+            }
+         } if options[:attachment_info]
+  []
 end
 
 # Inputs: options{parsed, cmd, caller_id}
@@ -172,10 +202,12 @@ def task_select_new(options)
   task_select_attachments = []
   # Slack supports up to 5 buttons per attachment. So we make a select buttons
   # attachment{} for each group of 5 buttons.
-  (1..options[:num_tasks]).to_a.in_groups_of(5, false).each do |group|
+  groups = (1..options[:num_tasks]).to_a.in_groups_of(5, false)
+  options[:task_select_num_attachments] = groups.size
+  groups.each do |group|
     options[:group] = group
     options[:task_select_attachments] = task_select_attachments
-    options[:task_sel_idx] = task_select_attachments.size
+    options[:task_sel_block] = task_select_attachments.size
     task_select_attachments << task_select_new_attachment(options)
   end
   [task_select_attachments, task_select_attachments.size]
@@ -186,15 +218,18 @@ def task_select_new_attachment(options)
     { text: '',
       fallback: 'Task select buttons',
       callback_id: { id: 'taskbot',
-                     caller: options[:caller_id] || 'taskbot footer',
+                     caller: options[:caller_id] || nil,
+                     header_idx: options[:header_attch_idx],
+                     header_num: options[:header_attch_idx],
                      body_idx: options[:body_attch_idx],
                      body_num: options[:body_num_attch],
                      footer_but_idx: options[:footer_buttons_attch_idx] || nil,
                      footer_but_num: options[:footer_buttons_num_attch] || nil,
                      footer_pmt_idx: options[:footer_prompt_attch_idx] || nil,
                      footer_pmt_num: options[:footer_prompt_num_attch] || nil,
-                     task_sel_idx: options[:task_sel_idx],
-                     task_sel_num: 1,
+                     task_sel_idx: options[:task_select_attch_idx] || nil,
+                     task_sel_num: options[:task_select_num_attachments] || nil,
+                     task_sel_block: options[:task_sel_block],
                      num_buttons: options[:group].size
                    }.to_json,
       color: options[:parsed][:first_button_value][:id] == 'done' ? '#00B300' : '#FF8080', # slack blue: '#3AA3E3', css light_green: #90EE90
@@ -203,13 +238,19 @@ def task_select_new_attachment(options)
       ]
     }
   options[:group].each do |tasknum|
-    # body_attachment instance for the task referenced by this button.
-    # 0 if first one.
-    options[:body_attch_frame] = 0
     options[:tasknum] = tasknum
+    options[:slack_channel_name] =
+      channel_name_from_attachment_info(options[:parsed][:first_button_value][:ba_info], tasknum)
     task_select_attachment[:actions] << task_select_new_button(options)
   end
   task_select_attachment
+end
+
+def channel_name_from_attachment_info(attachment_info, tasknum)
+  attachment_info.each do | attachment_info |
+    return attachment_info[:c_name] if tasknum <= attachment_info[:t_last]
+    '*unknown*'
+  end
 end
 
 def task_select_new_button(options)
@@ -218,7 +259,7 @@ def task_select_new_button(options)
     type: 'button',
     style: options[:button_style],
     value: { command: options[:tasknum].to_s,
-             b_idx: options[:body_attch_idx]
+             chan_name: options[:slack_channel_name],
            }.to_json
   }
 end

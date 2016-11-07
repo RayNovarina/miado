@@ -203,7 +203,7 @@ def list_add_item_to_display_list(parsed, attachments, attch_idx, item, tasknum)
   # Add task as another line of text in the specified attachment (usually the last one)
   task_desc = list_add_attachment_text(parsed, item, tasknum)
   attachments[(attch_idx == 'last' || attch_idx == 'new') ? attachments.length - 1 : attch_idx][:text].concat(task_desc)
-  task_desc.length
+  # task_desc.length
 end
 
 def list_add_attachment_text(parsed, item, tasknum)
