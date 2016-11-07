@@ -21,30 +21,30 @@ def picklist_button_taskbot(parsed)
   text = parsed[:url_params][:payload][:original_message][:text]
   # Note: attachments = header, body, footer, maybe task select attachments.
   attachments = parsed[:url_params][:payload][:original_message][:attachments]
-  unless parsed[:button_callback_id][:footer_prompt_num_attch].nil?
+  unless parsed[:button_callback_id][:footer_pmt_num].nil?
     # Delete existing footer prompt msg attachments, we will be replacing em.
     attachments.slice!(
-      parsed[:button_callback_id][:footer_prompt_attch_idx] - 1,
-      parsed[:button_callback_id][:footer_prompt_num_attch])
+      parsed[:button_callback_id][:footer_pmt_idx] - 1,
+      parsed[:button_callback_id][:footer_pmt_num])
     # Adjust following attachment indexes.
-    parsed[:button_callback_id][:task_select_attch_idx] -= parsed[:button_callback_id][:footer_prompt_num_attch]
+    parsed[:button_callback_id][:task_sel_idx] -= parsed[:button_callback_id][:footer_pmt_num]
     # Make sure our callback_id info is accurate, just in case.
-    parsed[:button_callback_id][:footer_prompt_attch_idx] = nil
-    parsed[:button_callback_id][:footer_prompt_num_attch] = nil
+    parsed[:button_callback_id][:footer_pmt_idx] = nil
+    parsed[:button_callback_id][:footer_pmt_num] = nil
   end
-  unless parsed[:button_callback_id][:task_select_num_attch].nil?
+  unless parsed[:button_callback_id][:task_sel_num].nil?
     # Delete existing task select attachments, we will be replacing em.
     attachments.slice!(
-      parsed[:button_callback_id][:task_select_attch_idx] - 1,
-      parsed[:button_callback_id][:task_select_num_attch])
+      parsed[:button_callback_id][:task_sel_idx] - 1,
+      parsed[:button_callback_id][:task_sel_num])
     # Make sure our callback_id info is accurate, just in case.
-    parsed[:button_callback_id][:task_select_attch_idx] = nil
-    parsed[:button_callback_id][:task_select_num_attch] = nil
+    parsed[:button_callback_id][:task_sel_idx] = nil
+    parsed[:button_callback_id][:task_sel_num] = nil
   end
 
   # We will be replacing the footer button attachments, delete em first.
   # Assume there are no footer_prompt or task_select attachments.
-  attachments.delete_at(parsed[:button_callback_id][:footer_buttons_attch_idx] - 1)
+  attachments.delete_at(parsed[:button_callback_id][:footer_but_idx] - 1)
   footer_buttons_attch_idx = attachments.size + 1
   footer_buttons_num_attch = 1
 
@@ -57,25 +57,35 @@ def picklist_button_taskbot(parsed)
   footer_prompt_attachments = [pretext: prompt_msg, mrkdwn_in: ['pretext']]
   footer_prompt_num_attch = footer_prompt_attachments.size
 
-  # Make new task select button attachments.
+  # Make new task select button attachments with updated caller_id info.
   task_select_attachments, task_select_num_attch =
-    task_select_buttons_replacement(parsed: parsed, cmd: 'new') # in list_all_chans_taskbot.rb
+    task_select_buttons_replacement(parsed: parsed, cmd: 'new', # in list_all_chans_taskbot.rb
+                                    num_tasks: parsed[:button_callback_id][:tasks],
+                                    attachments: attachments,
+                                    caller_id: parsed[:button_callback_id][:caller],
+                                    body_attch_idx: parsed[:button_callback_id][:body_idx],
+                                    body_num_attch: parsed[:button_callback_id][:body_num],
+                                    footer_buttons_attch_idx: footer_buttons_attch_idx,
+                                    footer_buttons_num_attch: footer_buttons_num_attch,
+                                    footer_prompt_attch_idx: footer_prompt_attch_idx,
+                                    footer_prompt_num_attch: footer_prompt_num_attch,
+                                    list_ids: parsed[:button_callback_id][:tasks])
   task_select_attch_idx = footer_prompt_attch_idx + footer_prompt_num_attch
 
   # Make new footer button attachments with updated caller_id info.
   footer_buttons_attachments, _footer_buttons_attch_idx, _footer_buttons_num_attch =
     list_button_taskbot_footer_replacement(parsed: parsed, cmd: 'new',
                                            attachments: attachments,
-                                           caller_id: parsed[:button_callback_id][:caller_id],
-                                           body_attch_idx: parsed[:button_callback_id][:body_attch_idx],
-                                           body_num_attch: parsed[:button_callback_id][:body_num_attch],
+                                           caller_id: parsed[:button_callback_id][:caller],
+                                           body_attch_idx: parsed[:button_callback_id][:body_idx],
+                                           body_num_attch: parsed[:button_callback_id][:body_num],
                                            footer_buttons_attch_idx: footer_buttons_attch_idx,
                                            footer_buttons_num_attch: footer_buttons_num_attch,
                                            footer_prompt_attch_idx: footer_prompt_attch_idx,
                                            footer_prompt_num_attch: footer_prompt_num_attch,
                                            task_select_attch_idx: task_select_attch_idx,
                                            task_select_num_attch: task_select_num_attch,
-                                           list_ids: parsed[:button_callback_id][:list_ids])
+                                           list_ids: parsed[:button_callback_id][:tasks])
 
   # Now add the footer buttons, prompt and select attachments to the body of the taskbot msg.
   attachments.concat(footer_buttons_attachments)

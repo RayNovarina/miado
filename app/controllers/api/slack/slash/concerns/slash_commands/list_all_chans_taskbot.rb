@@ -97,15 +97,16 @@ def list_button_taskbot_footer_replacement(options)
     [{ text: '',
        fallback: 'Taskbot list',
        callback_id: { id: 'taskbot',
-                      caller_id: '', # options[:caller_id] || 'taskbot',
-                      body_attch_idx: options[:body_attch_idx],
-                      body_num_attch: options[:body_num_attch],
-                      footer_buttons_attch_idx: footer_buttons_attch_idx,
-                      footer_buttons_num_attch: 1,
-                      footer_prompt_attch_idx: options[:footer_prompt_attch_idx] || nil,
-                      footer_prompt_num_attch: options[:footer_prompt_num_attch] || nil,
-                      task_select_attch_idx: options[:task_select_attch_idx] || nil,
-                      task_select_num_attch: options[:task_select_num_attch] || nil
+                      caller: options[:caller_id] || 'taskbot',
+                      body_idx: options[:body_attch_idx],
+                      body_num: options[:body_num_attch],
+                      footer_but_idx: footer_buttons_attch_idx,
+                      footer_but_num: 1,
+                      footer_pmt_idx: options[:footer_prompt_attch_idx] || nil,
+                      footer_pmt_num: options[:footer_prompt_num_attch] || nil,
+                      task_sel_idx: options[:task_select_attch_idx] || nil,
+                      task_sel_num: options[:task_select_num_attch] || nil,
+                      tasks: options[:list_ids].size
                     }.to_json,
        color: 'ffffff',
        attachment_type: 'default',
@@ -151,7 +152,7 @@ def task_select_buttons_replacement(options)
   return task_select_delete(options) if options[:cmd] == 'delete'
 end
 
-# Inputs: options{parsed, caller_id}
+# Inputs: options{parsed, caller_id, num_tasks}
 # Returns: [task_select_attachments, task_select_num_attch]
 def task_select_new(options)
   parsed = options[:parsed]
@@ -163,44 +164,39 @@ def task_select_new(options)
     { text: '',
       fallback: 'Task select buttons',
       callback_id: { id: 'taskbot',
-                     caller_id: options[:caller_id] || 'taskbot footer'
+                     caller: options[:caller_id] || 'taskbot footer',
+                     body_idx: options[:body_attch_idx],
+                     body_num: options[:body_num_attch],
+                     footer_but_idx: options[:footer_buttons_attch_idx] || nil,
+                     footer_but_num: options[:footer_buttons_num_attch] || nil,
+                     footer_pmt_idx: options[:footer_prompt_attch_idx] || nil,
+                     footer_pmt_num: options[:footer_prompt_num_attch] || nil,
+                     task_sel_idx: options[:task_select_attch_idx] || nil,
+                     task_sel_num: options[:task_select_num_attch] || nil,
+                     tasks: options[:list_ids].size
                    }.to_json,
       color: parsed[:first_button_value][:id] == 'done' ? '#00B300' : '#FF8080', # slack blue: '#3AA3E3', css light_green: #90EE90
       attachment_type: 'default',
       actions: [
-        { name: button_name,
-          text: '1',
-          type: 'button',
-          style: button_style,
-          value: {}.to_json
-        },
-        { name: button_name,
-          text: '2',
-          type: 'button',
-          style: button_style,
-          value: {}.to_json
-        },
-        { name: button_name,
-          text: '3',
-          type: 'button',
-          style: button_style,
-          value: {}.to_json
-        },
-        { name: button_name,
-          text: '4',
-          type: 'button',
-          style: button_style,
-          value: {}.to_json
-        },
-        { name: button_name,
-          text: '5',
-          type: 'button',
-          style: button_style,
-          value: {}.to_json
-        }
       ]
     }
+  options[:num_tasks] = 5
+  (1..options[:num_tasks]).to_a.each do |tasknum|
+    task_select_attachments.first[:actions] <<
+      task_select_new_button(
+        button_name: button_name, button_style: button_style,
+        tasknum: tasknum)
+  end
   [task_select_attachments, task_select_attachments.size]
+end
+
+def task_select_new_button(options)
+  { name: options[:button_name],
+    text: options[:tasknum].to_s,
+    type: 'button',
+    style: options[:button_style],
+    value: { command: options[:tasknum].to_s }.to_json,
+  }
 end
 
 def task_select_delete(options)

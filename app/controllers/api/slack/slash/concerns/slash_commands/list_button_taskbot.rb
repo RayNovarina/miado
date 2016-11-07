@@ -15,7 +15,7 @@ def list_button_taskbot_header_replacement(options)
        fallback: 'Taskbot lists',
        callback_id: { id: 'taskbot',
                       response_headline: options[:rpt_headline] || '',
-                      caller_id: options[:caller_id] || 'list',
+                      caller: options[:caller_id] || 'list',
                       debug: false
                     }.to_json,
        color: 'ffffff',
