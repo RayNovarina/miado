@@ -60,7 +60,6 @@ def picklist_button_taskbot(parsed)
   # Make new task select button attachments with updated caller_id info.
   task_select_attachments, task_select_num_attch =
     task_select_buttons_replacement(parsed: parsed, cmd: 'new', # in list_all_chans_taskbot.rb
-                                    num_tasks: parsed[:button_callback_id][:tasks],
                                     attachments: attachments,
                                     caller_id: parsed[:button_callback_id][:caller],
                                     body_attch_idx: parsed[:button_callback_id][:body_idx],
@@ -69,7 +68,7 @@ def picklist_button_taskbot(parsed)
                                     footer_buttons_num_attch: footer_buttons_num_attch,
                                     footer_prompt_attch_idx: footer_prompt_attch_idx,
                                     footer_prompt_num_attch: footer_prompt_num_attch,
-                                    list_ids: parsed[:button_callback_id][:tasks])
+                                    num_tasks: parsed[:button_callback_id][:num_tasks])
   task_select_attch_idx = footer_prompt_attch_idx + footer_prompt_num_attch
 
   # Make new footer button attachments with updated caller_id info.
@@ -85,7 +84,7 @@ def picklist_button_taskbot(parsed)
                                            footer_prompt_num_attch: footer_prompt_num_attch,
                                            task_select_attch_idx: task_select_attch_idx,
                                            task_select_num_attch: task_select_num_attch,
-                                           list_ids: parsed[:button_callback_id][:tasks])
+                                           num_tasks: parsed[:button_callback_id][:num_tasks])
 
   # Now add the footer buttons, prompt and select attachments to the body of the taskbot msg.
   attachments.concat(footer_buttons_attachments)
