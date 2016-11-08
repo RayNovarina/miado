@@ -27,19 +27,19 @@ def picklist_button_taskbot(parsed)
       parsed[:button_callback_id][:footer_pmt_idx] - 1,
       parsed[:button_callback_id][:footer_pmt_num])
     # Adjust following attachment indexes.
-    parsed[:button_callback_id][:task_sel_idx] -= parsed[:button_callback_id][:footer_pmt_num]
+    parsed[:button_callback_id][:sel_idx] -= parsed[:button_callback_id][:footer_pmt_num]
     # Make sure our callback_id info is accurate, just in case.
     parsed[:button_callback_id][:footer_pmt_idx] = nil
     parsed[:button_callback_id][:footer_pmt_num] = nil
   end
-  unless parsed[:button_callback_id][:task_sel_num].nil?
+  unless parsed[:button_callback_id][:sel_num].nil?
     # Delete existing task select attachments, we will be replacing em.
     attachments.slice!(
-      parsed[:button_callback_id][:task_sel_idx] - 1,
-      parsed[:button_callback_id][:task_sel_num])
+      parsed[:button_callback_id][:sel_idx] - 1,
+      parsed[:button_callback_id][:sel_num])
     # Make sure our callback_id info is accurate, just in case.
-    parsed[:button_callback_id][:task_sel_idx] = nil
-    parsed[:button_callback_id][:task_sel_num] = nil
+    parsed[:button_callback_id][:sel_idx] = nil
+    parsed[:button_callback_id][:sel_num] = nil
   end
 
   # We will be replacing the footer button attachments, delete em first.
@@ -75,7 +75,9 @@ def picklist_button_taskbot(parsed)
                                     footer_prompt_attch_idx: footer_prompt_attch_idx,
                                     footer_prompt_num_attch: footer_prompt_num_attch,
                                     task_select_attch_idx: task_select_attch_idx,
-                                    num_tasks: parsed[:button_callback_id][:num_tasks])
+                                    num_tasks: parsed[:button_callback_id][:num_tasks],
+                                    # Recover the helper info we embedded in the footer buttons we just clicked.
+                                    body_attch_info: parsed[:first_button_value][:ba_info])
 
   # Make new footer button attachments with updated caller_id info.
   footer_buttons_attachments, _footer_buttons_attch_idx, _footer_buttons_num_attch =

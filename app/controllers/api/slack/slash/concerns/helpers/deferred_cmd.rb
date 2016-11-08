@@ -1109,8 +1109,8 @@ def taskbot_burst_attachments(options)
 
   options[:task_select_attachments] =
     options[:org_attachments].slice(
-      options[:p_hash][:button_callback_id][:task_sel_idx] - 1,
-      options[:p_hash][:button_callback_id][:task_sel_num])
+      options[:p_hash][:button_callback_id][:sel_idx] - 1,
+      options[:p_hash][:button_callback_id][:sel_num])
 end
 
 =begin
@@ -1155,10 +1155,29 @@ options[:text] =
 end
 =end
 def taskbot_done_remove_done_task(options)
-  taskbot_remove_body_attachment(options) if options[:p_hash][:button_callback_id][:num_buttons] == 1
+  taskbot_remove_body_attachment(options) if options[:p_hash][:button_callback_id][:num_but] == 1
   taskbot_remove_footer_attachments(options) if options[:body_attachments].empty?
   taskbot_update_headline_attachments(options) if options[:body_attachments].empty?
-  options[:task_description] = 'options[:task_description]'
+  options[:task_description], options[:task_body_idx], options[:task_line_idx] =
+    taskbot_done_find_task(options)
+end
+
+def taskbot_done_find_task(options)
+  props = options[:p_hash][:first_button_value]
+  tasknum = props[:command]
+  task_channel_name = props[:chan_name]
+  # options[:footer_buttons_attachments].first[:actions].first[:value]
+  options[:body_attachments].each_with_index do |body_attch, body_idx|
+    body_attch[:text].split("\n").each_with_index do |line, line_idx|
+      # ["---- #general channel (1st tasknum: 1)----------",
+      # "1) gen 1 | *Assigned* to @dawnnova.",
+      # "2) gen 3 | *Assigned* to @dawnnova.",
+      # "3) gen 1 | *Assigned* to @ray."]
+      break if line_idx == 0 && !line.slice(6, line.length - 7).starts_with?(task_channel_name)
+      return [line, body_idx, line_idx] if line.starts_with?("#{tasknum})")
+    end
+  end
+  ['*not found*', 0, 0]
 end
 
 def taskbot_remove_footer_attachments(options)
@@ -1177,7 +1196,7 @@ attachments.slice!(
   parsed[:button_callback_id][:footer_pmt_idx] - 1,
   parsed[:button_callback_id][:footer_pmt_num])
 # Adjust following attachment indexes.
-parsed[:button_callback_id][:task_sel_idx] -= parsed[:button_callback_id][:footer_pmt_num]
+parsed[:button_callback_id][:sel_idx] -= parsed[:button_callback_id][:footer_pmt_num]
 # Make sure our callback_id info is accurate, just in case.
 parsed[:button_callback_id][:footer_pmt_idx] = nil
 parsed[:button_callback_id][:footer_pmt_num] = nil
@@ -1185,9 +1204,12 @@ parsed[:button_callback_id][:footer_pmt_num] = nil
 end
 
 def taskbot_done_button_response_text(options)
+  # Isolate the task number from the item description.
+  s = options[:task_description]
   (options[:p_hash][:button_actions].first['name'] == 'done and delete' ? 'Deleted: ' : 'Closed:    ')
-    .concat("Task #{options[:p_hash][:first_button_value][:command]}(##{options[:p_hash][:first_button_value][:chan_name]}) ")
-    .concat("~#{options[:task_description]}~\n")
+    .concat("#{s.slice(0..s.index(') '))} ~#{s.slice(s.index(') ') + 2..-1)}~ \n")
+  # .concat("Task #{options[:p_hash][:first_button_value][:command]}(##{options[:p_hash][:first_button_value][:chan_name]}) ")
+  # .concat("Body_attch_idx: #{options[:task_body_idx]}  line_idx: #{options[:task_line_idx]}\n")
 end
 
 def taskbot_done_button_remove_button(options)
