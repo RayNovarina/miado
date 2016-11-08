@@ -64,7 +64,7 @@ def all_chans_taskbot_body(options, list_of_records)
       current_channel_id = item.channel_id
       options[:attachments] << {
         color: 'f8f8f8',
-        text: "---- ##{item.channel_name} channel (1st tasknum: #{index + 1})----------",
+        text: "---- ##{item.channel_name} channel ----------",
         mrkdwn_in: ['text']
       }
       options[:attachment_info].last[:channel_last_tasknum] = index unless options[:attachment_info].empty?
