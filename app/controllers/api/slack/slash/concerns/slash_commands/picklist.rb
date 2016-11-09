@@ -13,6 +13,8 @@ def picklist_command(parsed)
   [text, attachments, options]
 end
 
+# Purpose: Taskbot report "Done" or "Delete" button has been clicked. We need
+#          to generate rows of task select buttons.
 # Returns: [text, attachments, response_options]
 def picklist_button_taskbot(parsed)
   # Nothing to change sometimes.
@@ -94,7 +96,8 @@ def picklist_button_taskbot(parsed)
                                            footer_prompt_num_attch: footer_prompt_num_attch,
                                            task_select_attch_idx: task_select_attch_idx,
                                            task_select_num_attch: task_select_num_attch,
-                                           num_tasks: parsed[:button_callback_id][:num_tasks])
+                                           num_tasks: parsed[:button_callback_id][:num_tasks],
+                                           num_but: parsed[:button_callback_id][:num_but] || parsed[:button_callback_id][:num_tasks])
 
   # Now add the footer buttons, prompt and select attachments to the body of the taskbot msg.
   attachments.concat(footer_buttons_attachments)

@@ -126,14 +126,16 @@ def list_button_taskbot_footer_replacement(options)
                       footer_pmt_num: options[:footer_prompt_num_attch] || nil,
                       sel_idx: options[:task_select_attch_idx] || nil,
                       sel_num: options[:task_select_num_attch] || nil,
-                      num_tasks: options[:num_tasks]
+                      num_tasks: options[:num_tasks] || nil,
+                      num_but: options[:num_buttons] || nil
                     }.to_json,
        color: 'ffffff',
        attachment_type: 'default',
        actions: [
        ]
     }]
-  # Add button unless we clicked the other one.
+  # If in toggle mode, Add button unless we clicked the other one.
+  # Otherwise, add the button.
   unless options[:parsed][:button_actions].any? &&
          options[:cmd] == 'toggle' &&
          options[:parsed][:first_button_value][:id] == 'done'
@@ -179,22 +181,9 @@ def task_footer_button_attch_info(options)
   []
 end
 
-# Inputs: options{parsed, cmd, caller_id}
-#         cmd CRUD operators:
-#             'new':    Create or replace existing selection buttons.
-#             'delete': Remove specified task selection button and refresh
-#                       current Task
-# selection button strip attachments.
-# Returns: [task_select_attachments, task_select_num_attch]
-def task_select_buttons_replacement(options)
-  return [[], nil] if options[:num_tasks] == 0
-  return task_select_new(options) if options[:cmd] == 'new'
-  return task_select_delete(options) if options[:cmd] == 'delete'
-end
-
 # Inputs: options{parsed, caller_id, num_tasks}
 # Returns: [task_select_attachments, task_select_num_attch]
-def task_select_new(options)
+def task_select_buttons_replacement(options)
   parsed = options[:parsed]
   options[:button_name] = parsed[:first_button_value][:id]
   options[:button_style] = 'primary' if parsed[:first_button_value][:id] == 'done'
