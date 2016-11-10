@@ -1091,6 +1091,7 @@ def edit_taskbot_msg_for_taskbot_done_button(options)
 end
 
 # Purpose: Find the task we are deleting and remember info about it.
+#          Assume taskbot rpts are grouped by slack channel name.
 # Inputs: options[:body_attachments] which is
 #         options[:p_hash][:url_params][:payload] broken into its component
 #         attachments.
@@ -1105,11 +1106,12 @@ def taskbot_done_find_task(options)
       # "1) gen 1 | *Assigned* to @dawnnova.",
       # "2) gen 3 | *Assigned* to @dawnnova.",
       # "3) gen 1 | *Assigned* to @ray."]
-      break if line_idx == 0 && !line.slice(6, line.length - 7).starts_with?(task_channel_name)
+      # Skip this report block if it is not the channel we are looking for.
+      break if line_idx == 0 && !chan_name_from_taskbot_line(line) == task_channel_name
       return { ok: true, task_found: true,
                tasknum: tasknum, channel_name: task_channel_name,
                task_description: line, body_attachment_idx: body_idx,
-               body_attch_line_idx: line_idx } if line.starts_with?("#{tasknum})")
+               body_attch_line_idx: line_idx } if tasknum_from_taskbot_line(line) == tasknum
     end
   end
   { ok: false, task_found: false,

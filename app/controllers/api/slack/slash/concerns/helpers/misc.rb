@@ -181,3 +181,14 @@ def lib_slack_api(method_name, api_token)
   response = http.request(request)
   JSON.parse(response.body)
 end
+
+# ["---- #general channel (1st tasknum: 1)----------",
+def chan_name_from_taskbot_line(line)
+  line.slice(6, line.length - 7).split.first
+end
+
+# "1) gen 1 | *Assigned* to @dawnnova."
+def tasknum_from_taskbot_line(line)
+  return nil if line.index(')').nil?
+  line.slice(0, line.index(')'))
+end

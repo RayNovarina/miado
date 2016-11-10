@@ -44,6 +44,10 @@ def picklist_button_taskbot(parsed)
     parsed[:button_callback_id][:sel_num] = nil
   end
 
+  # footer_buttons_callback_id_json = attachments[parsed[:button_callback_id][:footer_but_idx] - 1]['callback_id']
+  # footer_buttons_callback_id = JSON.parse(footer_buttons_callback_id_json).with_indifferent_access
+  # num_task_sel_buttons = footer_buttons_callback_id['num_but']
+
   # We will be replacing the footer button attachments, delete em first.
   # Assume there are no footer_prompt or task_select attachments.
   attachments.delete_at(parsed[:button_callback_id][:footer_but_idx] - 1)
@@ -58,6 +62,12 @@ def picklist_button_taskbot(parsed)
   footer_prompt_attch_idx = footer_buttons_attch_idx + footer_buttons_num_attch
   footer_prompt_attachments = [pretext: prompt_msg, mrkdwn_in: ['pretext']]
   footer_prompt_num_attch = footer_prompt_attachments.size
+
+  # Create map of select button labels and action values.
+  select_list_info = select_list_pattern_from_body_attachments(
+    body_attachments: attachments.slice(
+      parsed[:button_callback_id][:body_idx] - 1,
+      parsed[:button_callback_id][:body_num]))
 
   # Make new task select button attachments with updated caller_id info.
   # HACK - we need our select button caller_id to have correct task_select_attch_idx
@@ -77,9 +87,12 @@ def picklist_button_taskbot(parsed)
                                     footer_prompt_attch_idx: footer_prompt_attch_idx,
                                     footer_prompt_num_attch: footer_prompt_num_attch,
                                     task_select_attch_idx: task_select_attch_idx,
-                                    num_tasks: parsed[:button_callback_id][:num_tasks],
-                                    # Recover the helper info we embedded in the footer buttons we just clicked.
-                                    body_attch_info: parsed[:first_button_value][:ba_info])
+                                    # HACK: we want each button caller_id to
+                                    # have the total num of button strips/attchs
+                                    # We know one select_attachment per 5 buttons.
+                                    task_select_num_attch: (select_list_info[:total_options].to_f / 5.0).ceil,
+                                    select_list_info: select_list_info
+                                   )
 
   # Make new footer button attachments with updated caller_id info.
   footer_buttons_attachments, _footer_buttons_attch_idx, _footer_buttons_num_attch =
@@ -96,9 +109,10 @@ def picklist_button_taskbot(parsed)
                                            footer_prompt_num_attch: footer_prompt_num_attch,
                                            task_select_attch_idx: task_select_attch_idx,
                                            task_select_num_attch: task_select_num_attch,
-                                           num_tasks: parsed[:button_callback_id][:num_tasks],
-                                           num_but: parsed[:button_callback_id][:num_but] || parsed[:button_callback_id][:num_tasks])
-
+                                           # num_tasks: parsed[:button_callback_id][:num_tasks],
+                                           # num_but: parsed[:button_callback_id][:num_but] || parsed[:button_callback_id][:num_tasks])
+                                           num_but: select_list_info[:total_options]
+                                          )
   # Now add the footer buttons, prompt and select attachments to the body of the taskbot msg.
   attachments.concat(footer_buttons_attachments)
              .concat(footer_prompt_attachments)
@@ -139,4 +153,117 @@ end
 # Nothing to change sometimes.
 def picklist_button_taskbot_the_same(_parsed)
   false
+end
+
+=begin
+{ caller: 'taskbot footer picklists',
+  total_options: 3,
+  select_lists: [
+    { name: 'general',
+      first_option_num: 1,
+      last_option_num: 2,
+      num_options: 2,
+      options: [{ label: '1', value: { tasknum: 1,
+                                       slack_channel_name: 'general'}
+                },
+                { label: '2', value: { tasknum: 2,
+                                       slack_channel_name: 'general'}
+                }
+              ]
+    },
+    { name: 'issues',
+      options: [{ label: '3', value: { tasknum: 3,
+                                       slack_channel_name: 'issues'}
+                }
+              ]
+    }
+=end
+def select_list_pattern_from_body_attachments(options)
+  options[:sel_pattern] = new_pattern(caller: 'taskbot footer picklists')
+  options[:body_attachments].each_with_index do |body_attch, body_idx|
+    body_attch[:text].split("\n").each_with_index do |line, line_idx|
+      # ["---- #general channel (1st tasknum: 1)----------",
+      # "1) gen 1 | *Assigned* to @dawnnova.",
+      # "2) gen 3 | *Assigned* to @dawnnova.",
+      # "3) gen 1 | *Assigned* to @ray."]
+      add_taskbot_select_option(options.merge!(sel_body_idx: body_idx,
+                                               sel_line: line,
+                                               sel_line_idx: line_idx))
+    end
+  end
+  options[:sel_line_idx] = nil # signal that we are not starting a new list.
+  end_of_previous_taskbot_select_list(options)
+  options[:sel_pattern]
+end
+
+# Returns: either a select_list{} or a select_options{}
+def add_taskbot_select_option(options)
+  # End of one channel list, begin of another if line_idx == 0
+  return end_of_previous_taskbot_select_list(options) if options[:sel_line_idx] == 0
+  tasknum = tasknum_from_taskbot_line(options[:sel_line])
+  current_list = options[:sel_pattern][:select_lists].last
+  current_list[:options] <<
+    new_select_option(options.merge!(label: tasknum,
+                                     value: { tasknum: tasknum,
+                                              slack_channel_name: current_list[:name]
+                                            }
+                                    ))
+  options[:sel_pattern][:total_options] += 1
+  current_list
+end
+
+# Inputs: :line_idx == nil means just ending current list, not starting new.
+# Returns: updated current select list{}
+def end_of_previous_taskbot_select_list(options)
+  prev_list = options[:sel_pattern][:select_lists].last
+  unless options[:sel_line_idx].nil?
+    options[:sel_pattern][:select_lists] <<
+      new_select_list(
+        options.merge!(name: chan_name_from_taskbot_line(options[:sel_line]),
+                       first_option_num: options[:first_option_num] || nil,
+                       last_option_num: options[:last_option_num] || nil,
+                       num_options: options[:num_options] || nil
+                      ))
+  end
+  # Update previous list fields that are now known.
+  return nil if prev_list.nil?
+  prev_list[:num_options] = prev_list[:options].size
+  prev_list[:first_option_num] =
+    prev_list[:options].first[:value][:tasknum]
+  prev_list[:last_option_num] =
+    prev_list[:options].last[:value][:tasknum]
+  return prev_list if options[:sel_line_idx].nil?
+  # Return new current select list.
+  options[:sel_pattern][:select_lists].last
+end
+
+# Purpose: to populate picklists or button strips.
+# select_list_pattern:
+#   { select_lists: [
+#       ...
+#       options: [
+#         ...
+#       ]
+#     ]
+#   }
+def new_pattern(options)
+  { caller: options[:caller],
+    total_options: 0,
+    select_lists: []
+  }
+end
+
+def new_select_list(options)
+  { name: options[:name],
+    first_option_num: options[:first_option_num] || nil,
+    last_option_num: options[:last_option_num] || nil,
+    num_options: options[:first_option_num] || nil,
+    options: []
+  }
+end
+
+def new_select_option(options)
+  { label: options[:label],
+    value: options[:value]
+  }
 end
