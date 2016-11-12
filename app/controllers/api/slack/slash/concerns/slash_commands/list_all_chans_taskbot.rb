@@ -1,3 +1,4 @@
+# Purpose: Completely rebuild and replace existing taskbot reports msg.
 # Returns: [text, attachments{}, list_ids[], response_options{}]
 def all_channels_taskbot_format(parsed, _context, list_of_records)
   options = { parsed: parsed, num_tasks: list_of_records.length,
@@ -11,6 +12,8 @@ def all_channels_taskbot_format(parsed, _context, list_of_records)
   options.merge!(all_chans_taskbot_body(options, list_of_records))
   # updates: options[:attachments, :footer_buttons_attch_idx, footer_buttons_num_attch]
   options.merge!(all_chans_taskbot_footer(options))
+  # NOTE: any remaining attachments in the existing message, i.e. select
+  #       buttons, are not written back.
   [options[:text],
    options[:attachments],
    options[:list_ids],
@@ -125,9 +128,7 @@ def list_button_taskbot_footer_replacement(options)
                       footer_pmt_idx: options[:footer_prompt_attch_idx] || nil,
                       footer_pmt_num: options[:footer_prompt_num_attch] || nil,
                       sel_idx: options[:task_select_attch_idx] || nil,
-                      sel_num: options[:task_select_num_attch] || nil,
-                      # num_tasks: options[:num_tasks] || nil,
-                      num_but: options[:num_but] || nil
+                      sel_num: options[:task_select_num_attch] || nil
                     }.to_json,
        color: 'ffffff',
        attachment_type: 'default',
@@ -157,31 +158,9 @@ def task_footer_new_button(_options, props)
     text: props[:text],
     style: props[:style],
     type: 'button',
-    value: { id: props[:id] # ,
-             # ba_info: task_footer_button_attch_info(options)
-           }.to_json
+    value: { id: props[:id] }.to_json
   }
 end
-
-=begin
-# Note: source of body_attachment_info array differs:
-#       IF we are being generated from a report, then get from
-#       options[:attachment_info] as rpt is generated and persist on
-#       button value.
-#       IF picklist button click, we already have the info embedded in the
-#       button value.
-def task_footer_button_attch_info(options)
-  return options[:parsed][:first_button_value][:ba_info] if options[:parsed][:first_button_value] &&
-                                                            options[:parsed][:first_button_value][:ba_info]
-  return options[:attachment_info].map { |attachment_info|
-           { c_name: attachment_info[:channel_name],
-             t_1st: attachment_info[:channel_1st_tasknum],
-             t_last: attachment_info[:channel_last_tasknum]
-            }
-         } if options[:attachment_info]
-  []
-end
-=end
 
 # Inputs: options{parsed, caller_id, :select_list_info}
 # Returns: [task_select_attachments, task_select_num_attch]
@@ -205,7 +184,7 @@ end
 # Returns: [task_select_attachments, task_select_num_attch]
 def task_select_attachments_from_select_list_info(options)
   task_select_attachments = []
-  options[:sel_block] = 0
+  options[:select_row_num] = 0
   options[:group] = []
   # Slack supports up to 5 buttons per attachment. So we make a select buttons
   # attachment{} for each group of 5 buttons.
@@ -219,7 +198,7 @@ def task_select_attachments_from_select_list_info(options)
       next unless options[:group].size == 5
       # Max line of 5 buttons - same channel.
       task_select_attachments << task_select_new_attachment(options)
-      options[:sel_block] += 1
+      options[:select_row_num] += 1
       options[:group] = []
     end
   end
@@ -229,7 +208,7 @@ def task_select_attachments_from_select_list_info(options)
 end
 
 # Up to 5 buttons per attachment.
-# Inputs: options: { :task_select_attch_idx, :sel_block,
+# Inputs: options: { :task_select_attch_idx, :select_row_num,
 #                    :group, :button_name, :button_style, :slack_channel_name
 #                  }
 def task_select_new_attachment(options)
@@ -247,8 +226,8 @@ def task_select_new_attachment(options)
                      footer_pmt_idx: options[:footer_prompt_attch_idx] || nil,
                      footer_pmt_num: options[:footer_prompt_num_attch] || nil,
                      sel_idx: options[:task_select_attch_idx],
-                     sel_num: options[:task_select_num_attch],
-                     sel_block: options[:sel_block]
+                     # sel_num: options[:task_select_num_attch],
+                     select_row_num: options[:select_row_num]
                    }.to_json,
       color: options[:parsed][:first_button_value][:id] == 'done' ? '#00B300' : '#FF8080', # slack blue: '#3AA3E3', css light_green: #90EE90
       attachment_type: 'default',

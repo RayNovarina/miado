@@ -44,13 +44,10 @@ def picklist_button_taskbot(parsed)
     parsed[:button_callback_id][:sel_num] = nil
   end
 
-  # footer_buttons_callback_id_json = attachments[parsed[:button_callback_id][:footer_but_idx] - 1]['callback_id']
-  # footer_buttons_callback_id = JSON.parse(footer_buttons_callback_id_json).with_indifferent_access
-  # num_task_sel_buttons = footer_buttons_callback_id['num_but']
-
   # We will be replacing the footer button attachments, delete em first.
   # Assume there are no footer_prompt or task_select attachments.
   attachments.delete_at(parsed[:button_callback_id][:footer_but_idx] - 1)
+  # We know we will be creating one footer button attachment.
   footer_buttons_attch_idx = attachments.size + 1
   footer_buttons_num_attch = 1
 
@@ -67,7 +64,8 @@ def picklist_button_taskbot(parsed)
   select_list_info = select_list_pattern_from_body_attachments(
     body_attachments: attachments.slice(
       parsed[:button_callback_id][:body_idx] - 1,
-      parsed[:button_callback_id][:body_num]))
+      parsed[:button_callback_id][:body_num]),
+    parsed: parsed)
 
   # Make new task select button attachments with updated caller_id info.
   # HACK - we need our select button caller_id to have correct task_select_attch_idx
@@ -90,7 +88,7 @@ def picklist_button_taskbot(parsed)
                                     # HACK: we want each button caller_id to
                                     # have the total num of button strips/attchs
                                     # We know one select_attachment per 5 buttons.
-                                    task_select_num_attch: (select_list_info[:total_options].to_f / 5.0).ceil,
+                                    # task_select_num_attch: (select_list_info[:total_options].to_f / 5.0).ceil,
                                     select_list_info: select_list_info
                                    )
 
@@ -108,10 +106,7 @@ def picklist_button_taskbot(parsed)
                                            footer_prompt_attch_idx: footer_prompt_attch_idx,
                                            footer_prompt_num_attch: footer_prompt_num_attch,
                                            task_select_attch_idx: task_select_attch_idx,
-                                           task_select_num_attch: task_select_num_attch,
-                                           # num_tasks: parsed[:button_callback_id][:num_tasks],
-                                           # num_but: parsed[:button_callback_id][:num_but] || parsed[:button_callback_id][:num_tasks])
-                                           num_but: select_list_info[:total_options]
+                                           task_select_num_attch: task_select_num_attch
                                           )
   # Now add the footer buttons, prompt and select attachments to the body of the taskbot msg.
   attachments.concat(footer_buttons_attachments)
@@ -202,6 +197,9 @@ def add_taskbot_select_option(options)
   return end_of_previous_taskbot_select_list(options) if options[:sel_line_idx] == 0
   tasknum = tasknum_from_taskbot_line(options[:sel_line])
   current_list = options[:sel_pattern][:select_lists].last
+  # HACK - exclude completed tasks from button list.
+  return current_list if options[:parsed][:first_button_value][:id] == 'done' &&
+                         done_option_from_taskbot_line(options[:sel_line])
   current_list[:options] <<
     new_select_option(options.merge!(label: tasknum,
                                      value: { tasknum: tasknum,
@@ -210,6 +208,10 @@ def add_taskbot_select_option(options)
                                     ))
   options[:sel_pattern][:total_options] += 1
   current_list
+end
+
+def done_option_from_taskbot_line(line)
+  false # line.end_with?('| *Completed* ')
 end
 
 # Inputs: :line_idx == nil means just ending current list, not starting new.
