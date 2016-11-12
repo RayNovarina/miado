@@ -211,13 +211,18 @@ def add_taskbot_select_option(options)
 end
 
 def done_option_from_taskbot_line(line)
-  false # line.end_with?('| *Completed* ')
+  line.end_with?('| *Completed* ')
 end
 
 # Inputs: :line_idx == nil means just ending current list, not starting new.
 # Returns: updated current select list{}
 def end_of_previous_taskbot_select_list(options)
   prev_list = options[:sel_pattern][:select_lists].last
+  # Previous channel block may be empty. No buttons. Remove.
+  unless prev_list.nil? || !prev_list[:options].empty?
+    options[:sel_pattern][:select_lists].pop
+    prev_list = options[:sel_pattern][:select_lists].last
+  end
   unless options[:sel_line_idx].nil?
     options[:sel_pattern][:select_lists] <<
       new_select_list(
