@@ -122,7 +122,7 @@ end
 HELP_RESP_BUTTONS_HLP_TEXT =
   "Button: FAQs \n" \
   "Button: Best Practices \n" \
-  "Button: Task Lists \n" \
+  "Button: Task Lists '/do list @me open'\n" \
   "Button: Help \n" \
   "\n\n".freeze
 # "Button: Online Doc \n" \

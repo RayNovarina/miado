@@ -1,4 +1,7 @@
 # /raydo delete 1 does not update taskbot channel?
+# return options[:parsed][:tcb][:after_action_parse_hash]['func'] == 'list' &&
+#       team_option && open_option && done_option &&
+#       options[:parsed][:first_button_value][:id] == 'done'
 
 def after_action_deferred_logic(def_cmds)
   if def_cmds[0][:p_hash][:expedite_deferred_cmd]
@@ -185,7 +188,10 @@ def determine_impacted_members(parsed, deferred_cmd)
   # nil if MiaDo not installed by this member.
   update_ccb_chan_taskbot_msg_info(
     { 'error' => 'Task not impacted: determine_impacted_members().MiaDo not installed by this member.' },
-    p_hash: { ccb: parsed[:ccb] }) if am_hash.nil? || am_hash['bot_dm_channel_id'].nil?
+    p_hash: { ccb: parsed[:ccb] }) if am_hash['bot_dm_channel_id'].nil?
+  update_ccb_chan_taskbot_msg_info(
+    { 'error' => "Task not impacted: determine_impacted_members().assigned_member = #{impacted_task.nil? ? parsed[:assigned_member_id] : impacted_task[:assigned_member_id]}" },
+    p_hash: { ccb: parsed[:ccb] }) if am_hash.nil?
   return [] if am_hash.nil? || am_hash['bot_dm_channel_id'].nil?
   case func
   when :add, :assign, :unassign
@@ -258,10 +264,9 @@ end
 #                   process that may require the taskbot list to be updated.
 # Returns: impacted_task{}
 def impacted_task_if_no_assigned_member(parsed)
-  # Taskbot channel done_and_delete button command has already deleted the
-  # impacted task.
-  return parsed[:list_action_item_info][0] if parsed[:button_actions].any? &&
-                                              parsed[:button_actions].first['name'] == 'done and delete'
+  return impacted_task_if_taskbot_done(parsed) if parsed[:button_actions].any? &&
+                                                  (parsed[:button_actions].first['name'] == 'done and delete' ||
+                                                   parsed[:button_actions].first['name'] == 'done')
   task = ListItem.where(id: parsed[:list][parsed[:task_num] - 1]).first
   unless task.nil?
     return nil if parsed[:func] == :redo && parsed[:assigned_member_id].nil? &&
@@ -272,8 +277,19 @@ def impacted_task_if_no_assigned_member(parsed)
   nil
 end
 
+# Taskbot channel done_and_delete button command has already deleted the
+# impacted task.
+def impacted_task_if_taskbot_done(parsed)
+  impacted_task = parsed[:list_action_item_info][0]
+  return impacted_task unless impacted_task[:assigned_member_id].nil?
+  # Only refresh the taskbot report for the user looking at a All Tasks rpt.
+  impacted_task[:assigned_member_id] = parsed[:url_params]['user_id']
+  impacted_task
+end
+
 # Returns: am_hash{}
 def am_hash_from_assigned_member_id(parsed, assigned_member_id)
+  return nil if assigned_member_id.nil?
   return am_hash_from_member_record(parsed: parsed,
                                     slack_user_id: assigned_member_id,
                                     slack_team_id: parsed[:url_params]['team_id']
@@ -1153,18 +1169,6 @@ end
 #          deleted.
 def taskbot_done_remove_done_task(options)
   return unless options[:done_task_info][:ok]
-
-  # GOTCHA: if user is looking at All Tasks report, then a Done task should not
-  #         be removed because it still belongs to the All Tasks list. But a
-  #         deleted task should be removed.
-  # NOTE: then we should not display the "Done" picklist button if All Tasks
-  #       Display.
-  # NOTE: we should generate a diff button array for done button and for
-  #       delete button. If list is empty, dont show the button?
-  # return options[:parsed][:tcb][:after_action_parse_hash]['func'] == 'list' &&
-  #       team_option && open_option && done_option &&
-  #       options[:parsed][:first_button_value][:id] == 'done'
-
   # props =>
   # { :err_msg=>'',
   #   :tasknum=>"4",
