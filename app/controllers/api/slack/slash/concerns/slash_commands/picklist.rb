@@ -44,6 +44,13 @@ def picklist_button_taskbot(parsed)
     parsed[:button_callback_id][:sel_num] = nil
   end
 
+  # Create map of select button labels and action values.
+  select_list_info = select_list_pattern_from_body_attachments(
+    body_attachments: attachments.slice(
+      parsed[:button_callback_id][:body_idx] - 1,
+      parsed[:button_callback_id][:body_num]),
+    parsed: parsed)
+
   # We will be replacing the footer button attachments, delete em first.
   # Assume there are no footer_prompt or task_select attachments.
   attachments.delete_at(parsed[:button_callback_id][:footer_but_idx] - 1)
@@ -55,17 +62,13 @@ def picklist_button_taskbot(parsed)
   prompt_action = 'MARK the corresponding to-do task as `DONE`/closed' if parsed[:first_button_value][:id] == 'done'
   prompt_action = '`DELETE` the corresponding to-do task' if parsed[:first_button_value][:id] == 'done and delete'
   prompt_msg =
-    "Ok, pick a button, any button to #{prompt_action}."
+    "Ok, pick a button, any button to #{prompt_action}." unless select_list_info[:select_lists].empty?
+  prompt_msg =
+    'All tasks are already completed for this list. They can only be Deleted.' if select_list_info[:select_lists].empty?
+
   footer_prompt_attch_idx = footer_buttons_attch_idx + footer_buttons_num_attch
   footer_prompt_attachments = [pretext: prompt_msg, mrkdwn_in: ['pretext']]
   footer_prompt_num_attch = footer_prompt_attachments.size
-
-  # Create map of select button labels and action values.
-  select_list_info = select_list_pattern_from_body_attachments(
-    body_attachments: attachments.slice(
-      parsed[:button_callback_id][:body_idx] - 1,
-      parsed[:button_callback_id][:body_num]),
-    parsed: parsed)
 
   # Make new task select button attachments with updated caller_id info.
   # HACK - we need our select button caller_id to have correct task_select_attch_idx
