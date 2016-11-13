@@ -98,21 +98,21 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
           type: 'button',
           value: {}.to_json
         },
-        { name: 'online',
-          text: 'Online Doc',
-          type: 'button',
-          value: {}.to_json
-        },
-        { name: 'help',
-          text: 'Help',
-          type: 'button',
-          value: { command: 'buttons' }.to_json
-        },
+        # { name: 'online',
+        #  text: 'Online Doc',
+        #  type: 'button',
+        #  value: {}.to_json
+        # },
         { name: 'lists',
           text: 'Task Lists',
           type: 'button',
           value: { command: '@me open' }.to_json,
           style: 'primary'
+        },
+        { name: 'help',
+          text: 'Help',
+          type: 'button',
+          value: { command: 'buttons' }.to_json
         }
       ]
     }
@@ -122,10 +122,10 @@ end
 HELP_RESP_BUTTONS_HLP_TEXT =
   "Button: FAQs \n" \
   "Button: Best Practices \n" \
-  "Button: Online Doc \n" \
-  "Button: Help \n" \
   "Button: Task Lists \n" \
+  "Button: Help \n" \
   "\n\n".freeze
+# "Button: Online Doc \n" \
 
 # Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], response_options]
 def help_response_buttons_help(parsed)
@@ -150,7 +150,7 @@ def help_button_actions(parsed)
   text, attachments, _response_options = help_header(parsed)
   return help_button_faqs(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'faqs'
   return help_button_best_practices(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'best'
-  return help_button_online_doc(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'online'
+  # return help_button_online_doc(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'online'
   return help_body_basic(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'help' &&
                                                        parsed[:first_button_value][:command] == 'app'
   help_buttons_help(parsed, text, attachments)
@@ -382,6 +382,7 @@ def help_best_practices_subsection1(_parsed)
   }]
 end
 
+=begin
 # Returns: [text, attachments]
 def help_button_online_doc(parsed, text, attachments)
   attachments
@@ -416,3 +417,4 @@ def help_online_doc_subsection1(_parsed)
      mrkdwn_in: ['text']
   }]
 end
+=end
