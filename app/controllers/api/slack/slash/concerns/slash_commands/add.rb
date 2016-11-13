@@ -125,7 +125,7 @@ def add_response_headline_attachments(_parsed, response_text = '', item_db_id = 
          value: { resp_options: { replace_original: false } }.to_json
        },
        { name: 'help',
-         text: 'Help',
+         text: 'Button Help',
          type: 'button',
          value: { command: 'buttons' }.to_json
        }

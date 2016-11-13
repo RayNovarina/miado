@@ -53,7 +53,7 @@ def list_button_taskbot_header_replacement(options)
            value: { command: '@me' }.to_json
          },
          { name: 'help',
-           text: 'Help',
+           text: 'Button Help',
            type: 'button',
            value: { command: 'buttons' }.to_json
          }

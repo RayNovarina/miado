@@ -110,7 +110,7 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
           style: 'primary'
         },
         { name: 'help',
-          text: 'Help',
+          text: 'Button Help',
           type: 'button',
           value: { command: 'buttons' }.to_json
         }

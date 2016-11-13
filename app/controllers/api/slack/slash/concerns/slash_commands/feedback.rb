@@ -33,8 +33,9 @@ def feedback_button_public_chan(parsed)
   attachments =
     list_chan_headline_replacement(parsed, nil, 'feedback') # in list.rb
     .concat([pretext: 'Please use the MiaDo `/do feedback` command to email ' \
-                      "MiaDo product support.\n" \
-                      "Example: `/do feedback This is my suggestion. [enter]`\n\n",
+                      "MiaDo product support. Include an email address \n" \
+                      "if you would like a reply.\n" \
+                      "Example: `/do feedback From Jane@jj13@gmail.com This is my suggestion.`\n\n",
              mrkdwn_in: ['pretext']])
   update_channel_activity(parsed)
   [text, attachments, parsed[:first_button_value][:resp_options]]

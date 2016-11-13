@@ -109,7 +109,7 @@ def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list'
          value: {}.to_json
        },
        { name: 'help',
-         text: 'Help',
+         text: 'Button Help',
          type: 'button',
          value: { command: 'buttons' }.to_json
        }
