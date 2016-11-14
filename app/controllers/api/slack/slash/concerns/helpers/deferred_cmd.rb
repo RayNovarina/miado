@@ -682,9 +682,11 @@ end
 # Flow 3: Deletes all msgs in bot dm channel.
 #         requires chat:write:bot scope.
 def update_via_member_record(options)
-  # HACK: Also we are using user_token for im_history AND we dont have permission?
   if options[:p_hash][:func] == :reset
-    options[:message_source] = :im_history # :rtm_data # do we need to get fresh data?
+    # NOTE: We are using user_token for im_history AND we dont have permission.
+    #       Works on local dev but not on staging.
+    # options[:message_source] = :im_history
+    options[:message_source] = :rtm_data # do we need to get fresh data?
     clear_taskbot_msg_channel(options)
     options[:message_source] = :member_record
   else
