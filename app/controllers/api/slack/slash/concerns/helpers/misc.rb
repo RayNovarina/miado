@@ -92,10 +92,25 @@ def save_item_info(parsed, id)
   item
 end
 
-def make_web_client(api_token)
-  # Slack.config.token = 'xxxxx'
+# Purpose: make a new web client or select and use an existing one.
+# Returns: Slack::Web::Client new or existing.
+#          Updates an input of hash[:api_client user/bot] if needed.
+def make_web_client(token_or_hash)
+  return new_web_client(token_or_hash) unless token_or_hash.is_a?(Hash)
+  return token_or_hash[:api_client_user] if token_or_hash[:api_client_type] == :user &&
+                                            !token_or_hash[:api_client_user].nil?
+  return token_or_hash[:api_client_bot] if token_or_hash[:api_client_type] == :bot &&
+                                            !token_or_hash[:api_client_bot].nil?
+  web_client = new_web_client(
+    token_or_hash[:api_client_type] == :user ? token_or_hash[:slack_user_api_token] : token_or_hash[:taskbot_api_token])
+  token_or_hash[:api_client_user] = web_client if token_or_hash[:api_client_type] == :user
+  token_or_hash[:api_client_bot] = web_client if token_or_hash[:api_client_type] == :bot
+  web_client
+end
+
+def new_web_client(token)
   Slack.configure do |config|
-    config.token = api_token
+    config.token = token
   end
   Slack::Web::Client.new
 end

@@ -134,15 +134,13 @@ end
 def messages_via_rtm_start(options)
   # Get a new copy of the current dm channel msgs.
   rtm_start, _installation = Installation.refresh_rtm_start_data(options)
-  # user = Member.slack_user_from_rtm_start(rtm_start: rtm_start, slack_user_id: options[:taskbot_user_id])
-  # taskbot_slack_bot_id = user['profile']['bot_id']
   slack_dm_channels = rtm_start['ims']
   messages = []
   slack_dm_channels.each do |im|
     next unless im['id'] == options[:channel]
-    next if im['latest'].nil?
+    break if im['latest'].nil?
     # next unless im['latest']['bot_id'] == taskbot_slack_bot_id
-    # HACK
+    # HACK - reduce data alloc.
     im['latest']['attachments'] = []
     messages << im['latest']
     break
