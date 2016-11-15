@@ -767,14 +767,14 @@ def clear_taskbot_msg_channel(options)
   # Taskbot reset may require extra effort.
   return clear_channel_interface(options) unless options[:message_source] == :member_record
   # Try default first, clean up with rtm_start
+  prev_client_type = options[:api_client_type]
+  options[:api_client_type] = :bot
   api_resp = clear_channel_interface(options)
   # NOTE: We are using user_token for im_history AND we dont have permission.
   #       Works on local dev but not on staging.
   # options[:message_source] = :im_history
   prev_msg_src = options[:message_source]
-  prev_client_type = options[:api_client_type]
   options[:message_source] = :rtm_data
-  options[:api_client_type] = :bot
   while api_resp['ok']
     api_resp = clear_channel_interface(options)
     break if api_resp['num_deleted'].nil? ||
