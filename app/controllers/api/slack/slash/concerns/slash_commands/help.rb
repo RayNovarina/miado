@@ -88,11 +88,11 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
                      debug: false }.to_json,
       mrkdwn_in: ['text'],
       actions: [
-        { name: 'faqs',
-          text: 'FAQs',
-          type: 'button',
-          value: {}.to_json
-        },
+        # { name: 'faqs',
+        #  text: 'FAQs',
+        #  type: 'button',
+        #  value: {}.to_json
+        # },
         { name: 'best',
           text: 'Best Practices',
           type: 'button',
@@ -109,6 +109,11 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
           value: { command: '@me open' }.to_json,
           style: 'primary'
         },
+        { name: 'feedback',
+          text: 'Feedback',
+          type: 'button',
+          value: { resp_options: { replace_original: false } }.to_json
+        },
         { name: 'help',
           text: 'Button Help',
           type: 'button',
@@ -120,12 +125,13 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
 end
 
 HELP_RESP_BUTTONS_HLP_TEXT =
-  "Button: FAQs \n" \
   "Button: Best Practices \n" \
   "Button: Task Lists '/do list @me open'\n" \
+  "Button: Feedback \n" \
   "Button: Help \n" \
   "\n\n".freeze
 # "Button: Online Doc \n" \
+# "Button: FAQs \n" \
 
 # Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], response_options]
 def help_response_buttons_help(parsed)
@@ -148,12 +154,13 @@ end
 
 def help_button_actions(parsed)
   text, attachments, _response_options = help_header(parsed)
-  return help_button_faqs(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'faqs'
+  # return help_button_faqs(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'faqs'
   return help_button_best_practices(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'best'
   # return help_button_online_doc(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'online'
+  return help_button_feedback(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'feedback'
   return help_body_basic(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'help' &&
                                                        parsed[:first_button_value][:command] == 'app'
-  help_buttons_help(parsed, text, attachments)
+  help_body_basic(parsed, text, attachments)
 end
 
 # Returns: [text, attachments]
@@ -164,6 +171,7 @@ def help_body_basic(parsed, text, attachments)
     .concat(help_subsection2(parsed))
     .concat(help_subsection3(parsed))
     .concat(help_subsection4(parsed))
+    .concat(help_subsection5(parsed))
     .concat(help_footer(parsed))
   [text, attachments]
 end
@@ -288,6 +296,30 @@ def help_subsection4(_parsed)
   }]
 end
 
+# Returns: [attachment{}]
+def help_subsection5(_parsed)
+  root_url = @view.controller.request.base_url
+  msg = 'Feedback and more resources'
+  resources_hlp_text =
+    '• `Feedback`' \
+    "\n#{FEEDBACK_PUBLIC_TEXT}" \
+    '• `Online Help`' \
+    " Click here:  <#{root_url}/add_to_slack#product|Help>\n" \
+    '• `Online FAQs`' \
+    " Click here:  <#{root_url}/about#faq|FAQs>\n" \
+    '• `Online Contact Us`' \
+    " Click here:  <#{root_url}/add_to_slack#contact_us|Contact Us>\n" \
+    '• `Install Taskbot, Reinstall or Upgrade`' \
+    " Click here:  <#{root_url}/add_to_slack|Add to Slack>\n" \
+    "\n"
+  [{ fallback: msg,
+     title: msg,
+     text: resources_hlp_text,
+     color: '#3AA3E3',
+     mrkdwn_in: ['text']
+  }]
+end
+
 # ':bulb: Click on the <https://shadowhtracteam.slack.com/messages/@a.taskbot|a.taskbot> member to see all of your up to date ' \
 # 'lists.' \
 # Returns: [attachment{}]
@@ -308,18 +340,18 @@ def help_footer(_parsed)
 end
 
 # Returns: [text, attachments]
-def help_button_faqs(parsed, text, attachments)
+def help_button_feedback(parsed, text, attachments)
   attachments
-    .concat(help_faqs_headline(parsed))
-    .concat(help_faqs_subsection1(parsed))
+    .concat(help_feedback_headline(parsed))
+  # .concat(help_feedback_subsection1(parsed))
   [text, attachments]
 end
 
 # Returns: [attachment{}]
-def help_faqs_headline(_parsed)
-  msg = 'Frequently Asked Questions:'
-  [{ fallback: 'Faqs',
-     pretext: msg,
+def help_feedback_headline(_parsed)
+  # msg = 'Frequently Asked Questions:'
+  [{ fallback: 'feedback',
+     pretext: FEEDBACK_PUBLIC_TEXT,
      text: '',
      color: '#f2f2f3',
      mrkdwn_in: ['pretext']
@@ -327,11 +359,11 @@ def help_faqs_headline(_parsed)
 end
 
 # Returns: [attachment{}]
-def help_faqs_subsection1(parsed)
+def help_feedback_subsection1(parsed)
   help_subsection1(parsed)
 end
 
-HLP_FAQS_TEXT =
+HLP_feedback_TEXT =
   '• Hint 1' \
   " \n" \
   '• Hint 2' \
@@ -339,9 +371,9 @@ HLP_FAQS_TEXT =
   "\n".freeze
 
 # Returns: [attachment{}]
-def help_faqs_subsection1(_parsed)
-  [{ fallback: 'help_faqs_subsection1',
-     text: HLP_FAQS_TEXT,
+def help_feedback_subsection1(_parsed)
+  [{ fallback: 'help_feedback_subsection1',
+     text: HLP_feedback_TEXT,
      color: '#3AA3E3',
      mrkdwn_in: ['text']
   }]
@@ -384,6 +416,46 @@ end
 
 =begin
 # Returns: [text, attachments]
+def help_button_faqs(parsed, text, attachments)
+  attachments
+    .concat(help_faqs_headline(parsed))
+    .concat(help_faqs_subsection1(parsed))
+  [text, attachments]
+end
+
+# Returns: [attachment{}]
+def help_faqs_headline(_parsed)
+  msg = 'Frequently Asked Questions:'
+  [{ fallback: 'Faqs',
+     pretext: msg,
+     text: '',
+     color: '#f2f2f3',
+     mrkdwn_in: ['pretext']
+  }]
+end
+
+# Returns: [attachment{}]
+def help_faqs_subsection1(parsed)
+  help_subsection1(parsed)
+end
+
+HLP_FAQS_TEXT =
+  ' Hint 1' \
+  " \n" \
+  ' Hint 2' \
+  " \n" \
+  "\n".freeze
+
+# Returns: [attachment{}]
+def help_faqs_subsection1(_parsed)
+  [{ fallback: 'help_faqs_subsection1',
+     text: HLP_FAQS_TEXT,
+     color: '#3AA3E3',
+     mrkdwn_in: ['text']
+  }]
+end
+
+# Returns: [text, attachments]
 def help_button_online_doc(parsed, text, attachments)
   attachments
     .concat(help_online_doc_headline(parsed))
@@ -403,9 +475,9 @@ def help_online_doc_headline(_parsed)
 end
 
 HLP_ONLINE_TEXT =
-  '• Online doc link 1' \
+  ' Online doc link 1' \
   " \n" \
-  '• Online doc link 2' \
+  ' Online doc link 2' \
   " \n" \
   "\n".freeze
 

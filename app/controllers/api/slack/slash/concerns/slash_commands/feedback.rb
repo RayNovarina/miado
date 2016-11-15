@@ -27,15 +27,19 @@ def comment_from_slash_feedback(parsed)
   Comment.new(name: name, email: email, body: body)
 end
 
+FEEDBACK_PUBLIC_TEXT =
+  'Please use the MiaDo `/do feedback` command to email ' \
+  "MiaDo product support. \n" \
+  "Include an email address if you would like a reply.\n" \
+  'Example: `/do feedback From Jane@jj13@gmail.com This is my suggestion.`' \
+  "\n".freeze
+
 # Returns: [text, attachments, response_options]
 def feedback_button_public_chan(parsed)
   text = ''
   attachments =
     list_chan_headline_replacement(parsed, nil, 'feedback') # in list.rb
-    .concat([pretext: 'Please use the MiaDo `/do feedback` command to email ' \
-                      "MiaDo product support. Include an email address \n" \
-                      "if you would like a reply.\n" \
-                      "Example: `/do feedback From Jane@jj13@gmail.com This is my suggestion.`\n\n",
+    .concat([pretext: FEEDBACK_PUBLIC_TEXT,
              mrkdwn_in: ['pretext']])
   update_channel_activity(parsed)
   [text, attachments, parsed[:first_button_value][:resp_options]]
