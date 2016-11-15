@@ -685,20 +685,8 @@ end
 # Flow 3: Deletes all msgs in bot dm channel.
 #         requires chat:write:bot scope.
 def update_via_member_record(options)
-  if options[:p_hash][:func] == :reset
-    # NOTE: We are using user_token for im_history AND we dont have permission.
-    #       Works on local dev but not on staging.
-    # options[:message_source] = :im_history
-    options[:message_source] = :rtm_data
-    prev_client_type = options[:api_client_type]
-    options[:api_client_type] = :bot
-    clear_taskbot_msg_channel(options)
-    options[:message_source] = :member_record
-    options[:api_client_type] = prev_client_type
-  else
-    options[:message_source] = :member_record
-    clear_taskbot_msg_channel(options)
-  end
+  options[:message_source] = :member_record
+  clear_taskbot_msg_channel(options)
   api_resp = send_msg_to_taskbot_channel(options)
   remember_taskbot_msg_id(api_resp, options)
   update_taskbot_ccb_channel(options, 'msg_update - taskbot_msgs')
@@ -775,6 +763,29 @@ end
 
 # Returns: text status msg. 'ok' or err msg.
 def clear_taskbot_msg_channel(options)
+  return clear_channel_interface(options) unless options[:p_hash][:func] == :reset
+  # Taskbot reset may require extra effort.
+  return clear_channel_interface(options) unless options[:message_source] == :member_record
+  # Try default first, clean up with rtm_start
+  api_resp = clear_channel_interface(options)
+  # NOTE: We are using user_token for im_history AND we dont have permission.
+  #       Works on local dev but not on staging.
+  # options[:message_source] = :im_history
+  prev_msg_src = options[:message_source]
+  prev_client_type = options[:api_client_type]
+  options[:message_source] = :rtm_data
+  options[:api_client_type] = :bot
+  while api_resp['ok']
+    api_resp = clear_channel_interface(options)
+    break if api_resp['num_deleted'].nil? ||
+             api_resp['num_deleted'] == 0
+  end
+  options[:message_source] = prev_msg_src
+  options[:api_client_type] = prev_client_type
+  api_resp
+end
+
+def clear_channel_interface(options)
   options[:api_client] = make_web_client(options)
   api_resp =
     clear_channel_msgs(message_source: options[:message_source],

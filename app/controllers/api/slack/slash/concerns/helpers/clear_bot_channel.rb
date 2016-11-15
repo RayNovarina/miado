@@ -46,16 +46,17 @@ def clear_channel_msgs(options)
       "#{message_source_method}() has_more = " \
       "#{has_more}  num_messages.len = #{api_resp['messages'].length} \n "
     options[:api_client].logger.error(messages_stat)
-    return { 'ok' => true } if (api_options[:messages] = api_resp['messages']).length == 0
+    return { 'ok' => true, 'num_deleted' => 0 } if (api_options[:messages] = api_resp['messages']).length == 0
     # Returns updated delete_msgs_options hash with resp, latest.
     api_resp = delete_messages(api_options)
     return api_resp unless api_resp['ok']
   end
-  { 'ok' => true }
+  { 'ok' => true, 'num_deleted' => api_resp['num_deleted'] }
 end
 
 # Returns: { 'ok' or err_msg, latest msg timestamp }
 def delete_messages(options)
+  num_deleted = 0
   options[:messages].each do |m|
     # Prepare for next page query
     options[:latest] = m['ts']
@@ -68,11 +69,12 @@ def delete_messages(options)
     next if options[:exclude_pinned_msgs] && m.key?('subtype') && m['subtype'] == 'pinned_item'
     api_resp = delete_message_on_channel(options)
     m['deleted'] = true if api_resp['ok']
+    num_deleted += 1
     next if api_resp['ok'] == true
     # If we can't delete a msg, abandon delete loop, else we just keep trying.
     return { 'ok' => false, error: "Error occurred on Slack\'s API:client.chat_delete(#{options[:message_source]}): #{api_resp}" }
   end
-  { 'ok' => true }
+  { 'ok' => true, 'num_deleted' => num_deleted }
 end
 
 def delete_message_on_channel(options)
