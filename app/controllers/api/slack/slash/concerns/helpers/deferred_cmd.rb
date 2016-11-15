@@ -499,7 +499,7 @@ def generate_task_list_msgs(parsed, list_cmds)
   chat_msgs = []
   list_cmds.each do |cmd_hash|
     chat_msgs << { as_user: false,
-                   api_client_type: :user,
+                   api_client_type: :bot, # :user,
                    member_mcb: cmd_hash[:member_mcb],
                    member_tcb: cmd_hash[:member_tcb],
                    slack_user_api_token: cmd_hash[:slack_user_api_token],
@@ -512,8 +512,8 @@ def generate_task_list_msgs(parsed, list_cmds)
                    taskbot_list_scope: cmd_hash[:taskbot_list_scope],
                    member_name: cmd_hash[:member_name],
                    member_id: cmd_hash[:member_id],
-                   # api_client_bot: make_web_client(cmd_hash[:taskbot_api_token])
-                   api_client_user: make_web_client(cmd_hash[:slack_user_api_token])
+                   api_client_bot: make_web_client(cmd_hash[:taskbot_api_token])
+                   # api_client_user: make_web_client(cmd_hash[:slack_user_api_token])
                  }
     if cmd_hash[:type] == 'edit msg'
       chat_msgs.last[:edit_taskbot_msg] = true
@@ -603,13 +603,6 @@ def update_taskbot_channel(options)
 
   # Flow 6: misc experiments.
   # update_experiments(options)
-end
-
-# Pluck taskbot summary list msg from the button payload, edit it and write
-# back the msg via chat_update
-# Returns: slack api response hash.
-def edit_taskbot_msg(options)
-  edit_taskbot_msg_for_taskbot_done_button(options) if options[:p_hash][:func] == :done
 end
 
 =begin
@@ -767,14 +760,16 @@ def clear_taskbot_msg_channel(options)
   # Taskbot reset may require extra effort.
   return clear_channel_interface(options) unless options[:message_source] == :member_record
   # Try default first, clean up with rtm_start
-  prev_client_type = options[:api_client_type]
-  options[:api_client_type] = :bot
+  # prev_client_type = options[:api_client_type]
+  # options[:api_client_type] = :bot
   api_resp = clear_channel_interface(options)
   # NOTE: We are using user_token for im_history AND we dont have permission.
   #       Works on local dev but not on staging.
   # options[:message_source] = :im_history
   prev_msg_src = options[:message_source]
   options[:message_source] = :rtm_data
+  prev_client_type = options[:api_client_type]
+  options[:api_client_type] = :bot
   while api_resp['ok']
     api_resp = clear_channel_interface(options)
     break if api_resp['num_deleted'].nil? ||
@@ -1068,6 +1063,13 @@ def respond_to_picklist_button_event(parsed)
    # parsed[:button_callback_id]
 end
 
+# Pluck taskbot summary list msg from the button payload, edit it and write
+# back the msg via chat_update
+# Returns: slack api response hash.
+def edit_taskbot_msg(options)
+  edit_taskbot_msg_for_taskbot_done_button(options) if options[:p_hash][:func] == :done
+end
+
 # Click done button. Regular done logic runs, db is updated.
 # Remove button from task_select list:
 # Attachment is republished with one less button.
@@ -1247,6 +1249,7 @@ end
 
 # Returns: slack api response hash.
 def update_msg_in_taskbot_channel(options)
+  options[:api_client] = make_web_client(options)
   api_resp =
     options[:api_client]
     .chat_update(
@@ -1259,6 +1262,7 @@ def update_msg_in_taskbot_channel(options)
     "#{options[:taskbot_username]} at dm_channel: " \
     "#{options[:taskbot_channel_id]}.  Msg title: #{options[:text]}. " \
     "Message ts Id: #{options[:taskbot_msg_id]}. " \
+    "Token type: #{options[:api_client_type]}.  " \
     "For member: #{options[:member_name]}\n"
   return api_resp if api_resp['ok']
   err_msg = "Error: From update_msg_in_taskbot_channel(API:client.chat_update) = '#{api_resp['error']}'"
