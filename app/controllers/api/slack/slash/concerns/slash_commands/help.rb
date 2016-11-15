@@ -304,13 +304,13 @@ def help_subsection5(_parsed)
     '• `Feedback`' \
     "\n#{FEEDBACK_PUBLIC_TEXT}" \
     '• `Online Help`' \
-    " Click here:  <#{root_url}/add_to_slack#product|Help>\n" \
+    " Click here:  <#{root_url}/add_to_slack#product|Help>  \n" \
     '• `Online FAQs`' \
-    " Click here:  <#{root_url}/about#faq|FAQs>\n" \
+    " Click here:  <#{root_url}/about#faq|FAQs>  \n" \
     '• `Online Contact Us`' \
-    " Click here:  <#{root_url}/add_to_slack#contact_us|Contact Us>\n" \
+    " Click here:  <#{root_url}/add_to_slack#contact_us|Contact Us>  \n" \
     '• `Install Taskbot, Reinstall or Upgrade`' \
-    " Click here:  <#{root_url}/add_to_slack|Add to Slack>\n" \
+    " Click here:  <#{root_url}/add_to_slack|Add to Slack>  \n" \
     "\n"
   [{ fallback: msg,
      title: msg,
