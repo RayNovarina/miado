@@ -368,31 +368,134 @@ def help_button_best_practices(parsed, text, attachments)
   attachments
     .concat(help_best_practices_headline(parsed))
     .concat(help_best_practices_subsection1(parsed))
+    .concat(help_best_practices_subsection2(parsed))
   [text, attachments]
 end
 
+BEST_PRACTICES_HEADLINE_HLP_TEXT =
+  "*Best Practices* \n" \
+  'MiaDo was designed to accommodate the realities of \'micro\',  i.e. 1-5 ' \
+  'member Slack teams.  Usually one adult and a bunch of cranky associates.  ' \
+  'It usually works out just fine for one member to create and manage tasks. ' \
+  'MiaDo makes it painless for the other team members to see what they have ' \
+  'been assigned and to easily indicate that they have done it.  Team ' \
+  "members only need to remember to click on their \'a.taskbot\'  Direct " \
+  'Message channel and to notice when they get a Slack update indicator in ' \
+  "their a.taskbot channel. \n\n" \
+  "We see two basic ways to use MiaDo, in a  \'Single shared channel\' style " \
+  "or in a  \'Slack centric multi-channel\' style. \n" \
+  "\n".freeze
+
 # Returns: [attachment{}]
 def help_best_practices_headline(_parsed)
-  msg = 'Best Practices:'
-  [{ fallback: 'Best Practices',
-     pretext: msg,
+  [{ fallback: 'General Help - Best Practices',
+     pretext: BEST_PRACTICES_HEADLINE_HLP_TEXT,
      text: '',
      color: '#f2f2f3',
      mrkdwn_in: ['pretext']
   }]
 end
 
-HLP_BEST_TEXT =
-  '• Best Practice 1' \
-  " \n" \
-  '• Best Practice 2' \
-  " \n" \
-  "\n".freeze
+=begin
+  I.) Single shared channel
+    Use your existing 'general' or add a 'todo' channel and invite other team
+    members to it.
+    1) One person installs MiaDo. All team members now have access
+       to the '/do' command and buttons.
+    2) Just add tasks, update em, etc.
+    3) Discussions about tasks will be public and shared team wide.
+    4) Use the '/do list' command to easily see what is assigned to you or
+       others.
+    5) Use the 'Team To-Do's' button to list assigned tasks for all team
+       members.
+    6) Us the 'All Tasks' button to list team, unassigned and completed tasks.
+    7) A convenient and effective alternative to each member remembering
+       the '/do list' is to use the features of the MiaDo 'a.taskbot' Direct
+       message channel. That team member must install MiaDo via
+       <www.miado.net|MiaDo Add to Slack>. Now they merely have to notice when
+       they get a Slack message waiting indicator for their todo list.
+=end
+
+BEST_PRACTICES1_HLP_TITLE =
+  'Single shared channel'.freeze
 
 # Returns: [attachment{}]
 def help_best_practices_subsection1(_parsed)
-  [{ fallback: 'help_best_practices_subsection1',
-     text: HLP_BEST_TEXT,
+  root_url = @view.controller.request.base_url
+  best_practices1_hlp_text =
+    "Use your existing \'general\' or add a \'todo\' channel and invite " \
+    "other team members to it. \n" \
+    '• One person installs MiaDo via ' \
+    "<#{root_url}/add_to_slack|Add to Slack>.   " \
+    "All team members now have access to the \'/do\' command and buttons. \n" \
+    "• Just add tasks, update em, etc. \n" \
+    "• Discussions about tasks will be public and shared team wide. \n" \
+    "• Use the \'/do list\' command to easily see what is assigned to you or " \
+    "others. \n" \
+    "• Use the \'Team To-Do's\' button to list assigned tasks for all team " \
+    "members. \n" \
+    "• Use the \'All Tasks\' button to list team, unassigned and completed " \
+    "tasks. \n" \
+    '• A convenient and effective alternative to each member remembering ' \
+    "the \'/do list\' command is to use the features of the MiaDo " \
+    "\'a.taskbot\'  Direct message channel. " \
+    'In that case, a team member must install MiaDo via ' \
+    "<#{root_url}/add_to_slack|Add to Slack>.   " \
+    'Now they merely have to notice when they get a Slack message waiting ' \
+    "indicator for their todo list. \n"
+  [{ fallback: 'General Help - Best Practices',
+     title: BEST_PRACTICES1_HLP_TITLE,
+     text: best_practices1_hlp_text,
+     color: '#3AA3E3',
+     mrkdwn_in: ['text']
+  }]
+end
+
+=begin
+  II.) Slack centric multi-channel
+    In this style, todo lists and conversations are organized by Slack channels.
+    Each channel is specific to a topic and conversations occur within this
+    communications silo. The a.taskbot channel is very useful to help team
+    members be organized and effective dealing with multiple tasks created in
+    multiple Slack channels.
+    1) Each team member must install MiaDo via <www.miado.net|MiaDo Add to Slack>.
+       Every team member now has an a.taskbot channel.
+    2) Tasks are created and assigned in many public channels such as general,
+       issues, numbers, marketing, development, etc.  Each todo list is
+       attached to that channel. Conversations are public in that channel. This
+       is very Slack-like.
+    3) Doing a '/do list' will show your assigned tasks for only the channel
+       you are looking at.
+    4) The 'All Tasks' button will list tasks for the other
+       channels as well as unassigned and completed tasks.
+=end
+
+BEST_PRACTICES2_HLP_TITLE =
+  'Slack centric multi-channel'.freeze
+
+# Returns: [attachment{}]
+def help_best_practices_subsection2(_parsed)
+  root_url = @view.controller.request.base_url
+  best_practices2_hlp_text =
+    'In this style, todo lists and conversations are organized by Slack ' \
+    'channels.  Each channel is specific to a topic and conversations occur ' \
+    'within this communications silo.  The a.taskbot channel is very useful ' \
+    'to help team members be organized and effective dealing with multiple ' \
+    "tasks created in multiple Slack channels. \n" \
+    '•  Each team member must install MiaDo via ' \
+    "<#{root_url}/add_to_slack|Add to Slack>.   " \
+    "Every team member now has an a.taskbot channel. \n" \
+    "• Tasks are created and assigned in many public channels such as " \
+    'general, ssues, numbers, marketing, development, etc.  Each todo list ' \
+    'is attached to that channel. Conversations are public in that channel. ' \
+    "This is very Slack-like. \n" \
+    "• Doing a \'/do list\' will show your assigned tasks for only the " \
+    "channel you are looking at. \n" \
+    "• The \'All Tasks\' button will list tasks for the other channels as " \
+    "well as unassigned and completed tasks. \n"
+  [{ fallback: 'General Help - Best Practices',
+     title: BEST_PRACTICES2_HLP_TITLE,
+     text: best_practices2_hlp_text,
      color: '#3AA3E3',
      mrkdwn_in: ['text']
   }]
