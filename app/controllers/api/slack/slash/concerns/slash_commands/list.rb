@@ -122,19 +122,21 @@ def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list'
    }]
 end
 
-# Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], display_options]
+# Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], response_options]
 def list_response_buttons_help(parsed)
-  title = 'List Tasks'
+  title = 'List Tasks Buttons explained'
   replacement_buttons_attachments =
     add_response_headline_attachments(parsed,
                                       parsed[:button_callback_id][:response_headline],
                                       parsed[:button_callback_id][:item_db_id],
                                       parsed[:button_callback_id][:caller_id])
   button_help_attachments =
-    [{ pretext: ADD_RESP_BUTTONS_HLP_TEXT,
-       mrkdwn_in: ['pretext']
-     }
-    ]
+    [{ fallback: 'List Tasks Button Info',
+       # title: msg,
+       text: ADD_RESP_BUTTONS_HLP_TEXT,
+       color: '#3AA3E3',
+       mrkdwn_in: ['text']
+    }]
   [title, replacement_buttons_attachments, button_help_attachments, parsed[:first_button_value][:resp_options]]
 end
 

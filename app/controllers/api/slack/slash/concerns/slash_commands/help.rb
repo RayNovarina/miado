@@ -16,20 +16,20 @@ def help_command(parsed)
 end
 
 HELP_MORE_HLP_TEXT =
-  "For MiaDo Help use the \'/do help\' command or click on the button below:" \
+  "For MiaDo general Help use the \'/do help\' command or click on the button below:" \
   .freeze
 
 # Returns: [text, attachments{}, response_options{}]
 def help_for_buttons(parsed)
   # parsed[:first_button_value][:command] == 'buttons'
   title, replacement_buttons_attachments, button_help_attachments, display_options =
-    add_response_buttons_help(parsed) if parsed[:button_callback_id][:id] == 'add task'
+    add_response_buttons_help(parsed) if parsed[:button_callback_id][:id] == 'add task'   # in add.rb
   title, replacement_buttons_attachments, button_help_attachments, display_options =
-    list_response_buttons_help(parsed) if parsed[:button_callback_id][:id] == 'lists'
+    list_response_buttons_help(parsed) if parsed[:button_callback_id][:id] == 'lists'   # in list.rb
   title, replacement_buttons_attachments, button_help_attachments, display_options =
-    help_response_buttons_help(parsed) if parsed[:button_callback_id][:id] == 'help'
+    help_response_buttons_help(parsed) if parsed[:button_callback_id][:id] == 'help'    # in help.rb
   title, replacement_buttons_attachments, button_help_attachments, display_options =
-    taskbot_response_buttons_help(parsed) if parsed[:button_callback_id][:id] == 'taskbot'
+    taskbot_response_buttons_help(parsed) if parsed[:button_callback_id][:id] == 'taskbot'  # in list_button_taskbot.rb
 
   text = ''
   title_attachment = [{ pretext: "*#{title}*", mrkdwn_in: ['pretext'] }]
@@ -125,13 +125,14 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
 end
 
 HELP_RESP_BUTTONS_HLP_TEXT =
-  '• `Best Practices`' \
-  " \n" \
-  '• `Task Lists`' \
-  " /do list @me open \n" \
-  '• `Feedback`' \
+  '• `Best Practices`  ' \
+  "describe what we think are effective ways to use MiaDo. \n" \
+  '• `Task Lists`  ' \
+  "generates the command \'/do list @me open\' and " \
+  "Lists your ASSIGNED and OPEN tasks for THIS channel. \n" \
+  '• `Feedback`  tells you how to email MiaDo product support with suggestions, problems, etc.' \
   "\n" \
-  '• `Help`' \
+  '• `Button Help`  describes the purpose of each button.' \
   "\n" \
   "\n\n".freeze
 # "Button: Online Doc \n" \
@@ -143,12 +144,7 @@ def help_response_buttons_help(parsed)
   replacement_buttons_attachments =
     help_headline_replacement(parsed, nil, 'help')
   button_help_attachments =
-    # [{ pretext: HELP_RESP_BUTTONS_HLP_TEXT,
-    #   mrkdwn_in: ['pretext']
-    # }
-    # ]
     [{ fallback: 'Help Button Info',
-       # title: msg,
        text: HELP_RESP_BUTTONS_HLP_TEXT,
        color: '#3AA3E3',
        mrkdwn_in: ['text']
@@ -353,7 +349,6 @@ end
 def help_button_feedback(parsed, text, attachments)
   attachments
     .concat(help_feedback_headline(parsed))
-  # .concat(help_feedback_subsection1(parsed))
   [text, attachments]
 end
 
@@ -365,27 +360,6 @@ def help_feedback_headline(_parsed)
      text: '',
      color: '#f2f2f3',
      mrkdwn_in: ['pretext']
-  }]
-end
-
-# Returns: [attachment{}]
-def help_feedback_subsection1(parsed)
-  help_subsection1(parsed)
-end
-
-HLP_feedback_TEXT =
-  '• Hint 1' \
-  " \n" \
-  '• Hint 2' \
-  " \n" \
-  "\n".freeze
-
-# Returns: [attachment{}]
-def help_feedback_subsection1(_parsed)
-  [{ fallback: 'help_feedback_subsection1',
-     text: HLP_feedback_TEXT,
-     color: '#3AA3E3',
-     mrkdwn_in: ['text']
   }]
 end
 

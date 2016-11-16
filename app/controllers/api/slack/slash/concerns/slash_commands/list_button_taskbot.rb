@@ -71,21 +71,24 @@ def list_button_taskbot_header_replacement(options)
 end
 
 TASKBOT_RESP_BUTTONS_HLP_TEXT =
-  "Button: Your To-Do\'s generates the command \'/do list @me open\' and \n" \
-  "        Lists your ASSIGNED and OPEN tasks for THIS channel. \n" \
-  'Button: Team To-Do\'s generates the command \'/do list team open ' \
-  "assigned\' and \n" \
-  "        Lists all tasks that are ASSIGNED and OPEN for THIS channel.\n" \
-  "Button: All Tasks generates the command \'/do list team all assigned " \
-  "unassigned open done\' and \n" \
-  "        Lists all tasks for ALL channels. \n" \
-  "Button: Reset erases taskbot messages, displays default lists\n" \
-  "Button: Help displays tooltips about these buttons. \n" \
+  '• `Your To-Do\'s`  ' \
+  "generates the command \'/do list @me open\' and " \
+  "Lists your ASSIGNED and OPEN tasks for THIS channel. \n" \
+  '• `Team To-Do\'s`  ' \
+  "generates the command \'/do list team open assigned\' and " \
+  "Lists all tasks that are ASSIGNED and OPEN for THIS channel. \n" \
+  '• `All Tasks`  ' \
+  "generates the command \'/do list team all assigned unassigned open done\' and " \
+  "Lists all tasks for ALL channels. \n" \
+  '• `Reset`  erases taskbot messages, displays default lists.' \
+  "\n" \
+  '• `Button Help`  describes the purpose of each button.' \
+  "\n" \
   "\n\n".freeze
 
-# Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], display_options]
+# Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], response_options]
 def taskbot_response_buttons_help(parsed)
-  title = 'Taskbot Reports'
+  title = 'Taskbot Reports Buttons explained'
   replacement_buttons_attachments, _header_attch_idx, _header_num_attch =
     list_button_taskbot_header_replacement(
       parsed: parsed,
@@ -93,10 +96,11 @@ def taskbot_response_buttons_help(parsed)
       caller_id: parsed[:button_callback_id][:caller_id])
 
   button_help_attachments =
-    [{ pretext: TASKBOT_RESP_BUTTONS_HLP_TEXT,
-       mrkdwn_in: ['pretext']
-     }
-    ]
+    [{ fallback: 'Taskbot Reports Button Info',
+       text: TASKBOT_RESP_BUTTONS_HLP_TEXT,
+       color: '#3AA3E3',
+       mrkdwn_in: ['text']
+    }]
   [title, replacement_buttons_attachments, button_help_attachments, app_help: false]
 end
 

@@ -134,30 +134,35 @@ def add_response_headline_attachments(_parsed, response_text = '', item_db_id = 
 end
 
 ADD_RESP_BUTTONS_HLP_TEXT =
-  "Button: Your To-Do\'s generates the command \'/do list @me open\' and \n" \
-  "        Lists your ASSIGNED and OPEN tasks for THIS channel. \n" \
-  'Button: Team To-Do\'s generates the command \'/do list team open ' \
-  "assigned\' and \n" \
-  "        Lists all tasks that are ASSIGNED and OPEN for THIS channel.\n" \
-  "Button: All Tasks generates the command \'/do list team all assigned " \
-  "unassigned open done\' and \n" \
-  "        Lists all tasks for ALL channels. \n" \
-  "Button: Help displays tooltips about these buttons. \n" \
+  '• `Your To-Do\'s`  ' \
+  "generates the command \'/do list @me open\' and " \
+  "Lists your ASSIGNED and OPEN tasks for THIS channel. \n" \
+  '• `Team To-Do\'s`  ' \
+  "generates the command \'/do list team open assigned\' and " \
+  "Lists all tasks that are ASSIGNED and OPEN for THIS channel. \n" \
+  '• `All Tasks`  ' \
+  "generates the command \'/do list team all assigned unassigned open done\' and " \
+  "Lists all tasks for ALL channels. \n" \
+  '• `Feedback`  tells you how to email MiaDo product support with suggestions, problems, etc.' \
+  "\n" \
+  '• `Button Help`  describes the purpose of each button.' \
+  "\n" \
   "\n\n".freeze
 
-# Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], display_options]
+# Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], response_options]
 def add_response_buttons_help(parsed)
-  title = 'Add Task'
+  title = 'Add Task Buttons explained'
   replacement_buttons_attachments =
     add_response_headline_attachments(parsed,
                                       parsed[:button_callback_id][:response_headline],
                                       parsed[:button_callback_id][:item_db_id],
                                       parsed[:button_callback_id][:caller_id])
   button_help_attachments =
-    [{ pretext: ADD_RESP_BUTTONS_HLP_TEXT,
-       mrkdwn_in: ['pretext']
-     }
-    ]
+    [{ fallback: 'Add Task Button Info',
+       text: ADD_RESP_BUTTONS_HLP_TEXT,
+       color: '#3AA3E3',
+       mrkdwn_in: ['text']
+    }]
   [title, replacement_buttons_attachments, button_help_attachments, parsed[:first_button_value][:resp_options]]
 end
 
