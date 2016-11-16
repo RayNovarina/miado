@@ -125,24 +125,34 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
 end
 
 HELP_RESP_BUTTONS_HLP_TEXT =
-  "Button: Best Practices \n" \
-  "Button: Task Lists '/do list @me open'\n" \
-  "Button: Feedback \n" \
-  "Button: Help \n" \
+  '• `Best Practices`' \
+  " \n" \
+  '• `Task Lists`' \
+  " /do list @me open \n" \
+  '• `Feedback`' \
+  "\n" \
+  '• `Help`' \
+  "\n" \
   "\n\n".freeze
 # "Button: Online Doc \n" \
 # "Button: FAQs \n" \
 
 # Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], response_options]
 def help_response_buttons_help(parsed)
-  title = 'MiaDo Help'
+  title = 'MiaDo Help Buttons explained'
   replacement_buttons_attachments =
     help_headline_replacement(parsed, nil, 'help')
   button_help_attachments =
-    [{ pretext: HELP_RESP_BUTTONS_HLP_TEXT,
-       mrkdwn_in: ['pretext']
-     }
-    ]
+    # [{ pretext: HELP_RESP_BUTTONS_HLP_TEXT,
+    #   mrkdwn_in: ['pretext']
+    # }
+    # ]
+    [{ fallback: 'Help Button Info',
+       # title: msg,
+       text: HELP_RESP_BUTTONS_HLP_TEXT,
+       color: '#3AA3E3',
+       mrkdwn_in: ['text']
+    }]
   [title, replacement_buttons_attachments, button_help_attachments, parsed[:first_button_value][:resp_options]]
 end
 
