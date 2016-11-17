@@ -173,12 +173,13 @@ end
 def help_body_basic(parsed, text, attachments)
   attachments
     .concat(help_headline(parsed))
-    .concat(help_subsection1(parsed))
-    .concat(help_subsection2(parsed))
-    .concat(help_subsection3(parsed))
-    .concat(help_subsection4(parsed))
-    .concat(help_subsection5(parsed))
-    .concat(help_footer(parsed))
+    .concat(help_all_subsections(parsed))
+  #  .concat(help_subsection1(parsed))
+  # .concat(help_subsection2(parsed))
+  # .concat(help_subsection3(parsed))
+  # .concat(help_subsection4(parsed))
+  # .concat(help_subsection5(parsed))
+  # .concat(help_footer(parsed))
   [text, attachments]
 end
 
@@ -198,7 +199,8 @@ def help_headline(parsed)
    }]
 end
 
-ADDING_TASKS_HLP_TEXT =
+ALL_HLP_TEXT =
+  "*Adding Tasks*\n" \
   '• `/do rev 1 spec @susan /jun15`' \
   ' Adds "rev 1 spec" task to this channel, assigns it to Susan,' \
   " due date is June 15.\n" \
@@ -207,21 +209,8 @@ ADDING_TASKS_HLP_TEXT =
   " due date is today's date.\n" \
   '• `/do rev 1 spec `' \
   ' Adds "rev 1 spec" task to this channel. It can later be ' \
-  ' updated via the assign, append or redo commands.' \
-  "\n".freeze
-
-# Returns: [attachment{}]
-def help_subsection1(_parsed)
-  msg = 'Adding tasks'
-  [{ fallback: 'help_subsection1',
-     title: msg,
-     text: ADDING_TASKS_HLP_TEXT,
-     color: '#3AA3E3',
-     mrkdwn_in: ['text']
-  }]
-end
-
-UPDATE_DEL_TASKS_HLP_TEXT =
+  " updated via the assign, append or redo commands.\n\n" \
+  "*Update and delete tasks*\n" \
   '• `/do append 3 Contact Jim.`' \
   " Adds \"Contact Jim.\" to the end of task 3.\n" \
   '• `/do assign 4 @joe`' \
@@ -236,7 +225,62 @@ UPDATE_DEL_TASKS_HLP_TEXT =
   ' Deletes task 1, adds new task ' \
   "\"Send out newsletter /fri\"\n" \
   '• `/do delete 2`' \
-  " Deletes task number 2 from the list.\n" \
+  " Deletes task number 2 from the list.\n\n" \
+  "*List your tasks*\n" \
+  '• `/do list`' \
+  " Lists your ASSIGNED and OPEN tasks for THIS channel.\n" \
+  '• `/do list done`' \
+  " Lists your ASSIGNED and OPEN tasks which are DONE for THIS channel.\n" \
+  '• `/do list due`' \
+  " Lists your ASSIGNED and OPEN tasks with a due date for THIS channel.\n" \
+  '• `/do list all`' \
+  " Lists your ASSIGNED and OPEN tasks for ALL channels.\n" \
+  '• `/do list open done`' \
+  " Lists your ASSIGNED tasks, both OPEN and DONE, for THIS channel.\n" \
+  '• `/do list unassigned`' \
+  " Lists tasks that are NOT ASSIGNED for THIS channel.\n\n" \
+  "*Feedback and more resources*" \
+  "\n".freeze
+
+# Returns: [attachment{}]
+def help_all_subsections(_parsed)
+  root_url = @view.controller.request.base_url
+  all_text =
+    "#{ALL_HLP_TEXT}" \
+    '• `Feedback`' \
+    "\n#{FEEDBACK_PUBLIC_TEXT}" \
+    '• `Online Help`' \
+    " Click here:  <#{root_url}/add_to_slack#product|Help>  \n" \
+    '• `Online FAQs`' \
+    " Click here:  <#{root_url}/about#faq|FAQs>  \n" \
+    '• `Online Contact Us`' \
+    " Click here:  <#{root_url}/add_to_slack#contact_us|Contact Us>  \n" \
+    '• `Install Taskbot, Reinstall or Upgrade`' \
+    " Click here:  <#{root_url}/add_to_slack|Add to Slack>  \n" \
+    "\n"
+  [{ fallback: 'MiaDo general Help',
+     text: all_text,
+     color: '#3AA3E3',
+     mrkdwn_in: ['text']
+  }]
+end
+
+=begin
+ADDING_TASKS_HLP_TEXT =
+  "\n".freeze
+
+# Returns: [attachment{}]
+def help_subsection1(_parsed)
+  msg = 'Adding tasks'
+  [{ fallback: 'help_subsection1',
+     title: msg,
+     text: ADDING_TASKS_HLP_TEXT,
+     color: '#3AA3E3',
+     mrkdwn_in: ['text']
+  }]
+end
+
+UPDATE_DEL_TASKS_HLP_TEXT =
   "\n".freeze
 
 # Returns: [attachment{}]
@@ -251,18 +295,6 @@ def help_subsection2(_parsed)
 end
 
 LIST_YOUR_TASKS_HLP_TEXT =
-  '• `/do list`' \
-  " Lists your ASSIGNED and OPEN tasks for THIS channel.\n" \
-  '• `/do list done`' \
-  " Lists your ASSIGNED and OPEN tasks which are DONE for THIS channel.\n" \
-  '• `/do list due`' \
-  " Lists your ASSIGNED and OPEN tasks with a due date for THIS channel.\n" \
-  '• `/do list all`' \
-  " Lists your ASSIGNED and OPEN tasks for ALL channels.\n" \
-  '• `/do list open done`' \
-  " Lists your ASSIGNED tasks, both OPEN and DONE, for THIS channel.\n" \
-  '• `/do list unassigned`' \
-  " Lists tasks that are NOT ASSIGNED for THIS channel.\n" \
   "\n".freeze
 
 # Returns: [attachment{}]
@@ -277,18 +309,6 @@ def help_subsection3(_parsed)
 end
 
 LIST_TEAM_TASKS_HLP_TEXT =
-  '• `/do list team`' \
-  " Lists all TEAM tasks that are ASSIGNED and OPEN for THIS channel.\n" \
-  '• `/do list team done`' \
-  " Lists all TEAM tasks that are ASSIGNED and DONE for THIS channel.\n" \
-  '• `/do list team all`' \
-  " Lists all TEAM tasks that are ASSIGNED and OPEN for ALL channels.\n" \
-  '• `/do list team open done`' \
-  " Lists all TEAM tasks that are ASSIGNED, both OPEN and DONE, for THIS channel.\n" \
-  '• `/do list team all open done`' \
-  " Lists all TEAM tasks, both OPEN and DONE, for ALL channels.\n" \
-  '• `/do list team all unassigned`' \
-  " Lists all TEAM tasks that are NOT ASSIGNED for ALL channels.\n" \
   "\n".freeze
 
 # Returns: [attachment{}]
@@ -306,18 +326,6 @@ end
 def help_subsection5(_parsed)
   root_url = @view.controller.request.base_url
   msg = 'Feedback and more resources'
-  resources_hlp_text =
-    '• `Feedback`' \
-    "\n#{FEEDBACK_PUBLIC_TEXT}" \
-    '• `Online Help`' \
-    " Click here:  <#{root_url}/add_to_slack#product|Help>  \n" \
-    '• `Online FAQs`' \
-    " Click here:  <#{root_url}/about#faq|FAQs>  \n" \
-    '• `Online Contact Us`' \
-    " Click here:  <#{root_url}/add_to_slack#contact_us|Contact Us>  \n" \
-    '• `Install Taskbot, Reinstall or Upgrade`' \
-    " Click here:  <#{root_url}/add_to_slack|Add to Slack>  \n" \
-    "\n"
   [{ fallback: msg,
      title: msg,
      text: resources_hlp_text,
@@ -325,6 +333,7 @@ def help_subsection5(_parsed)
      mrkdwn_in: ['text']
   }]
 end
+=end
 
 # ':bulb: Click on the <https://shadowhtracteam.slack.com/messages/@a.taskbot|a.taskbot> member to see all of your up to date ' \
 # 'lists.' \
