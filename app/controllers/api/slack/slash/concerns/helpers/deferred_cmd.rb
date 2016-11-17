@@ -7,9 +7,9 @@ def after_action_deferred_logic(def_cmds)
   if def_cmds[0][:p_hash][:expedite_deferred_cmd]
     send_after_action_deferred_cmds(def_cmds)
   else
-    Thread.new do
+    # Thread.new do
       send_after_action_deferred_cmds(def_cmds)
-    end
+    # end
   end
 end
 
@@ -1132,8 +1132,8 @@ end
 # Returns: updated Select button strip with the Select button deleted from the
 #          options[:task_select_attachments][:actions]
 def taskbot_done_button_remove_button(options)
-  return unless options[:done_task_info][:ok]
   props = options[:done_task_info]
+  return unless props[:ok]
   props.merge!(taskbot_done_find_select_button(options))
   return taskbot_remove_task_select_attachment(options) if options[:task_select_attachments][props[:select_row_num]][:actions].size == 1
   # Remove action/button.
@@ -1161,7 +1161,8 @@ end
 # Returns: options[:body_attachments] with the line of text for the Task
 #          deleted.
 def taskbot_done_remove_done_task(options)
-  return unless options[:done_task_info][:ok]
+  props = options[:done_task_info]
+  return unless props[:ok]
   # props =>
   # { :err_msg=>'',
   #   :tasknum=>"4",
@@ -1173,7 +1174,6 @@ def taskbot_done_remove_done_task(options)
   #   :channel_group_line_idx=>1,
   #   :select_row_num=>0,
   #   :select_action_idx=>3 }
-  props = options[:done_task_info]
   # Delete the report channel list attachment if we are removing the last task.
   return taskbot_remove_body_attachment(options) if props[:channel_group_lines].size == 2
   # Remove task line.
@@ -1183,19 +1183,47 @@ def taskbot_done_remove_done_task(options)
 end
 
 def taskbot_remove_task_select_attachment(options)
-  options[:task_select_attachments][options[:p_hash][:button_callback_id][:select_row_num]] = {}
+  # options[:task_select_attachments][options[:p_hash][:button_callback_id][:select_row_num]] = {}
+  options[:task_select_attachments].delete_at(options[:p_hash][:button_callback_id][:select_row_num])
   # Note: if we just deleted the last button row,
   #       taskbot_remove_body_attachment() will notice that the body_attachments
   #       are empty and therefore remove the footer_attachments.
 end
 
 def taskbot_remove_body_attachment(options)
-  options[:body_attachments][options[:done_task_info][:channel_group_num]] = {}
+  # options[:body_attachments][options[:done_task_info][:channel_group_num]] = {}
   # If we just deleted the last report channel body attachment, we dont need
   # the footer button attachments.
-  body_empty = (options[:body_attachments].count(&:empty?) == options[:body_attachments].size)
-  taskbot_remove_footer_attachments(options) if body_empty
-  return taskbot_update_headline_attachments(options) if body_empty
+  # options[:body_empty] = (options[:body_attachments].count(&:empty?) == options[:body_attachments].size)
+  # taskbot_remove_footer_attachments(options) if options[:body_empty]
+  # return taskbot_update_headline_attachments(options) if options[:body_empty]
+
+  options[:body_attachments].delete_at(options[:done_task_info][:channel_group_num])
+  # If we just deleted the last report channel body attachment, we dont need
+  # the footer button attachments.
+  taskbot_remove_footer_attachments(options) if options[:body_attachments].empty?
+  return taskbot_update_headline_attachments(options) if options[:body_attachments].empty?
+  options[:footer_buttons_attachments].each do |footer_but_attch|
+    update_footer_attachment_indexes(footer_but_attch, options[:body_attachments])
+  end
+  options[:task_select_attachments].each do |task_sel_attch|
+    update_footer_attachment_indexes(task_sel_attch, options[:body_attachments])
+  end
+end
+
+def update_footer_attachment_indexes(attachment, body_attachments)
+  # callback_id_as_json_org = attachment['callback_id']
+  callback_id_as_hash = JSON.parse(attachment['callback_id']).with_indifferent_access
+
+  callback_id_as_hash['body_num'] = body_attachments.size
+  callback_id_as_hash['footer_but_idx'] =
+    callback_id_as_hash['body_idx'] + callback_id_as_hash['body_num']
+  callback_id_as_hash['footer_pmt_idx'] =
+    callback_id_as_hash['footer_but_idx'] + callback_id_as_hash['footer_but_num']
+  callback_id_as_hash['sel_idx'] =
+    callback_id_as_hash['footer_pmt_idx'] + callback_id_as_hash['footer_pmt_num']
+  # callback_id_as_json = callback_id_as_hash.to_json
+  attachment['callback_id'] = callback_id_as_hash.to_json
 end
 
 def taskbot_remove_footer_attachments(options)
@@ -1207,7 +1235,7 @@ def taskbot_remove_footer_attachments(options)
 end
 
 def taskbot_update_headline_attachments(options)
-  options[:headline_attachments][0]['pretext'].concat(' *empty*')
+  options[:headline_attachments][0]['pretext'].concat(' *empty*') if options[:body_attachments].empty? # options[:body_empty]
 end
 
 def taskbot_done_button_rebuild_attachments(options)
@@ -1294,30 +1322,25 @@ def taskbot_burst_attachments(options)
 
   options[:header_attachments] = options[:org_attachments].slice(
     options[:p_hash][:button_callback_id][:header_idx] - 1,
-      options[:p_hash][:button_callback_id][:header_num])
+    options[:p_hash][:button_callback_id][:header_num])
 
-  options[:headline_attachments] =
-    options[:org_attachments].slice(
-      options[:p_hash][:button_callback_id][:header_idx],
-      1)
+  options[:headline_attachments] = options[:org_attachments].slice(
+    options[:p_hash][:button_callback_id][:header_idx],
+    1)
 
-  options[:body_attachments] =
-    options[:org_attachments].slice(
-      options[:p_hash][:button_callback_id][:body_idx] - 1,
-      options[:p_hash][:button_callback_id][:body_num])
+  options[:body_attachments] = options[:org_attachments].slice(
+    options[:p_hash][:button_callback_id][:body_idx] - 1,
+    options[:p_hash][:button_callback_id][:body_num])
 
-  options[:footer_buttons_attachments] =
-    options[:org_attachments].slice(
-      options[:p_hash][:button_callback_id][:footer_but_idx] - 1,
-      options[:p_hash][:button_callback_id][:footer_but_num])
+  options[:footer_buttons_attachments] = options[:org_attachments].slice(
+    options[:p_hash][:button_callback_id][:footer_but_idx] - 1,
+    options[:p_hash][:button_callback_id][:footer_but_num])
 
-  options[:footer_prompt_attachments] =
-    options[:org_attachments].slice(
-      options[:p_hash][:button_callback_id][:footer_pmt_idx] - 1,
-      options[:p_hash][:button_callback_id][:footer_pmt_num])
+  options[:footer_prompt_attachments] = options[:org_attachments].slice(
+    options[:p_hash][:button_callback_id][:footer_pmt_idx] - 1,
+    options[:p_hash][:button_callback_id][:footer_pmt_num])
 
-  options[:task_select_attachments] =
-    options[:org_attachments].slice(
-      options[:p_hash][:button_callback_id][:sel_idx] - 1,
-      options[:org_attachments].size - options[:p_hash][:button_callback_id][:sel_idx] + 1)
+  options[:task_select_attachments] = options[:org_attachments].slice(
+    options[:p_hash][:button_callback_id][:sel_idx] - 1,
+    options[:org_attachments].size - options[:p_hash][:button_callback_id][:sel_idx] + 1)
 end

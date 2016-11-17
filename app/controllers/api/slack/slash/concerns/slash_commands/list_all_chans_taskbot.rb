@@ -127,8 +127,7 @@ def list_button_taskbot_footer_replacement(options)
                       footer_but_num: 1,
                       footer_pmt_idx: options[:footer_prompt_attch_idx] || nil,
                       footer_pmt_num: options[:footer_prompt_num_attch] || nil,
-                      sel_idx: options[:task_select_attch_idx] || nil,
-                      sel_num: options[:task_select_num_attch] || nil
+                      sel_idx: options[:task_select_attch_idx] || nil
                     }.to_json,
        color: 'ffffff',
        attachment_type: 'default',
@@ -226,7 +225,6 @@ def task_select_new_attachment(options)
                      footer_pmt_idx: options[:footer_prompt_attch_idx] || nil,
                      footer_pmt_num: options[:footer_prompt_num_attch] || nil,
                      sel_idx: options[:task_select_attch_idx],
-                     # sel_num: options[:task_select_num_attch],
                      select_row_num: options[:select_row_num]
                    }.to_json,
       color: options[:parsed][:first_button_value][:id] == 'done' ? '#00B300' : '#FF8080', # slack blue: '#3AA3E3', css light_green: #90EE90
