@@ -82,7 +82,7 @@ def all_chans_taskbot_body(options, list_of_records)
       # }
     end
     # list_add_item_to_taskbot_display_list(parsed, attachments, attachments.size - 1, item, index + 1)
-    list_add_item_to_display_list(
+    list_add_item_to_display_list( # in list.rb
       parsed, options[:attachments], options[:attachments].size - 1, item, index + 1) # in list.rb
     # task_text_len = list_add_item_to_display_list(
     #  parsed, options[:attachments], options[:attachments].size - 1, item, index + 1) # in list.rb

@@ -7,9 +7,9 @@ def after_action_deferred_logic(def_cmds)
   if def_cmds[0][:p_hash][:expedite_deferred_cmd]
     send_after_action_deferred_cmds(def_cmds)
   else
-    # Thread.new do
+    Thread.new do
       send_after_action_deferred_cmds(def_cmds)
-    # end
+    end
   end
 end
 
@@ -1257,7 +1257,7 @@ def taskbot_done_button_response_text(options)
   return props[:err_msg] unless props[:err_msg].empty?
   # Isolate the task number from the item description.
   (options[:p_hash][:button_actions].first['name'] == 'done and delete' ? 'Deleted: ' : 'Closed:    ')
-    .concat("#{props[:tasknum]}) ~#{props[:task_description]}~ \n")
+    .concat("#{props[:tasknum]}) ~#{props[:task_description].delete('|')}~ \n")
   # .concat("#{s.slice(0..s.index(') '))} ~#{s.slice(s.index(') ') + 2..-1)}~ \n")
   # .concat("Task #{options[:p_hash][:first_button_value][:command]}(##{options[:p_hash][:first_button_value][:chan_name]}) ")
   # .concat("Body_attch_idx: #{options[:task_body_idx]}  line_idx: #{options[:task_line_idx]}\n")

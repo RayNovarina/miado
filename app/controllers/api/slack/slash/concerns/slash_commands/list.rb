@@ -228,7 +228,7 @@ end
 
 def list_cmd_task_completed_clause(item)
   return '' unless item.done
-  ' | *Completed* '
+  ' | *Completed*'
 end
 
 def adjust_list_cmd_action_context(parsed)
