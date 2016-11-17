@@ -23,6 +23,24 @@ def picklist_button_taskbot(parsed)
   text = parsed[:url_params][:payload][:original_message][:text]
   # Note: attachments = header, body, footer, maybe task select attachments.
   attachments = parsed[:url_params][:payload][:original_message][:attachments]
+  unless parsed[:button_callback_id][:sel_idx].nil?
+    # Delete existing task select attachments, we will be replacing em.
+    attachments.slice!(
+      parsed[:button_callback_id][:sel_idx] - 1,
+      attachments.size - parsed[:button_callback_id][:sel_idx] + 1)
+    # Make sure our callback_id info is accurate, just in case.
+    parsed[:button_callback_id][:sel_idx] = nil
+  end
+  unless parsed[:button_callback_id][:footer_pmt_idx].nil?
+    # Delete existing footer prompt msg attachments, we will be replacing em.
+    attachments.slice!(
+      parsed[:button_callback_id][:footer_pmt_idx] - 1,
+      parsed[:button_callback_id][:footer_pmt_num])
+    # Make sure our callback_id info is accurate, just in case.
+    parsed[:button_callback_id][:footer_pmt_idx] = nil
+    parsed[:button_callback_id][:footer_pmt_num] = nil
+  end
+
 
   # Create map of select button labels and action values.
   select_list_info = select_list_pattern_from_body_attachments(
@@ -194,7 +212,7 @@ def add_taskbot_select_option(options)
 end
 
 def done_option_from_taskbot_line(line)
-  line.end_with?('| *Completed* ')
+  line.end_with?('| *Completed*')
 end
 
 # Inputs: :line_idx == nil means just ending current list, not starting new.

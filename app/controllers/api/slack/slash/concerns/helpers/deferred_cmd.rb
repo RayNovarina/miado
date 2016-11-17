@@ -1060,7 +1060,7 @@ end
 
 # Returns: nothing
 def respond_to_picklist_button_event(parsed)
-   # parsed[:button_callback_id]
+  # parsed[:button_callback_id]
 end
 
 # Pluck taskbot summary list msg from the button payload, edit it and write
