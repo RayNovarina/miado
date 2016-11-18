@@ -99,7 +99,7 @@ group :development do
   gem 'web-console', '~> 2.0'
   gem 'pry-stack_explorer'
   # How to get rid of 'apple-touch-icon.png' flooding my logs
-  # If you don’t care about /apple-touch-icon.png being a 404
+  # If you don't care about /apple-touch-icon.png being a 404
   # per: https://github.com/davidcelis/quiet_safari
   gem 'quiet_safari'
 end
@@ -145,5 +145,6 @@ group :production do
   # Rails 4 requires some minor configuration changes to properly serve assets
   # on Heroku
   gem 'rails_12factor'
+  gem 'pry-rails'
   #-------------------------------------------
 end
