@@ -223,6 +223,7 @@ def create_from_slack(options)
 
   # Returns: [text, attachments]
   def process_cmd(parsed)
+    parsed[:ccb].slack_messages = nil
     log_to_channel(cb: parsed[:ccb],
                    msg: { topic: 'Slash Feedback',
                           subtopic: 'parsed[:func]',

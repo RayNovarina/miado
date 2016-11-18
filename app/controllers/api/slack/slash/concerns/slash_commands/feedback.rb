@@ -3,8 +3,6 @@
 def feedback_command(parsed)
   return feedback_button_taskbot_rpts(parsed) if !parsed[:button_callback_id].nil? && parsed[:button_callback_id][:id] == 'taskbot'
   return feedback_button_public_chan(parsed) unless parsed[:button_callback_id].nil?
-  require 'pry'
-  binding.pry
   submitted_comment = comment_from_slash_feedback(parsed)
   update_channel_activity(parsed)
   if submitted_comment.valid?
