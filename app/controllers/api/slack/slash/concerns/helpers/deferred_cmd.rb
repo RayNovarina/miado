@@ -7,9 +7,9 @@ def after_action_deferred_logic(def_cmds)
   if def_cmds[0][:p_hash][:expedite_deferred_cmd]
     send_after_action_deferred_cmds(def_cmds)
   else
-    Thread.new do
+    # Thread.new do
       send_after_action_deferred_cmds(def_cmds)
-    end
+    # end
   end
 end
 
@@ -763,6 +763,12 @@ def clear_taskbot_msg_channel(options)
   # prev_client_type = options[:api_client_type]
   # options[:api_client_type] = :bot
   api_resp = clear_channel_interface(options)
+  log_to_channel(cb: options[:p_hash][:tcb],
+                 msg: { topic: 'Taskbot Reset',
+                        subtopic: 'api_resp = clear_channel_interface(options[:message_source] == :member_record)',
+                        id: 'clear_taskbot_msg_channel()',
+                        body: api_resp.to_json
+                      })
   # NOTE: We are using user_token for im_history AND we dont have permission.
   #       Works on local dev but not on staging.
   # options[:message_source] = :im_history
@@ -772,6 +778,12 @@ def clear_taskbot_msg_channel(options)
   options[:api_client_type] = :bot
   while api_resp['ok']
     api_resp = clear_channel_interface(options)
+    log_to_channel(cb: options[:p_hash][:tcb],
+                   msg: { topic: 'Taskbot Reset - loop',
+                          subtopic: 'api_resp = clear_channel_interface(options[:message_source] = :rtm_data)',
+                          id: 'clear_taskbot_msg_channel()',
+                          body: api_resp.to_json
+                        })
     break if api_resp['num_deleted'].nil? ||
              api_resp['num_deleted'] == 0
   end
