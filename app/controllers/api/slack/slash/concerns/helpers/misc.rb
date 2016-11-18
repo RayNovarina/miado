@@ -221,7 +221,7 @@ end
 def log2chan_make_room(options)
   options[:err_msg] = ''
   return [] if options[:cb].slack_messages.nil?
-
+  options[:cb].slack_messages.pop if options[:cb].slack_messages.size > 10
   options[:cb].slack_messages
 end
 
