@@ -161,7 +161,7 @@ module MemberExtensions
     end
 
 =begin
-member = Member.find_or_create_from(
+member = Member.fnd_or_create_from(
   source: :rtm_data,
   installation_slack_user_id: parsed[:url_params][:user_id],
   slack_user_name: name,
@@ -278,9 +278,9 @@ member = Member.find_or_create_from(
       nil
     end
 
-    # response is an array of hashes. Team, users, channels, dms.
+    # Response: TRIMMED array of hashes. Team, users, channels, dms.
     def start_data_from_rtm_start(api_token)
-      slack_api('rtm.start', api_token)
+      Installation.trim_rtm_start_data(slack_api('rtm.start', api_token))
     end
 
     def slack_api(method_name, api_token)

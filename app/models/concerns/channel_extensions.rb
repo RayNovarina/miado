@@ -99,9 +99,9 @@ module ChannelExtensions
       b_hash
     end
 
-    # response is an array of hashes. Team, users, channels, dms.
+    # Response: TRIMMED array of hashes. Team, users, channels, dms.
     def start_data_from_rtm_start(api_token)
-      slack_api('rtm.start', api_token)
+      Installation.trim_rtm_start_data(slack_api('rtm.start', api_token))
     end
 
     def slack_api(method_name, api_token)
