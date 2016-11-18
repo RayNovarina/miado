@@ -223,6 +223,8 @@ def create_from_slack(options)
 
   # Returns: [text, attachments]
   def process_cmd(parsed)
+    require 'pry'
+    binding.pry
     return add_command(parsed) if parsed[:func] == :add
     return after_action_list_command(parsed) if parsed[:func] == :last_action_list
     return append_command(parsed) if parsed[:func] == :append
