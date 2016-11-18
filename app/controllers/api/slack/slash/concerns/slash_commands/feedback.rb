@@ -6,7 +6,20 @@ def feedback_command(parsed)
   submitted_comment = comment_from_slash_feedback(parsed)
   update_channel_activity(parsed)
   if submitted_comment.valid?
-    CommentMailer.new_comment(@view, submitted_comment).deliver_now
+    new_comment = CommentMailer.new_comment(@view, submitted_comment)
+    log_to_channel(cb: parsed[:ccb],
+                   msg: { topic: 'Slash Feedback',
+                          subtopic: 'new_comment = CommentMailer.new_comment(@view, submitted_comment)',
+                          id: 'feedback_command()',
+                          body: new_comment.to_json
+                        })
+    response = new_comment.deliver_now
+    log_to_channel(cb: parsed[:ccb],
+                   msg: { topic: 'Slash Feedback',
+                          subtopic: 'response = new_comment.deliver_now',
+                          id: 'feedback_command()',
+                          body: response.to_json
+                        })
     return ['Thank you, we appreciate your input.', []]
     # text = ''
     # attachments =
@@ -24,7 +37,14 @@ def comment_from_slash_feedback(parsed)
   name = "#{parsed[:url_params][:user_name]} on Slack Team '#{parsed[:mcb].slack_team_name}'"
   email = '**Submitted as feedback**'
   body = parsed[:cmd_splits].join(' ')
-  Comment.new(name: name, email: email, body: body)
+  comment = Comment.new(name: name, email: email, body: body)
+  log_to_channel(cb: parsed[:ccb],
+                 msg: { topic: 'Slash Feedback',
+                        subtopic: 'comment = Comment.new(name: name, email: email, body: body)',
+                        id: 'comment_from_slash_feedback()',
+                        body: comment.to_json
+                      })
+  comment
 end
 
 FEEDBACK_PUBLIC_TEXT =

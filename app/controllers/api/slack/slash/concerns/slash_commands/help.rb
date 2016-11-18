@@ -239,7 +239,7 @@ ALL_HLP_TEXT =
   " Lists your ASSIGNED tasks, both OPEN and DONE, for THIS channel.\n" \
   '• `/do list unassigned`' \
   " Lists tasks that are NOT ASSIGNED for THIS channel.\n\n" \
-  "*Feedback and more resources*" \
+  '*Feedback and more resources*' \
   "\n".freeze
 
 # Returns: [attachment{}]

@@ -207,3 +207,39 @@ def tasknum_from_taskbot_line(line)
   return nil if line.index(')').nil?
   line.slice(0, line.index(')'))
 end
+
+# inputs: { cb: Channel,
+#           msg: { topic: '', subtopic: '', id: '', datetime: '', body: '', tags: ''}
+#         }
+def log_to_channel(options)
+  # slack_messages
+  options[:msg_bufr] = log2chan_make_room(options)
+  log2chan_add_msg(options)
+  log2chan_update(options)
+end
+
+def log2chan_make_room(options)
+  options[:err_msg] = ''
+  return [] if options[:cb].slack_messages.nil?
+
+  options[:cb].slack_messages
+end
+
+# msg_bufr: [msg{}]
+def log2chan_add_msg(options)
+  return unless options[:err_msg].empty?
+  msg = options[:msg]
+  msg[:topic] = '*none given*' if msg[:topic].nil?
+  msg[:subtopic] = '' if msg[:subtopic].nil?
+  msg[:id] = '' if msg[:id].nil?
+  msg[:datetime] = DateTime.current if msg[:datetime].nil?
+  msg[:body] = '*none given*' if msg[:body].nil?
+  msg[:tags] = '' if msg[:tags].nil?
+  options[:msg_bufr] << msg
+end
+
+def log2chan_update(options)
+  return unless options[:err_msg].empty?
+  options[:cb].update(slack_messages: options[:msg_bufr])
+  options[:cb].slack_messages = options[:msg_bufr]
+end
