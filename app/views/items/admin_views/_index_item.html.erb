@@ -3,14 +3,14 @@
    assigned_member_name = "@#{ Member.find_from(source: :slack,
                                                 slack_user_id: item.assigned_member_id,
                                                 slack_team_id: item.team_id
-                                               ).first.slack_user_name }" unless item.assigned_member_id.nil? || item.assigned_member_id.empty?
+                                               ).slack_user_name }" unless item.assigned_member_id.nil? || item.assigned_member_id.empty?
    created_by = item.slack_user_name
    updated_by_date = "@#{item.updated_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')}"
    unless item.updated_by_slack_user_id.nil?
      updated_by = "@#{ Member.find_from(source: :slack,
                                                   slack_user_id: item.updated_by_slack_user_id,
                                                   slack_team_id: item.team_id
-                                                 ).first.slack_user_name }"
+                                                 ).slack_user_name }"
    else
      if item.updated_at == item.created_at
        updated_by = '*not updated*'

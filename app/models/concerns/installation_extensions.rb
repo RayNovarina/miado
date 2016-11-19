@@ -79,19 +79,56 @@ module InstallationExtensions
       if options.key?(:slack_user_id)
         return Installation.where(slack_team_id: options[:slack_team_id],
                                   slack_user_id: options[:slack_user_id])
-                           .reorder('slack_team_id ASC')
+        # .reorder('slack_team_id ASC')
       end
       if options.key?(:slack_team_id)
         return Installation.where(slack_team_id: options[:slack_team_id])
-                           .reorder('slack_team_id ASC')
+        # .reorder('slack_team_id ASC')
       end
-      Installation.all.reorder('slack_team_id ASC')
+      Installation.all # .reorder('slack_team_id ASC')
     end
 
     # Returns: [Installation records]
     def teams
       Installation.select('DISTINCT ON(slack_team_id)*')
-                  .reorder('slack_team_id ASC')
+      # .reorder('slack_team_id ASC')
+    end
+
+    # Returns: [Channel records]
+    def team_channels(options = {})
+      Channel.where(slack_team_id: options[:slack_team_id])
+             .reorder('slack_channel_name ASC')
+    end
+
+    def team_lists(_options = {})
+      # options.key?(:slack_team_id)
+      []
+    end
+
+    # Returns: [Channel records]
+    def shared_team_channels(options)
+      channels = team_channels(options)
+      shared_channels = []
+      channels.each do |channel|
+        shared_channels << channel unless channel.slack_channel_id.starts_with?('D')
+      end
+      shared_channels
+    end
+
+    # Returns: [Channel records]
+    def dm_team_channels(options)
+      channels = team_channels(options)
+      dm_channels = []
+      channels.each do |channel|
+        dm_channels << channel if channel.slack_channel_id.starts_with?('D')
+      end
+      dm_channels
+    end
+
+    # Returns: [Channel records]
+    def bot_team_channels(options)
+      Channel.where(slack_team_id: options[:slack_team_id], is_taskbot: true)
+             .reorder('slack_channel_name ASC')
     end
 
     # Get a new "TRiMMED" copy of the rtm_start data from Slack for this team.

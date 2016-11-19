@@ -68,9 +68,6 @@ end
 # 4) post new lists into taskbot channel.
 # Returns: nothing. Cmd will send msgs, etc.
 def send_deferred_list_cmds(d_hash, parsed)
-  #----------------------
-  parsed[:am_hash_source] = :member_record
-  #----------------------
   list_cmds = generate_list_commands(parsed, d_hash)
   chat_msgs = generate_task_list_msgs(parsed, list_cmds)
   chat_msgs.each do |msg|
@@ -128,23 +125,6 @@ def generate_list_commands(parsed, deferred_cmd)
   end
   list_cmds
 end
-
-# ccb.members_hash:
-# "ray"=>
-#   { "slack_user_id"=>"U0VLZ5P51",
-#     "slack_real_name"=>"Ray Novarina",
-#     "slack_user_name"=>"ray",
-#     "slack_user_api_token"=>"xoxp-29753209748-29713193171-43134216116-f423bbc4f9",
-#     "bot_dm_channel_id"=>"D18E3GH2P"
-#     "bot_user_id"=>"U18F7T2H2",
-#     "bot_api_token"=>"xoxb-42517920580-GoqqNNgcoPDH1DruSQtDef7p",
-#   }
-# "U0VLZ5P51"=>
-#   { "slack_user_id"=>"U0VLZ5P51",
-#     "slack_real_name"=>"Ray Novarina",
-#     "slack_user_name"=>"ray",
-#     "bot_dm_channel_id"=>"D18E3GH2P"
-#   }
 
 # if a member's taskbot lists could be changed, then we need to update em.
 
@@ -221,19 +201,6 @@ def determine_impacted_members(parsed, deferred_cmd)
     #               Set channel and member activity fields to 'list'
     update_member_record_activity(parsed[:mcb], 'reset', {})
     am_hash['mcb'] = parsed[:mcb]
-    # Flow 2: Deletes all msgs in bot dm channel.
-    #         requires chat:write:bot scope.
-    # def update_via_rtm_data(options)
-    #  options[:message_source] = :rtm_data
-    #  options[:bot_api_token] = options[:p_hash][:ccb].bot_api_token
-    #  clear_taskbot_msg_channel(options)
-    #  api_resp = send_msg_to_taskbot_channel(options)
-    #  update_ccb_chan_taskbot_msg_info(api_resp, options)
-    #  api_resp
-    # end
-    # clear_taskbot_msg_channel(
-    #  message_source: :rtm_data,
-    #  bot_api_token: parsed[:ccb].bot_api_token)
     # NOTE: our clear_taskbot_msg_channel method will delete msgs from fresh
     # rtm_start msgs because func = :reset
     return build_one_impacted_member(am_hash: am_hash)
@@ -288,14 +255,13 @@ def impacted_task_if_taskbot_done(parsed)
   impacted_task
 end
 
+# Inputs: options hash { slack_user_id:, slack_team_id:, mcb:, tcb: }
 # Returns: am_hash{}
 def am_hash_from_assigned_member_id(parsed, assigned_member_id)
   return nil if assigned_member_id.nil?
-  return am_hash_from_member_record(parsed: parsed,
-                                    slack_user_id: assigned_member_id,
-                                    slack_team_id: parsed[:url_params]['team_id']
-                                   ) if parsed[:am_hash_source] == :member_record
-  parsed[:ccb].members_hash[assigned_member_id]
+  am_hash_from_member_record(parsed: parsed,
+                             slack_user_id: assigned_member_id,
+                             slack_team_id: parsed[:url_params]['team_id'])
 end
 
 # Inputs: options hash { slack_user_id:, slack_team_id:, mcb:, tcb: }
@@ -580,100 +546,10 @@ end
 def update_taskbot_channel(options)
   # Flow 0: Just edit the specified msg. Nothing is deleted.
   return edit_taskbot_msg(options) if options[:edit_taskbot_msg]
-
-  # Flow 1: Deletes all msgs in bot dm channel.
-  #         requires im_history, chat:write:bot scopes.
-  # update_via_im_history(options)
-
-  # Flow 2: Deletes all msgs in bot dm channel.
-  #         requires chat:write:bot scope.
-  # update_via_rtm_data(options)
-
   # Flow 3: Deletes all msgs in bot dm channel.
   #         requires chat:write:bot scope.
   update_via_member_record(options)
-
-  # Flow 4: Deletes all msgs in bot dm channel.
-  #         requires chat:write:bot scope.
-  # update_via_taskbot_channel(options)
-
-  # Flow 5: No msg delete, Update the single bot dm msg in place.
-  #         requires chat:write:bot scope.
-  # update_via_update_msg(options)
-
-  # Flow 6: misc experiments.
-  # update_experiments(options)
 end
-
-=begin
-# Flow 1: Deletes all msgs in bot dm channel.
-#         requires im_history, chat:write:bot scopes.
-def update_via_im_history(options)
-  options[:message_source] = :im_history
-  clear_taskbot_msg_channel(options)
-  api_resp = send_msg_to_taskbot_channel(options)
-  update_taskbot_ccb_channel(options, 'msg_update')
-  update_ccb_chan_taskbot_msg_info(api_resp, options)
-  api_resp
-end
-
-# Flow 2: Deletes all msgs in bot dm channel.
-#         requires chat:write:bot scope.
-def update_via_rtm_data(options)
-  options[:message_source] = :rtm_data
-  options[:bot_api_token] = options[:p_hash][:ccb].bot_api_token
-  clear_taskbot_msg_channel(options)
-  api_resp = send_msg_to_taskbot_channel(options)
-  update_ccb_chan_taskbot_msg_info(api_resp, options)
-  api_resp
-end
-
-# Flow 4: Deletes all msgs in bot dm channel.
-#         requires chat:write:bot scope.
-def update_via_taskbot_channel(options)
-  options[:message_source] = :taskbot_channel
-  options[:bot_api_token] = options[:p_hash][:ccb].bot_api_token
-  options[:taskbot_channel] =
-    Channel.find_or_create_taskbot_channel(slack_team_id: options[:slack_team_id],
-                                           slack_user_id: options[:slack_user_id])
-  # am_hash['bot_dm_channel_id'] = taskbot_channel_ccb.slack_channel_id
-  # am_hash['slack_user_api_token'] = taskbot_channel_ccb.slack_user_api_token
-  # am_hash['bot_api_token'] = taskbot_channel_ccb.bot_api_token
-  # am_hash['bot_user_id'] = taskbot_channel_ccb.bot_user_id
-  # am_hash['bot_messages'] = taskbot_channel_ccb.bot_messages
-  clear_taskbot_msg_channel(options)
-  api_resp = send_msg_to_taskbot_channel(options)
-  update_ccb_chan_taskbot_msg_info(api_resp, options)
-  update_taskbot_channel(api_resp, options)
-  api_resp
-end
-
-# Flow 5: No msg delete, Update the single bot dm msg in place.
-#         requires chat:write:bot scope.
-def update_via_update_msg(options)
-  api_resp = send_msg_to_taskbot_channel(options) if options[:taskbot_msg_id].nil?
-  api_resp = send_taskbot_update_msg(options) unless options[:taskbot_msg_id].nil?
-  # Now that we know the taskbot msg id, save it for all members.
-  # NOTE!! probably flawed logic because ccb for this user will have the msg
-  # id in members_hash of one or more other members. Other member can then send
-  # a taskbot msg to the same Other member but have nil in their ccb. MsgId
-  # needs to propagate to all other members, also on reinstall.
-  remember_taskbot_msg_id(api_resp, options)
-  update_ccb_chan_taskbot_msg_info(api_resp, options)
-  api_resp
-end
-
-# Flow 6: misc experiments.
-def update_experiments(options)
-  # delete_taskbot_msg(options) unless options[:taskbot_msg_id].nil?
-  # blank_taskbot_msg(options) unless options[:taskbot_msg_id].nil?
-  # api_resp = send_msg_to_taskbot_channel(options)
-  # Now that we know the taskbot msg id, save it for all members.
-  # remember_taskbot_msg_id(api_resp, options)
-  # update_ccb_chan_taskbot_msg_info(api_resp, options)
-  # api_resp
-end
-=end
 
 # Flow 3: Deletes all msgs in bot dm channel.
 #         requires chat:write:bot scope.
@@ -849,94 +725,6 @@ rescue Slack::Web::Api::Error => e # (not_authed)
   options[:api_client].logger.error(err_msg)
   return { 'ok' => false, 'error' => err_msg }
 end
-
-=begin
-def remember_msg_via_ccb(api_resp, options)
-  members_hash = options[:member_ccb].members_hash
-  am_hash = members_hash[options[:member_id]]
-  am_hash['bot_msg_id'] = api_resp['ts']
-  members_hash[options[:member_id]] = am_hash
-  members_hash[options[:member_name]] = am_hash
-  update_all_team_members_hash(
-    members_hash: members_hash,
-    slack_team_id: options[:member_ccb].slack_team_id)
-end
-
-# Inputs: options{ members_hash: hash, slack_team_id: team_id }
-# Update the ccb.members hash for all channels for this team.
-def update_all_team_members_hash(options)
-  Channel.where(slack_team_id: options[:slack_team_id])
-         .update_all(members_hash: options[:members_hash])
-end
-
-# Returns: slack api response hash.
-def blank_taskbot_msg(options)
-  org_text_arg = options[:text]
-  org_attachments_arg = options[:attachments]
-  options[:text] = ' '
-  options[:attachments] = {}
-  api_resp = send_taskbot_update_msg(options)
-  options[:text] = org_text_arg
-  options[:attachments] = org_attachments_arg
-  api_resp
-end
-
-# Deletes specified taskbot msg.
-# Returns 'ok' or err_msg
-def delete_taskbot_msg(options)
-  api_resp = delete_message_on_channel(
-    api_client: options[:api_client],
-    channel_id: options[:taskbot_channel_id],
-    message: { 'ts' => options[:taskbot_msg_id] })
-  return 'ok' if api_resp.key?('ok')
-  err_msg = "Error occurred on Slack\'s API:client.chat_delete: #{api_resp[:error]}"
-  options[:api_client].logger.error(err_msg)
-  err_msg
-end
-
-# Returns: slack api response hash.
-def send_taskbot_update_msg(options)
-  api_resp =
-    options[:api_client]
-    .chat_update(
-      ts: options[:taskbot_msg_id],
-      as_user: 'false',
-      channel: options[:taskbot_channel_id],
-      text: options[:text],
-      attachments: options[:attachments].to_json)
-  options[:api_client].logger.error "\nSent taskbot msg UPDATE to: " \
-    "#{options[:taskbot_username]} at dm_channel: " \
-    "#{options[:taskbot_channel_id]}.  Msg title: #{options[:text]}. " \
-    "Message ts Id: #{options[:taskbot_msg_id]}. " \
-    "For member: #{options[:member_name]}\n"
-  return api_resp if api_resp['ok'] == true
-  err_msg = "Error: From update_taskbot_msg(API:client.chat_update) = '#{api_resp['error']}'"
-  options[:api_client].logger.error(err_msg)
-  return api_resp
-rescue Slack::Web::Api::Error => e # (not_authed)
-  if e.message == 'message_not_found'
-    api_resp = send_msg_to_taskbot_channel(options)
-    remember_taskbot_msg_id(api_resp, options)
-    return api_resp
-  end
-  options[:api_client].logger.error e
-  err_msg = "\nFrom update_taskbot_msg(API:client.chat_update) = " \
-    "e.message: #{e.message}\n" \
-    "channel_id: #{options[:channel]}  " \
-    "Message ts Id: #{options[:taskbot_msg_id]}. " \
-    "token: #{options[:api_client].token.nil? ? '*EMPTY!*' : options[:api_client].token}\n"
-  options[:api_client].logger.error(err_msg)
-  return api_resp
-end
-
-# Inputs: options{ members_hash, slack_team_id, slack_user_id }
-# Update the ccb.members hash for all channels for this team member.
-def update_one_team_members_hash(options)
-  Channel.where(slack_team_id: options[:slack_team_id],
-                slack_user_id: options[:slack_user_id])
-         .update_all(members_hash: options[:members_hash])
-end
-=end
 
 ################### Deferred Events. Does not use chat_msgs options hash.
 #

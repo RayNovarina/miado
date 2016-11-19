@@ -12,7 +12,7 @@
     <% locals[:teams].each do |installation| %>
       <%= render partial: 'channels/admin_views/index_team',
                  locals: { locals: { team: installation,
-                                     shared_channels: Channel.shared_team_channels(slack_team_id: installation.slack_team_id),
+                                     shared_channels: Installation.shared_team_channels(slack_team_id: installation.slack_team_id),
                                    }
                          }
       %>
