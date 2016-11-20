@@ -1,12 +1,14 @@
 <header class="css-body-header">
   <%= render partial: 'shared/index_page_header',
-             locals: { locals: { title: 'Admin Dashboard - Teams' } }
+             locals: { locals: { title: "Teams(#{locals[:total_teams]}) whose members have installed MiaDo #{locals[:installations].length} times.",
+                                 pagination_collection: locals[:teams]
+                               }
+                     }
   %>
 </header>
 
 <main class="css-body-main">
   <div class="container">
-    <h2>Teams<%= " (#{locals[:teams].length}) whose members have installed MiaDo #{locals[:installations].length} times." %></h2>
     <br>
     <% locals[:teams].each do |installation| %>
       <%= render partial: 'teams/admin_views/show_team',

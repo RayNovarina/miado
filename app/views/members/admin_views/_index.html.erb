@@ -1,12 +1,14 @@
 <header class="css-body-header">
   <%= render partial: 'shared/index_page_header',
-             locals: { locals: { title: 'Admin Dashboard - Members' } }
+             locals: { locals: { title: "#{locals[:total_members]} Members in #{locals[:teams].length} Teams",
+                                 pagination_collection: locals[:members]
+                               }
+                     }
   %>
 </header>
 
 <main class="css-body-main">
   <div class="container">
-    <h2><%= "#{locals[:members].length} Members in #{locals[:teams].length} Teams"  %></h2>
     <hr>
     <% locals[:teams].each do |installation| %>
       <%= render partial: 'members/admin_views/index_team',

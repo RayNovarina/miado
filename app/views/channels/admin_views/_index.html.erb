@@ -1,13 +1,14 @@
 <header class="css-body-header">
   <%= render partial: 'shared/index_page_header',
-             locals: { locals: { title: 'Admin Dashboard - Channels' } }
+             locals: { locals: { title: "#{locals[:num_team_channels]} Active #{'Channel'.pluralize(locals[:num_team_channels])} in #{locals[:teams].length} #{'Team'.pluralize(locals[:teams].length)}",
+                                 pagination_collection: locals[:team_channels]
+                               }
+                     }
   %>
 </header>
 
 <main class="css-body-main">
   <div class="container">
-    <h2><%= "#{locals[:team_channels].length} Active #{'Channel'.pluralize(locals[:team_channels].length)} " %>
-        <%= "in #{locals[:teams].length} #{'Team'.pluralize(locals[:teams].length)}"  %></h2>
     <hr>
     <% locals[:teams].each do |installation| %>
       <%= render partial: 'channels/admin_views/index_team',

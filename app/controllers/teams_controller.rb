@@ -10,8 +10,11 @@ class TeamsController < ApplicationController
   # Note: we get here via /teams to display all teams in system (admin link)
   #                    or /user/:user_id/teams for "My Teams" link
   def index
+    teams = Installation.teams
     @view.locals = { user: current_user,
-                     teams: Installation.teams,
+                     teams: teams.paginate(page: params[:page],
+                                           per_page: 2),
+                     total_teams: teams.length,
                      installations: Installation.installations
                    }
     # @view.teams = @view.url_params.key?('user_id') \

@@ -1,12 +1,14 @@
 <header class="css-body-header">
   <%= render partial: 'shared/index_page_header',
-             locals: { locals: { title: 'Admin Dashboard - Installations' } }
+             locals: { locals: { title: "Installations(#{locals[:total_installations]}) of #{locals[:bot_info][:name]} into (#{locals[:teams].length}) teams",
+                                 pagination_collection: locals[:installations]
+                               }
+                     }
   %>
 </header>
 
 <main class="css-body-main">
   <div class="container">
-    <h2>Installations<%= " (#{locals[:installations].length}) of #{locals[:bot_info][:name]} into (#{locals[:teams].length}) " %>teams</h2>
     <table class="table table-bordered table-hover">
       <thead>
         <tr>
