@@ -155,7 +155,7 @@ end
 def task_footer_new_button(_options, props)
   { name: 'picklist',
     text: props[:text],
-    style: props[:style],
+    style: props[:style] || 'default',
     type: 'button',
     value: { id: props[:id] }.to_json
   }

@@ -116,8 +116,7 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
         { name: 'lists',
           text: 'Task Lists',
           type: 'button',
-          value: { command: '@me open' }.to_json,
-          style: 'primary'
+          value: { command: '@me open' }.to_json
         },
         { name: 'feedback',
           text: 'Feedback',

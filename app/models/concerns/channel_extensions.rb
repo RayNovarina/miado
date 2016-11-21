@@ -304,7 +304,7 @@ module ChannelExtensions
 
     # Return: new Channel record
     def create_taskbot_channel_from_slack(options)
-      installation = Installation.find_from_slack(
+      installation = Installation.find_from(
         source: :slack, view: @view,
         slack_user_id: options[:slash_url_params]['user_id'],
         slack_team_id: options[:slash_url_params]['team_id'])

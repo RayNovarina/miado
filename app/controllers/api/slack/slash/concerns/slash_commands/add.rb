@@ -105,7 +105,6 @@ def add_response_headline_attachments(_parsed, response_text = '', item_db_id = 
      actions: [
        { name: 'list',
          text: 'Your To-Do\'s',
-         style: 'primary',
          type: 'button',
          value: { command: '@me open' }.to_json
        },

@@ -106,6 +106,7 @@ end
 
 # Returns: [style_your_tasks, style_team_tasks]
 def list_button_taskbot_header_colors(parsed)
+=begin
   # Set color of list buttons.
   style_your_tasks = 'primary' if parsed[:func] == :message_event
   unless parsed[:func] == :message_event
@@ -124,4 +125,6 @@ def list_button_taskbot_header_colors(parsed)
   style_team_tasks = 'primary' if style_your_tasks == 'default'
   style_team_tasks = 'default' unless style_your_tasks == 'default'
   [style_your_tasks, style_team_tasks]
+=end
+  ['default', 'default']
 end
