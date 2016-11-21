@@ -14,8 +14,14 @@ def list_from_parsed(parsed)
     #------------------------------------
     if parsed[:channel_scope] == :one_channel
       #------------------------------------
-      list_of_assigned_tasks_for_one_member_in_one_channel(parsed, params)
-
+      if parsed[:assigned_option]
+        #----------------------------------
+        list_of_assigned_tasks_for_one_member_in_one_channel(parsed, params)
+      else # parsed[:unassigned_option]
+        #----------------------------------
+        list_of_unassigned_tasks_for_one_member_in_one_channel(parsed, params)
+      end
+    #
     elsif parsed[:channel_scope] == :all_channels
       #------------------------------------
       list_of_assigned_tasks_for_one_member_in_all_channels(parsed, params)
@@ -245,6 +251,65 @@ def list_of_all_assigned_tasks_for_all_team_members_in_one_channel(parsed, param
   else # All assigned tasks.
     ListItem.where(channel_id: params[:channel_id])
             .where.not(assigned_member_id: nil)
+            .reorder('channel_name ASC, created_at ASC')
+  end
+end
+
+def list_of_unassigned_tasks_for_one_member_in_one_channel(parsed, params)
+  parsed[:list_query_trace_info] = 'list_of_unassigned_tasks_for_one_member_in_one_channel' if parsed[:debug]
+  # For All unassigned list items for specified member in this channel.
+
+  if parsed[:due_option]
+    # due: All with a due date.
+    if parsed[:open_option]
+      # open: All which are not done.
+      if parsed[:done_option] # , :open_option, :due_option
+        # All unassigned in specified channel.
+        ListItem.where(channel_id: params[:channel_id],
+                       assigned_member_id: nil)
+                .reorder('channel_name ASC, created_at ASC')
+      else # parsed[:open_option], :due_option
+        # open: All which are not done.
+        ListItem.where(channel_id: params[:channel_id],
+                       assigned_member_id: nil,
+                       done: false)
+                .where.not(assigned_due_date: nil)
+                .reorder('channel_name ASC, created_at ASC')
+      end
+    else # parsed[:done_option], :due_option
+      # done: All which are done.
+      ListItem.where(channel_id: params[:channel_id],
+                     assigned_member_id: nil,
+                     done: true)
+              .where.not(assigned_due_date: nil)
+              .reorder('channel_name ASC, created_at ASC')
+    end
+  #
+  elsif parsed[:open_option]
+    # open: All which are not done.
+    if parsed[:done_option] # , :open_option
+      # All for specified channel.
+      ListItem.where(channel_id: params[:channel_id],
+                     assigned_member_id: nil)
+              .reorder('channel_name ASC, created_at ASC')
+    else # parsed[:open_option]
+      # open: All which are not done.
+      ListItem.where(channel_id: params[:channel_id],
+                     assigned_member_id: nil,
+                     done: false)
+              .reorder('channel_name ASC, created_at ASC')
+    end
+  #
+  elsif parsed[:done_option]
+    # done: All which are done.
+    ListItem.where(channel_id: params[:channel_id],
+                   assigned_member_id: nil,
+                   done: true)
+            .reorder('channel_name ASC, created_at ASC')
+  else
+    # All in specified channel.
+    ListItem.where(channel_id: params[:channel_id],
+                   assigned_member_id: nil)
             .reorder('channel_name ASC, created_at ASC')
   end
 end
