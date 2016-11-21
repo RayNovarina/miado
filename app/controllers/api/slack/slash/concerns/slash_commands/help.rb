@@ -49,7 +49,7 @@ def help_for_buttons(parsed)
            value: { command: 'app' }.to_json
          },
          { name: 'tutorial',
-           text: 'Tutorial Video',
+           text: 'Tutorials',
            type: 'button',
            value: {}.to_json
          }
@@ -94,7 +94,7 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
       mrkdwn_in: ['text'],
       actions: [
         { name: 'tutorial',
-          text: 'Tutorial Video',
+          text: 'Tutorials',
           type: 'button',
           value: {}.to_json
         },
@@ -134,8 +134,8 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
 end
 
 HELP_RESP_BUTTONS_HLP_TEXT =
-  '• `Tutorial Video`  ' \
-  "is a short YouTube video about using MiaDo. \n" \
+  '• `Tutorials`  ' \
+  "are short YouTube videos about using MiaDo. \n" \
   '• `Best Practices`  ' \
   "describe what we think are effective ways to use MiaDo. \n" \
   '• `Task Lists`  ' \
@@ -367,6 +367,54 @@ def help_footer(_parsed)
    }]
 end
 
+=begin
+# Returns: [text, attachments]
+def help_button_tutorial(parsed, _text, _attachments)
+  api_client_user = make_web_client(parsed[:mcb].slack_user_api_token)
+  slack_channel_id = parsed[:ccb].slack_channel_id
+  attachments = []
+  api_resp =
+    send_msg_to_public_channel(
+      as_user: false,
+      api_client: api_client_user,
+      username: 'taskbot',
+      channel_id: slack_channel_id,
+      text: 'https://davidwalsh.name/demo/facebook-metas.php',
+      attachments: attachments
+    )
+  [nil, nil]
+end
+=end
+
+# Returns: [text, attachments]
+# def help_button_tutorial(_parsed, text, attachments)
+#  text = 'https://davidwalsh.name/demo/facebook-metas.php'
+#  attachments = []
+#  [text, attachments]
+# end
+
+=begin
+
+TUTORIAL_HLP_TEXT =
+  "Tutorial\n" \
+  "\n".freeze
+  '• `Online Help`' \
+  " Click here:  <#{root_url}/add_to_slack#product|Help>  \n" \
+
+# Returns: [attachment{}]
+def help_tutorial_headline(_parsed)
+  # root_url = @view.controller.request.base_url
+  [{ fallback: 'Tutorial Videos',
+     pretext: '', # TUTORIAL_HLP_TEXT,
+     # <https://youtu.be/AlEbz21imX0>',
+     # text: "<#{root_url}/tutorials|Tutorial>",
+     # text: '<https://youtu.be/AlEbz21imX0|Tutorial>',
+     color: '#f2f2f3',
+     # mrkdwn_in: ['pretext']
+  }]
+end
+=end
+
 # Returns: [text, attachments]
 def help_button_tutorial(parsed, text, attachments)
   attachments
@@ -375,14 +423,13 @@ def help_button_tutorial(parsed, text, attachments)
 end
 
 TUTORIAL_HLP_TEXT =
-  "Tutorial\n" \
+  "<https://youtu.be/AlEbz21imX0|Brief Overview>  \n" \
   "\n".freeze
 
 # Returns: [attachment{}]
 def help_tutorial_headline(_parsed)
-  [{ fallback: 'Tutorial Video',
+  [{ fallback: 'Tutorial Videos',
      pretext: TUTORIAL_HLP_TEXT,
-     text: '<https://youtu.be/AlEbz21imX0>',
      color: '#f2f2f3',
      mrkdwn_in: ['pretext']
   }]
