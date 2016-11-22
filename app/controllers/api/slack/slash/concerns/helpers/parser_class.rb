@@ -52,7 +52,6 @@ def make_parse_hash
     open_option: false,
     team_option: false,
     unassigned_option: false,
-    taskbot_rpt: false,
     expedite_deferred_cmd: false,
     err_msg: '',
     ccb: nil,
@@ -86,6 +85,7 @@ def make_parse_hash
     func: nil,
     trace_syntax: '',
     response_headline: nil,
+    prompt_msg: nil,
     button_callback_id: nil,
     button_actions: [],
     first_button_value: nil,
@@ -124,8 +124,7 @@ def context_from_ccb_hash(previous_action_parse_hash)
     all_option: context['all_option'],
     done_option: context['done_option'],
     due_option: context['due_option'],
-    open_option: context['open_option'],
-    taskbot_rpt: context['taskbot_rpt']
+    open_option: context['open_option']
   }
 end
 
@@ -163,7 +162,6 @@ def after_action_list_context(context, list_ids = nil)
     all_option: context[:all_option],
     open_option: context[:open_option],
     done_option: context[:done_option],
-    due_option: context[:due_option],
-    taskbot_rpt: context[:taskbot_rpt]
+    due_option: context[:due_option]
   }
 end

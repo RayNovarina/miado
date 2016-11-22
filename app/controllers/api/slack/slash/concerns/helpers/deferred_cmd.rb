@@ -7,9 +7,9 @@ def after_action_deferred_logic(def_cmds)
   if def_cmds[0][:p_hash][:expedite_deferred_cmd]
     send_after_action_deferred_cmds(def_cmds)
   else
-    Thread.new do
+    # Thread.new do
       send_after_action_deferred_cmds(def_cmds)
-    end
+    # end
   end
 end
 
@@ -20,8 +20,7 @@ def new_member_deferred_logic(options)
 end
 
 CMD_FUNCS_IGNORED_BY_AFTER_ACTION_DEFERRED =
-  [:discuss, :feedback, :hints, :help, :last_action_list, :list,
-   :taskbot_rpts].freeze
+  [:discuss, :feedback, :hints, :help, :last_action_list, :list].freeze
 #
 # if a member's taskbot lists could be changed, then we need to update em.
 # Returns: [ deferred_cmd{} ]
@@ -102,6 +101,7 @@ def generate_list_commands(parsed, deferred_cmd)
     # impacted_member = ['id string', {impacted_member_hash}
     next unless i_item.respond_to?(:to_hash)
     type = 'rpts'
+    prompt_msg = parsed[:prompt_msg]
     # Edit msg, not list if clicking on taskbot Done button.
     type = 'edit msg' if parsed[:func] == :done &&
                          parsed[:button_actions].any? &&
@@ -120,7 +120,8 @@ def generate_list_commands(parsed, deferred_cmd)
         taskbot_msg_id: i_item[:taskbot_msg_id],
         taskbot_msgs: i_item[:taskbot_msgs],
         taskbot_list_scope: i_item[:taskbot_list_scope],
-        taskbot_username: 'MiaDo Taskbot'
+        taskbot_username: 'MiaDo Taskbot',
+        prompt_msg: prompt_msg
       }
   end
   list_cmds
@@ -203,6 +204,7 @@ def determine_impacted_members(parsed, deferred_cmd)
     am_hash['mcb'] = parsed[:mcb]
     # NOTE: our clear_taskbot_msg_channel method will delete msgs from fresh
     # rtm_start msgs because func = :reset
+    # parsed[:prompt_msg] may be added on later.
     return build_one_impacted_member(am_hash: am_hash)
   end
   []
@@ -476,6 +478,7 @@ def generate_task_list_msgs(parsed, list_cmds)
                    taskbot_username: cmd_hash[:taskbot_username],
                    taskbot_msgs: cmd_hash[:taskbot_msgs],
                    taskbot_list_scope: cmd_hash[:taskbot_list_scope],
+                   prompt_msg: cmd_hash[:prompt_msg],
                    member_name: cmd_hash[:member_name],
                    member_id: cmd_hash[:member_id],
                    api_client_bot: make_web_client(cmd_hash[:taskbot_api_token])
@@ -537,6 +540,9 @@ def taskbot_rpts(parsed, chat_msg)
   # context[:mcb] = chat_msg[:member_mcb]
   # context[:tcb] = chat_msg[:member_tcb]
   # context[:debug] = true
+  context[:taskbot_rpt] = true
+  context[:func] = :list
+  context[:prompt_msg] = chat_msg[:prompt_msg]
   text, attachments, options, list_cmd_after_action_list_context = list_command(context)
   @view.channel = parsed[:ccb]
   [text, attachments, options, list_cmd_after_action_list_context]
@@ -639,12 +645,13 @@ def clear_taskbot_msg_channel(options)
   # prev_client_type = options[:api_client_type]
   # options[:api_client_type] = :bot
   api_resp = clear_channel_interface(options)
-  # log_to_channel(cb: options[:p_hash][:tcb],
-  #               msg: { topic: 'Taskbot Reset',
-  #                      subtopic: 'api_resp = clear_channel_interface(options[:message_source] == :member_record)',
-  #                      id: 'clear_taskbot_msg_channel()',
-  #                      body: api_resp.to_json
-  #                    })
+  log_to_channel(cb: options[:p_hash][:tcb],
+                 msg: { topic: 'Taskbot Reset',
+                        subtopic: 'api_resp = clear_channel_interface(options[:message_source] == :member_record)',
+                        id: 'clear_taskbot_msg_channel()',
+                        body: api_resp.to_json
+                      })
+  api_resp = { 'ok' => true }
   # NOTE: We are using user_token for im_history AND we dont have permission.
   #       Works on local dev but not on staging.
   # options[:message_source] = :im_history
@@ -654,12 +661,12 @@ def clear_taskbot_msg_channel(options)
   options[:api_client_type] = :bot
   while api_resp['ok']
     api_resp = clear_channel_interface(options)
-    # log_to_channel(cb: options[:p_hash][:tcb],
-    #               msg: { topic: 'Taskbot Reset - loop',
-    #                      subtopic: 'api_resp = clear_channel_interface(options[:message_source] = :rtm_data)',
-    #                      id: 'clear_taskbot_msg_channel()',
-    #                      body: api_resp.to_json
-    #                    })
+    log_to_channel(cb: options[:p_hash][:tcb],
+                   msg: { topic: 'Taskbot Reset - loop',
+                          subtopic: 'api_resp = clear_channel_interface(options[:message_source] = :rtm_data)',
+                          id: 'clear_taskbot_msg_channel()',
+                          body: api_resp.to_json
+                        })
     break if api_resp['num_deleted'].nil? ||
              api_resp['num_deleted'] == 0
   end

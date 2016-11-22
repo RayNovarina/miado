@@ -63,6 +63,9 @@ def perform_scans_for_functions(p_hash)
   when :list
     scan4_mentioned_member(p_hash)
     scan4_options(p_hash)
+  when :list_taskbot
+    scan4_mentioned_member(p_hash)
+    scan4_options(p_hash)
   when :message_event
     # nothing to do.
   when :picklist
@@ -75,9 +78,6 @@ def perform_scans_for_functions(p_hash)
   when :reset
     # Makes this a reset @me command.
     scan4_mentioned_member(p_hash)
-  when :taskbot_rpts
-    scan4_mentioned_member(p_hash)
-    scan4_options(p_hash)
   when :unassign
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
@@ -90,12 +90,12 @@ end
 #       'delete all open tasks for @susan is a new task'
 # Case: command is as entered from command line.
 #       'a new task', 'list team'
-CMD_FUNCS = %w(append assign delete done due feedback help hints list lists list_taskbot redo unassign).freeze
+CMD_FUNCS = %w(append assign delete done due feedback help hints list list_taskbot lists redo unassign).freeze
 def scan4_command_func(p_hash)
   return command_func_from_button(p_hash) if p_hash[:button_actions].any?
   return command_func_from_event(p_hash) unless p_hash[:event_type].empty?
-  scan4_taskbot_cmd_func(p_hash) if p_hash[:ccb].is_taskbot
-  return p_hash unless p_hash[:err_msg].empty?
+  return scan4_taskbot_cmd_func(p_hash) if p_hash[:ccb].is_taskbot &&
+                                           !(p_hash[:cmd_splits][0] == 'list_taskbot')
   # Default if no command given.
   return p_hash[:func] = :help if p_hash[:cmd_splits].empty?
 
@@ -103,9 +103,7 @@ def scan4_command_func(p_hash)
   p_hash[:func] = CMD_FUNCS.include?(maybe_func) ? maybe_func.to_sym : nil
   # discard/consume func word if we have one.
   p_hash[:cmd_splits].shift unless p_hash[:func].nil?
-  p_hash[:taskbot_rpt] = true if p_hash[:func] == :list_taskbot
   p_hash[:func] = :list if p_hash[:func] == :lists
-  p_hash[:func] = :list if p_hash[:func] == :list_taskbot
   # Default to add cmd if no func specified or implied.
   p_hash[:func] = :add if p_hash[:func].nil?
 end
@@ -140,7 +138,6 @@ def command_func_from_taskbot_button(p_hash)
   # p_hash[:func] = :feedback if p_hash[:button_actions].first['name'] == 'feedback'
   p_hash[:func] = :reset if p_hash[:button_actions].first['name'] == 'reset'
   return p_hash[:func] = :picklist if p_hash[:button_actions].first['name'] == 'picklist'
-  p_hash[:taskbot_rpt] = true if p_hash[:button_actions].first['name'] == 'list'
   p_hash[:func] = :list if p_hash[:button_actions].first['name'] == 'list'
   p_hash[:func] = :done if p_hash[:button_actions].first['name'] == 'done' || p_hash[:button_actions].first['name'] == 'done and delete'
   # p_hash[:func] = :discuss if p_hash[:button_actions].first['name'] == 'discuss'
@@ -174,15 +171,22 @@ def command_func_from_message_event(p_hash)
   p_hash[:func] = :message_event
 end
 
-CMD_FUNCS_OK_IN_TASKBOT_CHAN = %w(list_taskbot).freeze
+CMD_FUNCS_OK_IN_TASKBOT_CHAN = %w(list).freeze
 def scan4_taskbot_cmd_func(p_hash)
-  p_hash[:err_msg] =
-    # "Error: only the '#{params[:command]} /done' command is " \
-    # 'allowed in the Taskbot channel.' unless p_hash[:func] == :done
-    "Error: Sorry, but at this time no '#{params[:command]}' commands " \
-    'allowed in the Taskbot channel. (Except for the Done and Discuss ' \
-    'buttons). Switch to a regular channel to run /do commands' \
+  # return if p_hash[:cmd_splits][0] == 'list_taskbot'
+  # Just do a reset with a prompt msg. Results in a clean channel and list.
+  p_hash[:prompt_msg] = '' if CMD_FUNCS_OK_IN_TASKBOT_CHAN.include?(p_hash[:cmd_splits][0])
+  p_hash[:prompt_msg] =
+    "Error: Sorry, but at this time no '#{p_hash[:slash_cmd_name]}' commands " \
+    "allowed in the Taskbot channel. (Except for \'#{p_hash[:slash_cmd_name]} list\' " \
+    "). Switch to a regular channel to run #{p_hash[:slash_cmd_name]} commands" \
     '.' unless CMD_FUNCS_OK_IN_TASKBOT_CHAN.include?(p_hash[:cmd_splits][0])
+  # "Error: only the '#{params[:command]} /done' command is " \
+  # 'allowed in the Taskbot channel.' unless p_hash[:func] == :done
+  # return p_hash[:err_msg] =
+  p_hash[:command] = 'reset @me'
+  p_hash[:cmd_splits] = p_hash[:command].split
+  p_hash[:func] = :reset
 end
 
 # Case: command function has been processed, leaving:

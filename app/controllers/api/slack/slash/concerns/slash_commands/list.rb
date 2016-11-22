@@ -65,8 +65,8 @@ def list_formats(parsed, context, list_of_records)
     return button_lists_public_chan(parsed, list_of_records) # list_button_public.rb
   end
   # Regular list commands.
-  return one_channel_display(parsed, context, list_of_records) if context[:channel_scope] == :one_channel # list_one_chans.rb
   return all_channels_taskbot_format(parsed, context, list_of_records) if parsed[:taskbot_rpt] # in list_all_chans_taskbot.rb
+  return one_channel_display(parsed, context, list_of_records) if context[:channel_scope] == :one_channel # list_one_chans.rb
   all_channels_display(parsed, context, list_of_records) # list_all_chans.rb
 end
 
