@@ -33,7 +33,6 @@ def help_for_buttons(parsed)
 
   text = ''
   title_attachment = [{ pretext: "*#{title}*", mrkdwn_in: ['pretext'] }]
-  # more_help_attachment = [{ pretext: "\n*#{HELP_MORE_HLP_TEXT}*", mrkdwn_in: ['pretext'] }]
   more_help_attachment =
     [{ fallback: 'Help',
        text: "\n*#{HELP_MORE_HLP_TEXT}*",
@@ -74,9 +73,9 @@ end
 
 # Top of report buttons and headline.
 # Returns: Replacement help headline [attachment{}] if specified.
-def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
+def help_headline_replacement(parsed, response_text = nil, caller_id = 'help')
   # response_options = { replace_original: false } unless caller_id == 'add'
-  response_options = { replace_original: true } # if caller_id == 'add'
+  response_options = {} # replace_original: true } # if caller_id == 'add'
   attachments = []
   attachments << {
     fallback: 'Help',
@@ -94,7 +93,7 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
       mrkdwn_in: ['text'],
       actions: [
         { name: 'tutorial',
-          text: 'Tutorials',
+          text: lib_button_text(text: 'Tutorials', parsed: parsed, name: 'tutorial'),
           type: 'button',
           value: {}.to_json
         },
@@ -104,7 +103,7 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
         #  value: {}.to_json
         # },
         { name: 'best',
-          text: 'Best Practices',
+          text: lib_button_text(text: 'Best Practices', parsed: parsed, name: 'best'),
           type: 'button',
           value: {}.to_json
         },
@@ -114,17 +113,18 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
         #  value: {}.to_json
         # },
         { name: 'lists',
-          text: 'Task Lists',
+          text: lib_button_text(text: 'Task Lists', parsed: parsed, name: 'lists'),
           type: 'button',
           value: { command: '@me open' }.to_json
         },
         { name: 'feedback',
-          text: 'Feedback',
+          text: lib_button_text(text: 'Feedback', parsed: parsed, name: 'feedback'),
           type: 'button',
           value: { resp_options: { replace_original: false } }.to_json
         },
         { name: 'help',
-          text: 'Button Help',
+          text: lib_button_text(text: 'Button Help', parsed: parsed,
+                                name: 'help', value: 'buttons'),
           type: 'button',
           value: { command: 'buttons' }.to_json
         }
@@ -152,7 +152,7 @@ HELP_RESP_BUTTONS_HLP_TEXT =
 # Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], response_options]
 def help_response_buttons_help(parsed)
   title = 'MiaDo Help Buttons explained'
-  replacement_buttons_attachments =
+  replacement_buttons_attachments, resp_options =
     help_headline_replacement(parsed, nil, 'help')
   button_help_attachments =
     [{ fallback: 'Help Button Info',
@@ -394,7 +394,6 @@ end
 # end
 
 =begin
-
 TUTORIAL_HLP_TEXT =
   "Tutorial\n" \
   "\n".freeze

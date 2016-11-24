@@ -7,9 +7,9 @@ def after_action_deferred_logic(def_cmds)
   if def_cmds[0][:p_hash][:expedite_deferred_cmd]
     send_after_action_deferred_cmds(def_cmds)
   else
-    Thread.new do
+    # Thread.new do
       send_after_action_deferred_cmds(def_cmds)
-    end
+    # end
   end
 end
 
@@ -168,19 +168,23 @@ def determine_impacted_members(parsed, deferred_cmd)
   am_hash = am_hash_from_assigned_member_id(parsed, parsed[:assigned_member_id]) if impacted_task.nil?
   am_hash = am_hash_from_assigned_member_id(parsed, impacted_task[:assigned_member_id]) unless impacted_task.nil?
   # nil if MiaDo not installed by this member.
-  update_ccb_chan_taskbot_msg_info(
-    { 'error' => 'Task not impacted: determine_impacted_members().MiaDo not installed by this member.' },
-    p_hash: { ccb: parsed[:ccb] }) if am_hash['bot_dm_channel_id'].nil?
-  update_ccb_chan_taskbot_msg_info(
-    { 'error' => "Task not impacted: determine_impacted_members().assigned_member = #{impacted_task.nil? ? parsed[:assigned_member_id] : impacted_task[:assigned_member_id]}" },
-    p_hash: { ccb: parsed[:ccb] }) if am_hash.nil?
+  if am_hash.nil? || am_hash['bot_dm_channel_id'].nil?
+    reason = 'am_hash.nil' if am_hash.nil?
+    reason = "bot_dm_channel_id: #{am_hash['bot_dm_channel_id']}" unless am_hash.nil?
+    update_ccb_chan_taskbot_msg_info(
+      { 'error' => 'Task not impacted: determine_impacted_members().' \
+        'MiaDo not installed by assigned member: ' \
+        "#{impacted_task.nil? ? parsed[:assigned_member_id] : impacted_task[:assigned_member_id]}" \
+        ".  reason: #{reason}"
+      }, p_hash: { ccb: parsed[:ccb] })
+  end
   return [] if am_hash.nil? || am_hash['bot_dm_channel_id'].nil?
   case func
   when :add, :assign, :unassign
     return build_impacted_team_members(parsed, am_hash)
   when :append, :done, :due
     update_ccb_chan_taskbot_msg_info(
-      { 'error' => 'Task not impacted: determine_impacted_members().:append, :done, :due - impacted_task.nil?' },
+      { 'error' => 'Task not impacted: determine_impacted_members().:append, :done, :due - impacted_task.nil' },
       p_hash: { ccb: parsed[:ccb] }) if impacted_task.nil?
     return [] if impacted_task.nil?
     return build_taskbot_button_done_impacted_members(parsed, am_hash) if parsed[:button_actions].any?
@@ -288,15 +292,21 @@ def am_hash_from_member_record(options)
                           'team_id' => options[:slack_team_id]
                         })
   end
-  list_scope = nil
+  #-----------------------------------
+  # list_scope:  nil: no rpts visible.
+  #              'one_member': "Your To-Do's" report visible.
+  #              'empty': no msgs in channel.
+  #              'team': "Team To-Do's" report visible.
+  #              'all': "All Tasks" report visible.
+  #-------------------------------------
+  # list_scope = nil
+  # Better to be safe. Default to a list. Only the "Button Help" means no rpt visible.
+  list_scope = 'one_member'
   list_scope = tcb.after_action_parse_hash['list_scope'] if tcb && tcb.after_action_parse_hash &&
                                                             tcb.after_action_parse_hash.key?('list_scope') &&
                                                             (tcb.last_activity_type == 'msg_update - taskbot_msgs' ||
                                                              tcb.last_activity_type == 'button_action - list')
   list_scope = 'empty' if mcb.bot_msgs_json.nil? || mcb.bot_msgs_json.empty?
-  # HACK: we can't be sure what is in the channel unless we monitor message
-  # events. User can delete all messages.
-  list_scope = 'team' if list_scope.nil?
   # Special case: if resetting taskbot channel, default to 'Your To-Do's' list
   list_scope = 'one_member' if options[:parsed][:func] == :reset
   { 'mcb' => mcb,
@@ -325,7 +335,8 @@ def build_one_impacted_member(options)
   # skip if user member does not have a taskbot list being displayed.
   update_ccb_chan_taskbot_msg_info(
     { 'error' => 'Task not impacted: build_one_impacted_member().Member(' \
-      "#{impacted_member[:name]}) does not have a taskbot list being displayed."
+      "#{impacted_member[:name]}) does not have a taskbot list being " \
+      "displayed.  list_scope: #{options[:am_hash]['taskbot_list_scope']}"
     }, p_hash: { ccb: options[:parsed][:ccb] }) if options[:am_hash]['taskbot_list_scope'].nil?
   return [] if options[:am_hash]['taskbot_list_scope'].nil?
 
@@ -354,23 +365,30 @@ def build_impacted_team_members(parsed, task_am_hash)
       slack_user_id: member.slack_user_id,
       slack_team_id: member.slack_team_id)
     # skip if MiaDo not installed by this member.
-    taskbot_trace_msg.concat(
-      "Member.DbId:#{member.id}(#{member.slack_user_name}) has not installed " \
-      'MiaDo') if am_hash.nil? || am_hash['bot_dm_channel_id'].nil?
-    next if am_hash.nil? ||
-            am_hash['bot_dm_channel_id'].nil?
+    if am_hash.nil? || am_hash['bot_dm_channel_id'].nil?
+      reason = 'am.nil' if am_hash.nil?
+      reason = "bot_chan_id: #{am_hash['bot_dm_channel_id']}" unless am_hash.nil?
+      taskbot_trace_msg.concat(
+        "Member.DbId:#{member.id}(#{member.slack_user_name}) has not " \
+        "installed MiaDo. #{reason}")
+    end
+    next if am_hash.nil? || am_hash['bot_dm_channel_id'].nil?
     # Always generate reports if taskbot channel has no message displayed.
     unless am_hash['taskbot_list_scope'] == 'empty'
       # skip if user member does not have a taskbot list being displayed.
       taskbot_trace_msg.concat(
         "Member.DbId:#{member.id}(#{member.slack_user_name}) does not have a " \
-        'taskbot list being displayed.') if am_hash['taskbot_list_scope'].nil?
+        'taskbot list being displayed. list_scope: ' \
+        "#{am_hash['taskbot_list_scope']}") if am_hash['taskbot_list_scope'].nil?
       next if am_hash['taskbot_list_scope'].nil?
       # skip if impacted task is not on this member's displayed taskbot list.
-      taskbot_trace_msg.concat(
-        "Member.DbId:#{member.id}(#{member.slack_user_name}) impacted task " \
-        'is not on this member\'s displayed taskbot ' \
-        'list.') unless am_hash['taskbot_list_scope'] == 'team' || am_hash['taskbot_list_scope'] == 'empty' || (am_hash['slack_user_id'] == task_am_hash['slack_user_id'])
+      unless am_hash['taskbot_list_scope'] == 'team' || (am_hash['slack_user_id'] == task_am_hash['slack_user_id'])
+        taskbot_trace_msg.concat(
+          "Member.DbId:#{member.id}(#{member.slack_user_name}) impacted task " \
+          'is not on this member\'s displayed taskbot list. list_scope: ' \
+          "#{am_hash['taskbot_list_scope']}. am[slack_user_id]: " \
+          "#{am_hash['slack_user_id']} task[slack_user_id]")
+      end
       next unless am_hash['taskbot_list_scope'] == 'team' ||
                   am_hash['slack_user_id'] == task_am_hash['slack_user_id']
     end
@@ -406,9 +424,15 @@ def build_many_impacted_members_for_deleted_tasks(parsed)
   impacted_members = []
   parsed[:list_action_item_info].each do |task_info|
     am_hash = am_hash_from_assigned_member_id(parsed, task_info[:assigned_member_id])
-    taskbot_trace_msg.concat(
-      "Member.SlackId:#{task_info[:assigned_member_id]} we already saw " \
-      'this member or member is not looking at taskbot list.') if am_hash.nil? || impacted_members.include?(am_hash['slack_user_id']) || am_hash['taskbot_list_scope'].nil?
+    if am_hash.nil? || impacted_members.include?(am_hash['slack_user_id']) || am_hash['taskbot_list_scope'].nil?
+      reason = 'am.nil' if am_hash.nil?
+      reason = "impacted_members.include?(#{am_hash['slack_user_id']}): " \
+               "#{impacted_members.include?(am_hash['slack_user_id'])}" unless am_hash.nil?
+      taskbot_trace_msg.concat(
+        "Member.SlackId:#{task_info[:assigned_member_id]} we already saw " \
+        'this member or member is not looking at taskbot list. list_scope: ' \
+        "#{am_hash['taskbot_list_scope']}.  #{reason}")
+    end
     # skip if we already saw this member or member is not looking at taskbot list
     next if am_hash.nil? ||
             impacted_members.include?(am_hash['slack_user_id']) ||
@@ -522,6 +546,12 @@ def taskbot_rpts(parsed, chat_msg)
                                                                         chat_msg[:taskbot_list_scope].nil?
   list_cmd = 'list_taskbot team all due_first' if chat_msg[:taskbot_list_scope] == 'team'
   list_cmd = 'list_taskbot team all assigned unassigned open done' if chat_msg[:taskbot_list_scope] == 'all'
+  update_ccb_chan_taskbot_msg_info(
+    { 'ok' => true },
+    p_hash: { ccb: chat_msg[:member_tcb] },
+    chan_log_detail: "#{Time.new.localtime.ctime}: " \
+                     "taskbot_rpts sent. list_cmd: #{list_cmd}  list_scope: " \
+                     "#{chat_msg[:taskbot_list_scope]}")
   url_params = {
     channel_id: chat_msg[:member_tcb].slack_channel_id,
     channel_name: chat_msg[:member_tcb].slack_channel_name,
@@ -565,6 +595,7 @@ def update_via_member_record(options)
   api_resp = send_msg_to_taskbot_channel(options)
   remember_taskbot_msg_id(api_resp, options)
   update_taskbot_ccb_channel(options, 'msg_update - taskbot_msgs')
+  options[:chan_log_detail] = 'send_msg_to_taskbot_channel()'
   update_ccb_chan_taskbot_msg_info(api_resp, options)
   update_member_record(options)
   api_resp
@@ -579,7 +610,7 @@ def update_ccb_chan_taskbot_msg_info(api_resp, options)
   trace = JSON.parse(options[:p_hash][:ccb].taskbot_msg_to_slack_id) unless options[:p_hash][:ccb].taskbot_msg_to_slack_id.nil?
   trace << {
     ok: api_resp['ok'] ? true : false,
-    value: api_resp['ok'] ? "#{options[:member_id]}(#{options[:member_name]})" : "*failed*: #{api_resp['error']}"
+    value: api_resp['ok'] ? "#{Time.new.localtime.ctime} api_resp.ok: For member: #{options[:member_id]}(#{options[:member_name]}). #{options[:chan_log_detail]}" : "*failed*: #{api_resp['error']}"
   }
   options[:p_hash][:ccb].update(
     taskbot_msg_to_slack_id: trace.to_json,
@@ -642,15 +673,13 @@ def clear_taskbot_msg_channel(options)
   # Taskbot reset may require extra effort.
   return clear_channel_interface(options) unless options[:message_source] == :member_record
   # Try default first, clean up with rtm_start
-  # prev_client_type = options[:api_client_type]
-  # options[:api_client_type] = :bot
   api_resp = clear_channel_interface(options)
-  log_to_channel(cb: options[:p_hash][:tcb],
-                 msg: { topic: 'Taskbot Reset',
-                        subtopic: 'api_resp = clear_channel_interface(options[:message_source] == :member_record)',
-                        id: 'clear_taskbot_msg_channel()',
-                        body: api_resp.to_json
-                      })
+  # log_to_channel(cb: options[:p_hash][:tcb],
+  #               msg: { topic: 'Taskbot Reset',
+  #                      subtopic: 'api_resp = clear_channel_interface(options[:message_source] == :member_record)',
+  #                      id: 'clear_taskbot_msg_channel()',
+  #                      body: api_resp.to_json
+  #                    })
   api_resp = { 'ok' => true }
   # NOTE: We are using user_token for im_history AND we dont have permission.
   #       Works on local dev but not on staging.
@@ -661,12 +690,12 @@ def clear_taskbot_msg_channel(options)
   options[:api_client_type] = :bot
   while api_resp['ok']
     api_resp = clear_channel_interface(options)
-    log_to_channel(cb: options[:p_hash][:tcb],
-                   msg: { topic: 'Taskbot Reset - loop',
-                          subtopic: 'api_resp = clear_channel_interface(options[:message_source] = :rtm_data)',
-                          id: 'clear_taskbot_msg_channel()',
-                          body: api_resp.to_json
-                        })
+    # log_to_channel(cb: options[:p_hash][:tcb],
+    #               msg: { topic: 'Taskbot Reset - loop',
+    #                      subtopic: 'api_resp = clear_channel_interface(options[:message_source] = :rtm_data)',
+    #                      id: 'clear_taskbot_msg_channel()',
+    #                      body: api_resp.to_json
+    #                    })
     break if api_resp['num_deleted'].nil? ||
              api_resp['num_deleted'] == 0
   end
@@ -942,6 +971,7 @@ def taskbot_done_button_remove_button(options)
   props = options[:done_task_info]
   return unless props[:ok]
   props.merge!(taskbot_done_find_select_button(options))
+  return unless props[:ok]
   return taskbot_remove_task_select_attachment(options) if options[:task_select_attachments][props[:select_row_num]][:actions].size == 1
   # Remove action/button.
   options[:task_select_attachments][props[:select_row_num]][:actions].slice!(props[:select_action_idx])

@@ -243,3 +243,21 @@ def log2chan_update(options)
   options[:cb].update(slack_messages: options[:msg_bufr])
   options[:cb].slack_messages = options[:msg_bufr]
 end
+
+
+def lib_button_text(options)
+  unless (actions = options[:parsed][:button_actions]).empty?
+    if actions.first['name'] == options[:name]
+      return lib_button_active(options[:text]) if (command = options[:parsed][:first_button_value][:command]).nil?
+      return lib_button_active(options[:text]) if command == options[:value] # options.key?(:value) && (command == options[:value])
+    end
+    return options[:text]
+  end
+  return lib_button_active(options[:text]) if options[:default]
+  options[:text]
+end
+
+def lib_button_active(button_text)
+  # "· #{button_text} ·"
+  "• #{button_text} •"
+end

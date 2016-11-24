@@ -89,7 +89,7 @@ def add_description(parsed)
 end
 
 # Returns: [attachment{}]
-def add_response_headline_attachments(_parsed, response_text = '', item_db_id = '', caller_id = 'add')
+def add_response_headline_attachments(parsed, response_text = '', item_db_id = '', caller_id = 'add')
   [{ response_type: 'ephemeral',
      text: response_text,
      fallback: 'A task has been added.',
@@ -104,27 +104,33 @@ def add_response_headline_attachments(_parsed, response_text = '', item_db_id = 
      attachment_type: 'default',
      actions: [
        { name: 'list',
-         text: 'Your To-Do\'s',
+         text: lib_button_text(text: 'Your To-Do\'s', parsed: parsed,
+                               name: 'list', value: '@me open',
+                               default: true),
          type: 'button',
          value: { command: '@me open' }.to_json
        },
        { name: 'list',
-         text: 'Team To-Do\'s',
+         text: lib_button_text(text: 'Team To-Do\'s', parsed: parsed,
+                               name: 'list', value: 'team open assigned'),
          type: 'button',
          value: { command: 'team open assigned' }.to_json
        },
        { name: 'list',
-         text: 'All Tasks',
+         text: lib_button_text(text: 'All Tasks', parsed: parsed,
+                               name: 'list', value: 'team all assigned unassigned open done'),
          type: 'button',
          value: { command: 'team all assigned unassigned open done' }.to_json
        },
        { name: 'feedback',
-         text: 'Feedback',
+         text: lib_button_text(text: 'Feedback', parsed: parsed, name: 'feedback'),
          type: 'button',
-         value: { resp_options: { replace_original: false } }.to_json
+         # value: { resp_options: { replace_original: false } }.to_json
+         value: {}.to_json
        },
        { name: 'help',
-         text: 'Button Help',
+         text: lib_button_text(text: 'Button Help', parsed: parsed,
+                               name: 'help', value: 'buttons'),
          type: 'button',
          value: { command: 'buttons' }.to_json
        }

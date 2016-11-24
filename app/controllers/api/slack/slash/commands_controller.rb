@@ -224,12 +224,12 @@ def create_from_slack(options)
   # Returns: [text, attachments]
   def process_cmd(parsed)
     parsed[:ccb].slack_messages = nil
-    log_to_channel(cb: parsed[:ccb],
-                   msg: { topic: 'ChanLog init',
-                          subtopic: 'parsed[:func]',
-                          id: 'process_cmd()',
-                          body: parsed[:func].to_json
-                        })
+    # log_to_channel(cb: parsed[:ccb],
+    #               msg: { topic: 'ChanLog init',
+    #                      subtopic: 'parsed[:func]',
+    #                      id: 'process_cmd()',
+    #                      body: parsed[:func].to_json
+    #                    })
     return add_command(parsed) if parsed[:func] == :add
     return after_action_list_command(parsed) if parsed[:func] == :last_action_list
     return append_command(parsed) if parsed[:func] == :append

@@ -21,19 +21,23 @@ def list_button_taskbot_header_replacement(options)
        color: 'ffffff',
        actions: [
          { name: 'list',
-           text: 'Your To-Do\'s',
+           text: lib_button_text(text: 'Your To-Do\'s', parsed: options[:parsed],
+                                 name: 'list', value: '@me all',
+                                 default: true),
            type: 'button',
            value: { command: '@me all' }.to_json,
            style: style_your_tasks
          },
          { name: 'list',
-           text: 'Team To-Do\'s',
+           text: lib_button_text(text: 'Team To-Do\'s', parsed: options[:parsed],
+                                 name: 'list', value: 'team all'),
            type: 'button',
            value: { command: 'team all' }.to_json,
            style: style_team_tasks
          },
          { name: 'list',
-           text: 'All Tasks',
+           text: lib_button_text(text: 'All Tasks', parsed: options[:parsed],
+                                 name: 'list', value: 'team all assigned unassigned open done'),
            type: 'button',
            value: { command: 'team all assigned unassigned open done' }.to_json
          },
@@ -48,12 +52,14 @@ def list_button_taskbot_header_replacement(options)
          # value: {}.to_json
          # }
          { name: 'reset',
-           text: 'Reset',
+           text: lib_button_text(text: 'Reset', parsed: options[:parsed],
+                                 name: 'list', value: '@me'),
            type: 'button',
            value: { command: '@me' }.to_json
          },
          { name: 'help',
-           text: 'Button Help',
+           text: lib_button_text(text: 'Button Help', parsed: options[:parsed],
+                                 name: 'help', value: 'buttons'),
            type: 'button',
            value: { command: 'buttons' }.to_json
          }
