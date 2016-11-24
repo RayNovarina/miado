@@ -248,16 +248,20 @@ end
 def lib_button_text(options)
   unless (actions = options[:parsed][:button_actions]).empty?
     if actions.first['name'] == options[:name]
-      return lib_button_active(options[:text]) if (command = options[:parsed][:first_button_value][:command]).nil?
-      return lib_button_active(options[:text]) if command == options[:value] # options.key?(:value) && (command == options[:value])
+      return lib_button_active(options[:text], options[:parsed]) if (command = options[:parsed][:first_button_value][:command]).nil?
+      return lib_button_active(options[:text], options[:parsed]) if command == options[:match]
     end
     return options[:text]
   end
-  return lib_button_active(options[:text]) if options[:default]
+  # return lib_button_active(options[:text], options[:parsed]) if options[:default]
+  return lib_button_active(
+    options[:text],
+    options[:parsed]) if options[:match_list_cmd] == options[:parsed][:original_command]
   options[:text]
 end
 
-def lib_button_active(button_text)
+def lib_button_active(button_text, parsed)
+  parsed[:active_button_label] = button_text
   # "· #{button_text} ·"
   "• #{button_text} •"
 end

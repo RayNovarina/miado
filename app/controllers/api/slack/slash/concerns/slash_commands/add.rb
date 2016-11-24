@@ -105,20 +105,20 @@ def add_response_headline_attachments(parsed, response_text = '', item_db_id = '
      actions: [
        { name: 'list',
          text: lib_button_text(text: 'Your To-Do\'s', parsed: parsed,
-                               name: 'list', value: '@me open',
+                               name: 'list', match: '@me open',
                                default: true),
          type: 'button',
          value: { command: '@me open' }.to_json
        },
        { name: 'list',
          text: lib_button_text(text: 'Team To-Do\'s', parsed: parsed,
-                               name: 'list', value: 'team open assigned'),
+                               name: 'list', match: 'team open assigned'),
          type: 'button',
          value: { command: 'team open assigned' }.to_json
        },
        { name: 'list',
          text: lib_button_text(text: 'All Tasks', parsed: parsed,
-                               name: 'list', value: 'team all assigned unassigned open done'),
+                               name: 'list', match: 'team all assigned unassigned open done'),
          type: 'button',
          value: { command: 'team all assigned unassigned open done' }.to_json
        },
@@ -130,7 +130,7 @@ def add_response_headline_attachments(parsed, response_text = '', item_db_id = '
        },
        { name: 'help',
          text: lib_button_text(text: 'Button Help', parsed: parsed,
-                               name: 'help', value: 'buttons'),
+                               name: 'help', match: 'buttons'),
          type: 'button',
          value: { command: 'buttons' }.to_json
        }

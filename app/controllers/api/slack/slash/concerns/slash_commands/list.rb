@@ -87,22 +87,24 @@ def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list'
      actions: [
        { name: 'list',
          text: lib_button_text(text: 'Your To-Do\'s', parsed: parsed,
-                               name: 'list', value: '@me open',
-                               default: true),
+                               name: 'list', match: '@me open',
+                               match_list_cmd: 'list'),
          type: 'button',
          value: { command: '@me open' }.to_json,
          style: style_your_tasks
        },
        { name: 'list',
          text: lib_button_text(text: 'Team To-Do\'s', parsed: parsed,
-                               name: 'list', value: 'team open assigned'),
+                               name: 'list', match: 'team open assigned',
+                               match_list_cmd: 'list team'),
          type: 'button',
          value: { command: 'team open assigned' }.to_json,
          style: style_team_tasks
        },
        { name: 'list',
          text: lib_button_text(text: 'All Tasks', parsed: parsed,
-                               name: 'list', value: 'team all assigned unassigned open done'),
+                               name: 'list', match: 'team all assigned unassigned open done',
+                               match_list_cmd: 'list team all open done'),
          type: 'button',
          value: { command: 'team all assigned unassigned open done' }.to_json
        },
@@ -114,7 +116,7 @@ def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list'
        },
        { name: 'help',
          text: lib_button_text(text: 'Button Help', parsed: parsed,
-                               name: 'help', value: 'buttons'),
+                               name: 'help', match: 'buttons'),
          type: 'button',
          value: { command: 'buttons' }.to_json
        }
@@ -131,10 +133,9 @@ end
 def list_response_buttons_help(parsed)
   title = 'List Tasks Buttons explained'
   replacement_buttons_attachments =
-    add_response_headline_attachments(parsed,
-                                      parsed[:button_callback_id][:response_headline],
-                                      parsed[:button_callback_id][:item_db_id],
-                                      parsed[:button_callback_id][:caller_id])
+    list_chan_headline_replacement(parsed,
+                                   parsed[:button_callback_id][:response_headline],
+                                   parsed[:button_callback_id][:caller_id])
   button_help_attachments =
     [{ fallback: 'List Tasks Button Info',
        # title: msg,

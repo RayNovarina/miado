@@ -89,6 +89,7 @@ def make_parse_hash
     button_callback_id: nil,
     button_actions: [],
     first_button_value: nil,
+    active_button_label: nil,
     event_type: '',
     url_params: {}
   }
@@ -120,6 +121,7 @@ def context_from_ccb_hash(previous_action_parse_hash)
     response_headline: context['response_headline'],
     button_callback_id: context['button_callback_id'],
     button_actions: context['button_actions'],
+    active_button_label: context['active_button_label'],
     slash_cmd_name: context['slash_cmd_name'],
     all_option: context['all_option'],
     done_option: context['done_option'],
@@ -157,6 +159,7 @@ def after_action_list_context(context, list_ids = nil)
     original_command: context[:original_command],
     button_callback_id: context[:button_callback_id],
     button_actions: context[:button_actions],
+    active_button_label: context[:active_button_label],
     slash_cmd_name: context[:slash_cmd_name],
     response_headline: context[:response_headline],
     all_option: context[:all_option],

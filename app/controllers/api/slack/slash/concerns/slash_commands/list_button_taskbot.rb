@@ -22,7 +22,7 @@ def list_button_taskbot_header_replacement(options)
        actions: [
          { name: 'list',
            text: lib_button_text(text: 'Your To-Do\'s', parsed: options[:parsed],
-                                 name: 'list', value: '@me all',
+                                 name: 'list', match: '@me all',
                                  default: true),
            type: 'button',
            value: { command: '@me all' }.to_json,
@@ -30,14 +30,14 @@ def list_button_taskbot_header_replacement(options)
          },
          { name: 'list',
            text: lib_button_text(text: 'Team To-Do\'s', parsed: options[:parsed],
-                                 name: 'list', value: 'team all'),
+                                 name: 'list', match: 'team all'),
            type: 'button',
            value: { command: 'team all' }.to_json,
            style: style_team_tasks
          },
          { name: 'list',
            text: lib_button_text(text: 'All Tasks', parsed: options[:parsed],
-                                 name: 'list', value: 'team all assigned unassigned open done'),
+                                 name: 'list', match: 'team all assigned unassigned open done'),
            type: 'button',
            value: { command: 'team all assigned unassigned open done' }.to_json
          },
@@ -53,13 +53,13 @@ def list_button_taskbot_header_replacement(options)
          # }
          { name: 'reset',
            text: lib_button_text(text: 'Reset', parsed: options[:parsed],
-                                 name: 'list', value: '@me'),
+                                 name: 'list', match: '@me'),
            type: 'button',
            value: { command: '@me' }.to_json
          },
          { name: 'help',
            text: lib_button_text(text: 'Button Help', parsed: options[:parsed],
-                                 name: 'help', value: 'buttons'),
+                                 name: 'help', match: 'buttons'),
            type: 'button',
            value: { command: 'buttons' }.to_json
          }

@@ -124,7 +124,7 @@ def help_headline_replacement(parsed, response_text = nil, caller_id = 'help')
         },
         { name: 'help',
           text: lib_button_text(text: 'Button Help', parsed: parsed,
-                                name: 'help', value: 'buttons'),
+                                name: 'help', match: 'buttons'),
           type: 'button',
           value: { command: 'buttons' }.to_json
         }
