@@ -257,11 +257,6 @@ def lib_button_text(options)
   active = false
   active = true if parsed[:func] == :list &&
                    options[:match_list_cmd] == parsed[:original_command]
-  # active = true if parsed[:func] == :add &&
-  #                 options[:match_list_cmd] == 'list'
-  # "list_taskbot all due_first"
-  active = true if parsed[:func] == :list_taskbot &&
-                   options[:match_list_cmd] == parsed[:command]
   return lib_button_active(options[:text], parsed) if active
   options[:text]
 end

@@ -298,35 +298,3 @@ def list_button_footer_update_footer_indexes(footer_attch,
                                              footer_prompt_attch_idx,
                                              footer_prompt_num_attch)
 end
-
-=begin
-if footer_prompt_num_attch.nil?
-  footer_prompt_attch_idx = nil
-elsif footer_buttons_num_attch.nil?
-  footer_prompt_attch_idx = options[:attachments].length + 1
-else # have footer button attachments.
-  footer_prompt_attch_idx = footer_buttons_attch_idx + footer_buttons_num_attch
-end
-options[:task_select_attachments].each do |task_sel_attch|
-  update_footer_attachment_indexes(task_sel_attch, options[:body_attachments])
-end
-
-
-# HACK: assume just one footer button attachment.
-unless footer_prompt_num_attch.nil?
-  taskbot_footer_attachments[0][:callback_id][:footer_pmt_idx] =
-    footer_prompt_attch_idx
-    # callback_id_as_json_org = attachment['callback_id']
-    callback_id_as_hash = JSON.parse(attachment['callback_id']).with_indifferent_access
-
-    callback_id_as_hash['body_num'] = body_attachments.size
-    callback_id_as_hash['footer_but_idx'] =
-      callback_id_as_hash['body_idx'] + callback_id_as_hash['body_num']
-    callback_id_as_hash['footer_pmt_idx'] =
-      callback_id_as_hash['footer_but_idx'] + callback_id_as_hash['footer_but_num']
-    callback_id_as_hash['sel_idx'] =
-      callback_id_as_hash['footer_pmt_idx'] + callback_id_as_hash['footer_pmt_num']
-    # callback_id_as_json = callback_id_as_hash.to_json
-    attachment['callback_id'] = callback_id_as_hash.to_json
-end
-=end

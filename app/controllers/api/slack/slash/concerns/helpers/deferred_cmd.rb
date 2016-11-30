@@ -541,9 +541,10 @@ end
 # After the list command is run on the taskbot channel, its
 # Channel.after_action_parse_hash is updated via the list command.
 def taskbot_rpts(parsed, chat_msg)
-  list_cmd = "list_taskbot @#{chat_msg[:member_name]} all due_first" if chat_msg[:taskbot_list_scope] == 'one_member' ||
-                                                                        chat_msg[:taskbot_list_scope] == 'empty' ||
-                                                                        chat_msg[:taskbot_list_scope].nil?
+  # list_cmd = "list_taskbot @#{chat_msg[:member_name]} all due_first" if chat_msg[:taskbot_list_scope] == 'one_member' ||
+  list_cmd = 'list_taskbot @me all due_first' if chat_msg[:taskbot_list_scope] == 'one_member' ||
+                                                 chat_msg[:taskbot_list_scope] == 'empty' ||
+                                                 chat_msg[:taskbot_list_scope].nil?
   list_cmd = 'list_taskbot team all due_first' if chat_msg[:taskbot_list_scope] == 'team'
   list_cmd = 'list_taskbot team all assigned unassigned open done' if chat_msg[:taskbot_list_scope] == 'all'
   update_ccb_chan_taskbot_msg_info(
