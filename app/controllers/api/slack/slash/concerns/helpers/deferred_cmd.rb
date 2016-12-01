@@ -197,6 +197,15 @@ def determine_impacted_members(parsed, deferred_cmd)
       p_hash: { ccb: parsed[:ccb] }) if impacted_task[:done]
     return [] if impacted_task[:done]
     return build_impacted_team_members(parsed, am_hash)
+  when :onboarding
+    # Just do a reset with a prompt msg. Results in a clean channel and list.
+    parsed[:prompt_msg] =
+      "Hi @#{parsed[:mcb].slack_user_name}, Miado is now installed and ready " \
+      'to help you manage your tasks in Slack.  Your taskbot always has your ' \
+      'current to-do list ready to review with one click.  To get started, ' \
+      'click on your #general channel and add your first task. i.e. ' \
+      '`/do @me my first task /today`'
+    return build_one_impacted_member(am_hash: am_hash)
   when :reset
     # reset taskbot channel. Regenerate the default reports for @me.
     # Reset: Erase ALL taskbot channel msgs.
@@ -734,27 +743,37 @@ end
 
 # Returns: slack api response hash.
 def send_msg_to_taskbot_channel(options)
-  options[:api_client] = make_web_client(options)
+  send_msg_to_dm_channel(
+    api_client: make_web_client(options),
+    as_user: options[:as_user],
+    username: options[:taskbot_username],
+    channel_id: options[:taskbot_channel_id],
+    text: options[:text],
+    attachments: options[:attachments])
+end
+
+# Returns: slack api response hash.
+def send_msg_to_dm_channel(options)
   api_resp =
     options[:api_client]
     .chat_postMessage(
       as_user: options[:as_user],
-      username: options[:taskbot_username],
-      channel: options[:taskbot_channel_id],
+      username: options[:username],
+      channel: options[:channel_id],
       text: options[:text],
       attachments: options[:attachments])
-  options[:api_client].logger.error "\nSent taskbot msg to: " \
-    "#{options[:taskbot_username]} at dm_channel: " \
-    "#{options[:taskbot_channel_id]}.  Msg title: #{options[:text]}. " \
+  options[:api_client].logger.error "\nSent msg to: " \
+    "#{options[:username]} at dm_channel: " \
+    "#{options[:channel_id]}.  Msg title: #{options[:text]}. " \
     "For member: #{options[:member_name]}. " \
     "Token type: #{options[:api_client_type]}\n"
   return api_resp if api_resp['ok']
-  err_msg = "Error: From send_msg_to_taskbot_channel(API:client.chat_postMessage) = '#{api_resp['error']}'"
+  err_msg = "Error: From send_msg_to_dm_channel(API:client.chat_postMessage) = '#{api_resp['error']}'"
   options[:api_client].logger.error(err_msg)
   return { 'ok' => false, error: err_msg }
 rescue Slack::Web::Api::Error => e # (not_authed)
   options[:api_client].logger.error e
-  err_msg = "\nFrom send_msg_to_taskbot_channel(API:client.chat_postMessage) = " \
+  err_msg = "\nFrom send_msg_to_dm_channel(API:client.chat_postMessage) = " \
     "e.message: #{e.message}\n" \
     "channel_id: #{options[:channel]}  " \
     "Token type: #{options[:api_client_type]}  " \
@@ -768,7 +787,6 @@ end
 # Process deferred event.
 # Returns: nothing
 def send_deferred_event_cmds(_d_hash, parsed)
-  return respond_to_picklist_button_event(parsed) if parsed[:button_actions].first['name'] == 'picklist'
   parsed[:mcb] = Member.find_from(
     source: :slack,
     slack_user_id: parsed[:url_params][:user_id],
@@ -776,7 +794,6 @@ def send_deferred_event_cmds(_d_hash, parsed)
   parsed[:api_client_user] = make_web_client(parsed[:ccb].slack_user_api_token)
   parsed[:api_client_bot] = make_web_client(parsed[:ccb].bot_api_token)
   parsed[:button_callback_id] = parsed[:ccb].after_action_parse_hash['button_callback_id']
-  # return respond_to_reset_button_event(parsed) if parsed[:button_actions].first['name'] == 'reset'
   return respond_to_discuss_msg_event(parsed) if parsed[:ccb]['last_activity_type'] == 'button_action - discuss'
   respond_to_feedback_msg_event(parsed) if parsed[:ccb]['last_activity_type'] == 'button_action - feedback'
 end
@@ -893,11 +910,6 @@ rescue Slack::Web::Api::Error => e # (not_authed)
     "token: #{options[:api_client].token.nil? ? '*EMPTY!*' : options[:api_client].token}\n"
   options[:api_client].logger.error(err_msg)
   return { 'ok' => false, 'error' => err_msg }
-end
-
-# Returns: nothing
-def respond_to_picklist_button_event(parsed)
-  # parsed[:button_callback_id]
 end
 
 # Pluck taskbot summary list msg from the button payload, edit it and write
