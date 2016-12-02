@@ -204,7 +204,10 @@ def determine_impacted_members(parsed, deferred_cmd)
       'to help you manage your tasks in Slack.  Your taskbot always has your ' \
       'current to-do list ready to review with one click.  To get started, ' \
       'click on your #general channel and add your first task. i.e. ' \
-      '`/do @me my first task /today`'
+      "`/do @me my first task /today` \n" \
+      'Please note that MiaDo is most effective when used with team members ' \
+      'who have also added MiaDo to Slack. Best Practices, such as that are ' \
+      'available via the `/do help` command.'
     return build_one_impacted_member(am_hash: am_hash)
   when :reset
     # reset taskbot channel. Regenerate the default reports for @me.
