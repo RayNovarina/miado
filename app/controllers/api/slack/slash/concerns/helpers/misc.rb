@@ -98,7 +98,7 @@ def slack_member_from_name(parsed, name)
     member = Member.find_from(source: :slack,
                               slack_user_name: name,
                               slack_team_id: parsed[:url_params][:team_id]
-                             )).nil?
+                             ).first).nil?
   [member.slack_user_id, name]
 end
 
@@ -107,7 +107,7 @@ def slack_member_name_from_slack_user_id(parsed, id)
     member = Member.find_from(source: :slack,
                               slack_user_id: id,
                               slack_team_id: parsed[:url_params][:team_id]
-                             )).nil?
+                             ).first).nil?
   member.slack_user_name
 end
 

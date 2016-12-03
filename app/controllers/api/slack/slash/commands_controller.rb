@@ -71,6 +71,7 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   user_id	U0VLZ5P51
   user_name	ray
 =end
+  # Returns: [channel, error_message]
   # Case1: Member1 installs miaDo. Only this member has a taskbot dm channel and
   #        token. BUT the slash command is available to all members.
   #        Member2 uses /do.
@@ -80,6 +81,7 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   #   slack_user_id.slack_team_id.slack_channel_id.  A new channel/ccb is
   #   created.
   def channel_control_block_from_slack
+    return channel_control_block_from_wordpress_plugin if params.has_key?('channel_id') && params[:channel_id].starts_with?('wordpress:')
     update_url_params_from_interactive_msg if params.has_key?('payload')
     if (@view.channel = Channel.find_or_create_from(source: :slack, view: @view, slash_url_params: params)).nil?
       return [nil,
@@ -89,6 +91,54 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
               'MiaDo needs to be installed via add to Slack button ' \
               'at www.miado.net/add_to_slack`']
     end
+    [@view.channel, '']
+  end
+
+=begin
+channel_id	=> wordpress: plugin; name: contact-form-slack
+channel_name	general
+command	/do
+response_url
+team_domain	shadowhtracteam => 'Shadow Htrac Team'
+team_id	WordPress for Attack Cats
+text	@ray wordpress Contact Us message. Name: visitor 1, Email: visitor1@example.com, Message: hi from visitor 1.
+token	page-contact-us.php: 0.1
+user_id	contact-form-slack
+user_name	wordpress => 'ray'
+
+def find_from_slack(options)
+  @view ||= options[:view]
+  Channel.where(slack_user_id: options[:slash_url_params]['user_id'],
+                slack_team_id: options[:slash_url_params]['team_id'],
+                slack_channel_id: options[:slash_url_params]['channel_id'])
+end
+def create_from_slack(options)
+  @view ||= options[:view]
+  channel = Channel.new(
+    slack_channel_name: options[:slash_url_params]['channel_name'],
+    slack_channel_id: options[:slash_url_params]['channel_id'],
+    slack_user_id: options[:slash_url_params]['user_id'],
+    slack_team_id: options[:slash_url_params]['team_id'],
+  )
+=end
+  # Returns: [channel, error_message]
+  # //HACK
+  def channel_control_block_from_wordpress_plugin
+    if (@view.channel = Channel.find_or_create_from(source: :wordpress, view: @view, slash_url_params: params)).nil?
+      return [nil,
+              "`MiaDo server ERROR: team #{params[:team_domain]}" \
+              " or channel #{params[:channel_name]}" \
+              " not found for Slack user #{params[:user_name]}." \
+              ' MiaDo Contact Us Wordpress plugin needs to be configured properly.`']
+    end
+    params[:channel_id] = @view.channel.slack_channel_id
+    params[:channel_name] = @view.channel.slack_channel_name
+    params[:response_url] = params[:response_url]
+    params[:team_domain] = params[:team_domain]
+    params[:team_id] = @view.channel.slack_team_id
+    params[:token] = params[:token]
+    params[:user_id] = @view.channel.slack_user_id
+    params[:user_name] = params[:user_name]
     [@view.channel, '']
   end
 

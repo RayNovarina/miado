@@ -27,6 +27,7 @@ module MemberExtensions
 
     def find_from(options)
       return find_from_slack(options) if options[:source] == :slack
+      return find_from_wordpress(options) if options[:source] == :wordpress
     end
 
     def create_from(options)
@@ -51,9 +52,9 @@ module MemberExtensions
     private
 
     def find_or_create_from_rtm_data(options)
-      member = find_from_slack(options)
+      member = find_from_slack(options).first
       return member unless member.nil?
-      member = find_from_rtm_data(options)
+      member = find_from_rtm_data(options).first
       return member unless member.nil?
       create_from_rtm_data(options)
     end
@@ -61,7 +62,7 @@ module MemberExtensions
     def find_or_create_from_installation(options)
       member = find_from_slack(
         slack_user_id: options[:installation].slack_user_id,
-        slack_team_id: options[:installation].slack_team_id)
+        slack_team_id: options[:installation].slack_team_id).first
       return member unless member.nil?
       create_from_installation(options)
     end
@@ -70,7 +71,7 @@ module MemberExtensions
       # Case: User has not installed before.
       return create_from_installation(options) if (member = find_from_slack(
         slack_user_id: options[:installation].slack_user_id,
-        slack_team_id: options[:installation].slack_team_id)).nil?
+        slack_team_id: options[:installation].slack_team_id).first).nil?
       # Update fields changed by reinstall for all team members of this user.
       update_or_create_install_info(member: member, type: 'reinstallation',
                                     auth_json: options[:installation].auth_json,
@@ -82,10 +83,10 @@ module MemberExtensions
     def find_from_slack(options)
       return Member.where(slack_user_id: options[:slack_user_id],
                           slack_team_id: options[:slack_team_id]
-                         ).first if options.key?(:slack_user_id) && options.key?(:slack_team_id)
+                         ) if options.key?(:slack_user_id) && options.key?(:slack_team_id)
       return Member.where(slack_user_name: options[:slack_user_name],
                           slack_team_id: options[:slack_team_id]
-                         ).first if options.key?(:slack_user_name) && options.key?(:slack_team_id)
+                         ) if options.key?(:slack_user_name) && options.key?(:slack_team_id)
       nil
     end
 
@@ -94,7 +95,13 @@ module MemberExtensions
     def find_from_rtm_data(options)
       # If user name found for this team and member rec for user_id found,
       # then name change, update member.slack_user_name and real_name.
-      nil
+      []
+    end
+
+    # Find member using wordpress slash cmd info.
+    def find_from_wordpress(options)
+      Member.where(slack_team_name: options[:slash_url_params][:team_domain],
+                   slack_user_name: options[:slash_url_params][:user_name])
     end
 
     # Returns: member record
@@ -133,14 +140,14 @@ member = Member.find_or_create_from(
       installation = Installation.find_from(
         source: :slack,
         slack_user_id: options[:installation_slack_user_id],
-        slack_team_id: options[:slack_team_id])
+        slack_team_id: options[:slack_team_id]).first
       if installation.nil?
         # Person using slash cmd has not installed the app but someone one their
         # team has. i.e. Case2.
         # Get install record of anyone on team who has installed app.
         installation = Installation.find_from(
           source: :slack,
-          slack_team_id: options[:slack_team_id])
+          slack_team_id: options[:slack_team_id]).first
       end
       return nil if installation.nil?
       rtm_start = installation.rtm_start_json
