@@ -37,3 +37,7 @@ test:
 production:
   <<: *default
   database: db/production_postgresql
+
+staging:
+  <<: *default
+  database: db/production_postgresql

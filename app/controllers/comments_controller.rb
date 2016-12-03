@@ -6,7 +6,7 @@ class CommentsController < ApplicationController
   def create
     @submitted_comment = Comment.new(comment_params_whitelist)
     if @submitted_comment.valid?
-      CommentMailer.new_comment(@submitted_comment).deliver_now
+      CommentMailer.new_comment(@view, @submitted_comment).deliver_now
     end
     redirect_to :root
   end
