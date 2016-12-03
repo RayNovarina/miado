@@ -61,7 +61,7 @@ module TeamExtensions
 
     def find_from_slack_id(options)
       user, slack_team_id = options
-      Team.where(user: user, slack_team_id: slack_team_id).first
+      Team.where(user: user, slack_team_id: slack_team_id)
     end
 
     def find_or_create_from_omniauth_provider(provider)

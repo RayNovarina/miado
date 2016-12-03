@@ -100,8 +100,8 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   def sign_in_from_omniauth
     @view.provider = OmniauthProvider.find_or_create_from(:omniauth_callback, request.env)
     unless @view.provider.user.nil?
-      @view.user = User.find_from(:omniauth_provider, @view.provider)
-      @view.team = Team.find_from(:omniauth_provider, @view.provider)
+      @view.user = User.find_from(:omniauth_provider, @view.provider).first
+      @view.team = Team.find_from(:omniauth_provider, @view.provider).first
       return
     end
     # We have not authenticated with this oauth server for the oauth user
@@ -116,7 +116,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     # And link the OmniauthProvider to the user.
     @view.user.omniauth_providers << @view.provider
     @view.user.save!
-    @view.team = Team.find_from(:omniauth_provider, @view.provider)
+    @view.team = Team.find_from(:omniauth_provider, @view.provider).first
   end
 
   def make_view_helper

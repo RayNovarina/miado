@@ -219,7 +219,7 @@ def am_hash_from_member_record(parsed, assigned_member_id)
   parsed[:mcb] = Member.find_from(
     source: :slack,
     slack_team_id: parsed[:url_params]['team_id'],
-    slack_user_id: assigned_member_id)
+    slack_user_id: assigned_member_id).first
 
   { 'bot_dm_channel_id' => parsed[:mcb].bot_dm_channel_id,
     'slack_user_name' => parsed[:mcb].slack_user_name,
@@ -446,7 +446,7 @@ def update_taskbot_ccb_channel(api_resp, options)
         'channel_id' => options[:taskbot_channel_id],
         'user_id' => options[:member_id],
         'team_id' => options[:member_mcb].slack_team_id }
-    ).first).nil?
+     ).first).nil?
     # Case: This channel has not been accessed before.
     channel = Channel.create_from(source: :slack, slash_url_params: {
       'channel_name' => 'directmessage', # installation.rtm_start_json['self']['name'
