@@ -4,13 +4,14 @@ def all_channels_taskbot_format(parsed, _context, list_of_records)
   options = { parsed: parsed, num_tasks: list_of_records.length,
               channel_scope: parsed[:channel_scope],
               caller_id: 'list: taskbot',
-              attachment_info: []
+              attachment_info: [],
+              prompt_msg: parsed[:prompt_msg]
             }
   # updates: options[:text, :attachments, :header_attch_idx, header_num_attch]
   options.merge!(all_chans_taskbot_header(options))
   # updates: options[:attachments, :body_attch_idx, body_num_attch, :list_ids #, attachment_info]
   options.merge!(all_chans_taskbot_body(options, list_of_records))
-  # updates: options[:attachments, :footer_buttons_attch_idx, footer_buttons_num_attch]
+  # updates: options[:attachments, :footer_buttons_attch_idx, footer_buttons_num_attch, :footer_prompt_attch_idx, footer_prompt_num_attch]
   options.merge!(all_chans_taskbot_footer(options))
   # NOTE: any remaining attachments in the existing message, i.e. select
   #       buttons, are not written back.
@@ -100,12 +101,26 @@ end
 # Returns: hash of options{} fields to add, update:
 #          attachments, footer_buttons_attch_idx, footer_buttons_num_attch
 def all_chans_taskbot_footer(options)
+  # NOTE: footer buttons and/or footer prompts are optional.
+  # Do the prompt attachments first, we need idx field for footer_attachments.
+  footer_prompt_attachments, footer_prompt_num_attch =
+    list_button_taskbot_footer_prompt_replacement(options)
   taskbot_footer_attachments, footer_buttons_attch_idx, footer_buttons_num_attch =
     list_button_taskbot_footer_replacement(options)
+  # Update the button caller_id info for the footer_buttons now that we know
+  # the postion of the footer_prompt attachments, if any.
+  footer_prompt_attch_idx =
+    list_button_taskbot_update_footer_attachments(
+      options, footer_prompt_num_attch, taskbot_footer_attachments,
+      footer_buttons_attch_idx, footer_buttons_num_attch)
   options[:attachments].concat(taskbot_footer_attachments) unless footer_buttons_num_attch.nil?
+  options[:attachments].concat(footer_prompt_attachments) unless footer_prompt_num_attch.nil?
   { attachments: options[:attachments],
     footer_buttons_attch_idx: footer_buttons_attch_idx,
-    footer_buttons_num_attch: footer_buttons_num_attch }
+    footer_buttons_num_attch: footer_buttons_num_attch,
+    footer_prompt_attch_idx: footer_prompt_attch_idx,
+    footer_prompt_num_attch: footer_prompt_num_attch
+  }
 end
 
 # Bottom of report buttons.
@@ -155,7 +170,7 @@ end
 def task_footer_new_button(_options, props)
   { name: 'picklist',
     text: props[:text],
-    style: props[:style],
+    style: props[:style] || 'default',
     type: 'button',
     value: { id: props[:id] }.to_json
   }
@@ -249,4 +264,37 @@ def task_select_new_button(options)
              chan_name: options[:slack_channel_name]
            }.to_json
   }
+end
+
+# Inputs: options{parsed, :prompt_msg}
+# Returns: [footer_prompt_attachments, footer_prompt_attch]
+def list_button_taskbot_footer_prompt_replacement(options)
+  return [nil, nil] if options[:prompt_msg].nil?
+  footer_prompt_attachments =
+    [pretext: options[:prompt_msg], mrkdwn_in: ['pretext']]
+  [footer_prompt_attachments, footer_prompt_attachments.size]
+end
+
+# Update the button caller_id info for the footer_buttons now that we know
+# the postion of the footer_prompt attachments, if any.
+# Inputs: options{}, etc.
+# Returns: footer_prompt_attch_idx, updates taskbot_footer_attachments[]
+def list_button_taskbot_update_footer_attachments(
+      options, footer_prompt_num_attch, taskbot_footer_attachments,
+      footer_buttons_attch_idx, footer_buttons_num_attch)
+  return nil if footer_prompt_num_attch.nil?
+  return options[:attachments].length + 1 if footer_buttons_num_attch.nil?
+  footer_prompt_attch_idx = footer_buttons_attch_idx + footer_buttons_num_attch
+  taskbot_footer_attachments.each do |footer_attch|
+    list_button_footer_update_footer_indexes(
+      footer_attch,
+      footer_prompt_attch_idx,
+      footer_prompt_num_attch)
+  end
+  footer_prompt_attch_idx
+end
+
+def list_button_footer_update_footer_indexes(footer_attch,
+                                             footer_prompt_attch_idx,
+                                             footer_prompt_num_attch)
 end

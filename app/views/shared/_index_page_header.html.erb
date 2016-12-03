@@ -1,4 +1,4 @@
-<div class="row" style="margin-bottom: 30px;">
+<div class="row" style="margin-bottom: 0px; margin-top: 50px;">
   <div class="col-md-2">
   </div>
   <div class="col-md-8 css-page-title">
@@ -7,5 +7,11 @@
         <h2 class="media-heading text-center"><%= locals[:title] %></h2>
       </div>
     </div>
+  </div>
+</div>
+
+<div class="row" style="margin-bottom: 0px; margin-top: 0px; padding-left: 28px;">
+  <div class="css-index-top-pagination">
+    <%= will_paginate locals[:pagination_collection] %>
   </div>
 </div>

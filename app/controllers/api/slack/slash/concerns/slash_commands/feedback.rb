@@ -3,25 +3,23 @@
 def feedback_command(parsed)
   return feedback_button_taskbot_rpts(parsed) if !parsed[:button_callback_id].nil? && parsed[:button_callback_id][:id] == 'taskbot'
   return feedback_button_public_chan(parsed) unless parsed[:button_callback_id].nil?
-  require 'pry'
-  binding.pry
   submitted_comment = comment_from_slash_feedback(parsed)
   update_channel_activity(parsed)
   if submitted_comment.valid?
     new_comment = CommentMailer.new_comment(@view, submitted_comment)
-    log_to_channel(cb: parsed[:ccb],
-                   msg: { topic: 'Slash Feedback',
-                          subtopic: 'new_comment = CommentMailer.new_comment(@view, submitted_comment)',
-                          id: 'feedback_command()',
-                          body: new_comment.to_json
-                        })
+    # log_to_channel(cb: parsed[:ccb],
+    #               msg: { topic: 'Slash Feedback',
+    #                      subtopic: 'new_comment = CommentMailer.new_comment(@view, submitted_comment)',
+    #                      id: 'feedback_command()',
+    #                      body: new_comment.to_json
+    #                    })
     response = new_comment.deliver_now
-    log_to_channel(cb: parsed[:ccb],
-                   msg: { topic: 'Slash Feedback',
-                          subtopic: 'response = new_comment.deliver_now',
-                          id: 'feedback_command()',
-                          body: response.to_json
-                        })
+    # log_to_channel(cb: parsed[:ccb],
+    #               msg: { topic: 'Slash Feedback',
+    #                      subtopic: 'response = new_comment.deliver_now',
+    #                      id: 'feedback_command()',
+    #                      body: response.to_json
+    #                    })
     return ['Thank you, we appreciate your input.', []]
     # text = ''
     # attachments =
@@ -40,12 +38,12 @@ def comment_from_slash_feedback(parsed)
   email = '**Submitted as feedback**'
   body = parsed[:cmd_splits].join(' ')
   comment = Comment.new(name: name, email: email, body: body)
-  log_to_channel(cb: parsed[:ccb],
-                 msg: { topic: 'Slash Feedback',
-                        subtopic: 'comment = Comment.new(name: name, email: email, body: body)',
-                        id: 'comment_from_slash_feedback()',
-                        body: comment.to_json
-                      })
+  # log_to_channel(cb: parsed[:ccb],
+  #               msg: { topic: 'Slash Feedback',
+  #                      subtopic: 'comment = Comment.new(name: name, email: email, body: body)',
+  #                      id: 'comment_from_slash_feedback()',
+  #                      body: comment.to_json
+  #                    })
   comment
 end
 

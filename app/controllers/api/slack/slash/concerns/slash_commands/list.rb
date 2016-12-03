@@ -65,8 +65,8 @@ def list_formats(parsed, context, list_of_records)
     return button_lists_public_chan(parsed, list_of_records) # list_button_public.rb
   end
   # Regular list commands.
-  return one_channel_display(parsed, context, list_of_records) if context[:channel_scope] == :one_channel # list_one_chans.rb
   return all_channels_taskbot_format(parsed, context, list_of_records) if parsed[:taskbot_rpt] # in list_all_chans_taskbot.rb
+  return one_channel_display(parsed, context, list_of_records) if context[:channel_scope] == :one_channel # list_one_chans.rb
   all_channels_display(parsed, context, list_of_records) # list_all_chans.rb
 end
 
@@ -86,30 +86,37 @@ def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list'
      attachment_type: 'default',
      actions: [
        { name: 'list',
-         text: 'Your To-Do\'s',
+         text: lib_button_text(text: 'Your To-Do\'s', parsed: parsed,
+                               name: 'list', match: '@me open',
+                               match_list_cmd: 'list'),
          type: 'button',
          value: { command: '@me open' }.to_json,
          style: style_your_tasks
        },
        { name: 'list',
-         text: 'Team To-Do\'s',
+         text: lib_button_text(text: 'Team To-Do\'s', parsed: parsed,
+                               name: 'list', match: 'team open assigned',
+                               match_list_cmd: 'list team'),
          type: 'button',
          value: { command: 'team open assigned' }.to_json,
          style: style_team_tasks
        },
        { name: 'list',
-         text: 'All Tasks',
+         text: lib_button_text(text: 'All Tasks', parsed: parsed,
+                               name: 'list', match: 'team all assigned unassigned open done',
+                               match_list_cmd: 'list team all open done'),
          type: 'button',
          value: { command: 'team all assigned unassigned open done' }.to_json
        },
        { name: 'feedback',
-         text: 'Feedback',
+         text: lib_button_text(text: 'Feedback', parsed: parsed, name: 'feedback'),
          type: 'button',
          # value: { resp_options: { replace_original: false } }.to_json
          value: {}.to_json
        },
        { name: 'help',
-         text: 'Button Help',
+         text: lib_button_text(text: 'Button Help', parsed: parsed,
+                               name: 'help', match: 'buttons'),
          type: 'button',
          value: { command: 'buttons' }.to_json
        }
@@ -126,10 +133,9 @@ end
 def list_response_buttons_help(parsed)
   title = 'List Tasks Buttons explained'
   replacement_buttons_attachments =
-    add_response_headline_attachments(parsed,
-                                      parsed[:button_callback_id][:response_headline],
-                                      parsed[:button_callback_id][:item_db_id],
-                                      parsed[:button_callback_id][:caller_id])
+    list_chan_headline_replacement(parsed,
+                                   parsed[:button_callback_id][:response_headline],
+                                   parsed[:button_callback_id][:caller_id])
   button_help_attachments =
     [{ fallback: 'List Tasks Button Info',
        # title: msg,
@@ -142,6 +148,7 @@ end
 
 # Returns: [style_your_tasks, style_team_tasks]
 def list_button_headline_colors(parsed)
+=begin
   # Set color of list buttons.
   style_your_tasks = 'primary' if parsed[:func] == :message_event
   unless parsed[:func] == :message_event
@@ -159,6 +166,8 @@ def list_button_headline_colors(parsed)
   style_team_tasks = 'primary' if style_your_tasks == 'default'
   style_team_tasks = 'default' unless style_your_tasks == 'default'
   [style_your_tasks, style_team_tasks]
+=end
+  ['default', 'default']
 end
 
 # Returns: text

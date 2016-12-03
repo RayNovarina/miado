@@ -9,7 +9,7 @@
    else
      msg_to_member = Member.find_from(source: :slack,
                                slack_user_id: channel.taskbot_msg_to_slack_id,
-                               slack_team_id: channel.slack_team_id).first
+                               slack_team_id: channel.slack_team_id)
      taskbot_msg_to_name = '*member?*' if msg_to_member.nil?
      taskbot_msg_to_name = msg_to_member.slack_user_name unless msg_to_member.nil?
    end

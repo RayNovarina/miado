@@ -41,7 +41,6 @@ def picklist_button_taskbot(parsed)
     parsed[:button_callback_id][:footer_pmt_num] = nil
   end
 
-
   # Create map of select button labels and action values.
   select_list_info = select_list_pattern_from_body_attachments(
     body_attachments: attachments.slice(
@@ -63,10 +62,11 @@ def picklist_button_taskbot(parsed)
     "Ok, pick a button, any button to #{prompt_action}." unless select_list_info[:select_lists].empty?
   prompt_msg =
     'All tasks are already completed for this list. They can only be Deleted.' if select_list_info[:select_lists].empty?
-
   footer_prompt_attch_idx = footer_buttons_attch_idx + footer_buttons_num_attch
-  footer_prompt_attachments = [pretext: prompt_msg, mrkdwn_in: ['pretext']]
-  footer_prompt_num_attch = footer_prompt_attachments.size
+  footer_prompt_attachments, footer_prompt_num_attch =
+    list_button_taskbot_footer_prompt_replacement(
+      parsed: parsed, cmd: 'new', # in list_all_chans_taskbot.rb
+      prompt_msg: prompt_msg)
 
   # Make new task select button attachments with updated caller_id info.
   # HACK - we need our select button caller_id to have correct task_select_attch_idx
@@ -75,7 +75,7 @@ def picklist_button_taskbot(parsed)
   task_select_attch_idx = footer_prompt_attch_idx + footer_prompt_num_attch
   task_select_attachments, task_select_num_attch =
     task_select_buttons_replacement(parsed: parsed, cmd: 'new', # in list_all_chans_taskbot.rb
-                                    attachments: attachments,
+                                    # attachments: attachments,
                                     caller_id: parsed[:button_callback_id][:caller],
                                     header_attch_idx: parsed[:button_callback_id][:header_idx],
                                     header_num_attch: parsed[:button_callback_id][:header_num],

@@ -21,19 +21,25 @@ def list_button_taskbot_header_replacement(options)
        color: 'ffffff',
        actions: [
          { name: 'list',
-           text: 'Your To-Do\'s',
+           text: lib_button_text(text: 'Your To-Do\'s', parsed: options[:parsed],
+                                 name: 'list', match: '@me all',
+                                 match_list_cmd: 'list_taskbot @me all due_first'),
            type: 'button',
            value: { command: '@me all' }.to_json,
            style: style_your_tasks
          },
          { name: 'list',
-           text: 'Team To-Do\'s',
+           text: lib_button_text(text: 'Team To-Do\'s', parsed: options[:parsed],
+                                 name: 'list', match: 'team all',
+                                 match_list_cmd: 'list_taskbot team all due_first'),
            type: 'button',
            value: { command: 'team all' }.to_json,
            style: style_team_tasks
          },
          { name: 'list',
-           text: 'All Tasks',
+           text: lib_button_text(text: 'All Tasks', parsed: options[:parsed],
+                                 name: 'list', match: 'team all assigned unassigned open done',
+                                 match_list_cmd: 'list_taskbot team all assigned unassigned open done'),
            type: 'button',
            value: { command: 'team all assigned unassigned open done' }.to_json
          },
@@ -48,12 +54,14 @@ def list_button_taskbot_header_replacement(options)
          # value: {}.to_json
          # }
          { name: 'reset',
-           text: 'Reset',
+           text: lib_button_text(text: 'Reset', parsed: options[:parsed],
+                                 name: 'list', match: '@me'),
            type: 'button',
            value: { command: '@me' }.to_json
          },
          { name: 'help',
-           text: 'Button Help',
+           text: lib_button_text(text: 'Button Help', parsed: options[:parsed],
+                                 name: 'help', match: 'buttons'),
            type: 'button',
            value: { command: 'buttons' }.to_json
          }
@@ -106,6 +114,7 @@ end
 
 # Returns: [style_your_tasks, style_team_tasks]
 def list_button_taskbot_header_colors(parsed)
+=begin
   # Set color of list buttons.
   style_your_tasks = 'primary' if parsed[:func] == :message_event
   unless parsed[:func] == :message_event
@@ -124,4 +133,6 @@ def list_button_taskbot_header_colors(parsed)
   style_team_tasks = 'primary' if style_your_tasks == 'default'
   style_team_tasks = 'default' unless style_your_tasks == 'default'
   [style_your_tasks, style_team_tasks]
+=end
+  ['default', 'default']
 end

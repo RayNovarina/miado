@@ -16,7 +16,7 @@ def help_command(parsed)
 end
 
 HELP_MORE_HLP_TEXT =
-  "For MiaDo general Help use the \'/do help\' command or click on the button below:" \
+  "For MiaDo general Help use the \'/do help\' command or click on a button below:" \
   .freeze
 
 # Returns: [text, attachments{}, response_options{}]
@@ -33,7 +33,6 @@ def help_for_buttons(parsed)
 
   text = ''
   title_attachment = [{ pretext: "*#{title}*", mrkdwn_in: ['pretext'] }]
-  # more_help_attachment = [{ pretext: "\n*#{HELP_MORE_HLP_TEXT}*", mrkdwn_in: ['pretext'] }]
   more_help_attachment =
     [{ fallback: 'Help',
        text: "\n*#{HELP_MORE_HLP_TEXT}*",
@@ -47,6 +46,11 @@ def help_for_buttons(parsed)
            text: 'MiaDo Help',
            type: 'button',
            value: { command: 'app' }.to_json
+         },
+         { name: 'tutorial',
+           text: 'Tutorials',
+           type: 'button',
+           value: {}.to_json
          }
        ]
     }]
@@ -69,9 +73,9 @@ end
 
 # Top of report buttons and headline.
 # Returns: Replacement help headline [attachment{}] if specified.
-def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
+def help_headline_replacement(parsed, response_text = nil, caller_id = 'help')
   # response_options = { replace_original: false } unless caller_id == 'add'
-  response_options = { replace_original: true } # if caller_id == 'add'
+  response_options = {} # replace_original: true } # if caller_id == 'add'
   attachments = []
   attachments << {
     fallback: 'Help',
@@ -88,13 +92,18 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
                      debug: false }.to_json,
       mrkdwn_in: ['text'],
       actions: [
+        { name: 'tutorial',
+          text: lib_button_text(text: 'Tutorials', parsed: parsed, name: 'tutorial'),
+          type: 'button',
+          value: {}.to_json
+        },
         # { name: 'faqs',
         #  text: 'FAQs',
         #  type: 'button',
         #  value: {}.to_json
         # },
         { name: 'best',
-          text: 'Best Practices',
+          text: lib_button_text(text: 'Best Practices', parsed: parsed, name: 'best'),
           type: 'button',
           value: {}.to_json
         },
@@ -104,18 +113,18 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
         #  value: {}.to_json
         # },
         { name: 'lists',
-          text: 'Task Lists',
+          text: lib_button_text(text: 'Task Lists', parsed: parsed, name: 'lists'),
           type: 'button',
-          value: { command: '@me open' }.to_json,
-          style: 'primary'
+          value: { command: '@me open' }.to_json
         },
         { name: 'feedback',
-          text: 'Feedback',
+          text: lib_button_text(text: 'Feedback', parsed: parsed, name: 'feedback'),
           type: 'button',
           value: { resp_options: { replace_original: false } }.to_json
         },
         { name: 'help',
-          text: 'Button Help',
+          text: lib_button_text(text: 'Button Help', parsed: parsed,
+                                name: 'help', match: 'buttons'),
           type: 'button',
           value: { command: 'buttons' }.to_json
         }
@@ -125,6 +134,8 @@ def help_headline_replacement(_parsed, response_text = nil, caller_id = 'help')
 end
 
 HELP_RESP_BUTTONS_HLP_TEXT =
+  '• `Tutorials`  ' \
+  "are short YouTube videos about using MiaDo. \n" \
   '• `Best Practices`  ' \
   "describe what we think are effective ways to use MiaDo. \n" \
   '• `Task Lists`  ' \
@@ -141,7 +152,7 @@ HELP_RESP_BUTTONS_HLP_TEXT =
 # Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], response_options]
 def help_response_buttons_help(parsed)
   title = 'MiaDo Help Buttons explained'
-  replacement_buttons_attachments =
+  replacement_buttons_attachments, resp_options =
     help_headline_replacement(parsed, nil, 'help')
   button_help_attachments =
     [{ fallback: 'Help Button Info',
@@ -158,12 +169,14 @@ def help_body(parsed, text, attachments)
   help_body_basic(parsed, text, attachments)
 end
 
+# Returns: [text, attachments]
 def help_button_actions(parsed)
   text, attachments, _response_options = help_header(parsed)
   # return help_button_faqs(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'faqs'
   return help_button_best_practices(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'best'
   # return help_button_online_doc(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'online'
   return help_button_feedback(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'feedback'
+  return help_button_tutorial(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'tutorial'
   return help_body_basic(parsed, text, attachments) if parsed[:button_actions].first['name'] == 'help' &&
                                                        parsed[:first_button_value][:command] == 'app'
   help_body_basic(parsed, text, attachments)
@@ -354,6 +367,73 @@ def help_footer(_parsed)
    }]
 end
 
+=begin
+# Returns: [text, attachments]
+def help_button_tutorial(parsed, _text, _attachments)
+  api_client_user = make_web_client(parsed[:mcb].slack_user_api_token)
+  slack_channel_id = parsed[:ccb].slack_channel_id
+  attachments = []
+  api_resp =
+    send_msg_to_public_channel(
+      as_user: false,
+      api_client: api_client_user,
+      username: 'taskbot',
+      channel_id: slack_channel_id,
+      text: 'https://davidwalsh.name/demo/facebook-metas.php',
+      attachments: attachments
+    )
+  [nil, nil]
+end
+=end
+
+# Returns: [text, attachments]
+# def help_button_tutorial(_parsed, text, attachments)
+#  text = 'https://davidwalsh.name/demo/facebook-metas.php'
+#  attachments = []
+#  [text, attachments]
+# end
+
+=begin
+TUTORIAL_HLP_TEXT =
+  "Tutorial\n" \
+  "\n".freeze
+  '• `Online Help`' \
+  " Click here:  <#{root_url}/add_to_slack#product|Help>  \n" \
+
+# Returns: [attachment{}]
+def help_tutorial_headline(_parsed)
+  # root_url = @view.controller.request.base_url
+  [{ fallback: 'Tutorial Videos',
+     pretext: '', # TUTORIAL_HLP_TEXT,
+     # <https://youtu.be/AlEbz21imX0>',
+     # text: "<#{root_url}/tutorials|Tutorial>",
+     # text: '<https://youtu.be/AlEbz21imX0|Tutorial>',
+     color: '#f2f2f3',
+     # mrkdwn_in: ['pretext']
+  }]
+end
+=end
+
+# Returns: [text, attachments]
+def help_button_tutorial(parsed, text, attachments)
+  attachments
+    .concat(help_tutorial_headline(parsed))
+  [text, attachments]
+end
+
+TUTORIAL_HLP_TEXT =
+  "<https://youtu.be/AlEbz21imX0|Brief Overview>  \n" \
+  "\n".freeze
+
+# Returns: [attachment{}]
+def help_tutorial_headline(_parsed)
+  [{ fallback: 'Tutorial Videos',
+     pretext: TUTORIAL_HLP_TEXT,
+     color: '#f2f2f3',
+     mrkdwn_in: ['pretext']
+  }]
+end
+
 # Returns: [text, attachments]
 def help_button_feedback(parsed, text, attachments)
   attachments
@@ -363,7 +443,7 @@ end
 
 # Returns: [attachment{}]
 def help_feedback_headline(_parsed)
-  # msg = 'Frequently Asked Questions:'
+  # msg = 'Feedback'
   [{ fallback: 'feedback',
      pretext: FEEDBACK_PUBLIC_TEXT,
      text: '',

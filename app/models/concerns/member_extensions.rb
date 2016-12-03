@@ -52,6 +52,13 @@ module MemberExtensions
       Member.all.reorder('slack_team_id ASC, slack_user_name ASC')
     end
 
+    # Note: This code is based on the observation of rtm_start data returned
+    # when using a bot api token from the miado installer. In that case, the
+    # im channels seem to be team bot channels and a matching user_id would be
+    # the taskbot channel even if miado is not installed by that user.
+    # NOTE: if a bot token is used, the slack_user_id will find the Taskbot DM
+    #       channel for that user. IF a user token is used, the slack_user_id
+    #       will return the user's dm channel.
     # Returns: slackUserObj{}
     def slack_user_from_rtm_start(options)
       options[:rtm_start]['users'].each do |user|
@@ -63,6 +70,13 @@ module MemberExtensions
         return user
       end
       nil
+    end
+
+    # Returns: slackDMchanObj{}
+    def slack_user_dm_chan_from_rtm_start(options)
+      find_dm_channel_from_rtm_start(
+        slack_user_id: options[:slack_user_id],
+        rtm_start: options[:rtm_start])
     end
 
     private
@@ -161,7 +175,7 @@ module MemberExtensions
     end
 
 =begin
-member = Member.find_or_create_from(
+member = Member.fnd_or_create_from(
   source: :rtm_data,
   installation_slack_user_id: parsed[:url_params][:user_id],
   slack_user_name: name,
@@ -257,7 +271,7 @@ member = Member.find_or_create_from(
 
     # Returns: String
     def find_bot_dm_channel_id_from_rtm_start(options)
-      return nil if (im = find_bot_dm_channel_from_rtm_start(
+      return nil if (im = find_dm_channel_from_rtm_start(
         slack_user_id: options[:slack_user_id],
         rtm_start: options[:rtm_start])).nil?
       im['id']
@@ -267,8 +281,11 @@ member = Member.find_or_create_from(
     # when using a bot api token from the miado installer. In that case, the
     # im channels seem to be team bot channels and a matching user_id would be
     # the taskbot channel even if miado is not installed by that user.
+    # NOTE: if a bot token is used, the slack_user_id will find the Taskbot DM
+    #       channel for that user. IF a user token is used, the slack_user_id
+    #       will return the user's dm channel.
     # Returns: slackImObj{} or nil
-    def find_bot_dm_channel_from_rtm_start(options)
+    def find_dm_channel_from_rtm_start(options)
       return nil if options[:slack_user_id].nil?
       slack_dm_channels = options[:rtm_start]['ims']
       slack_dm_channels.each do |im|
@@ -278,9 +295,9 @@ member = Member.find_or_create_from(
       nil
     end
 
-    # response is an array of hashes. Team, users, channels, dms.
+    # Response: TRIMMED array of hashes. Team, users, channels, dms.
     def start_data_from_rtm_start(api_token)
-      slack_api('rtm.start', api_token)
+      Installation.trim_rtm_start_data(slack_api('rtm.start', api_token))
     end
 
     def slack_api(method_name, api_token)

@@ -72,6 +72,9 @@ module ApplicationHelper
     def include_policy(element)
       if element == :back_button
         !@controller.is_a?(::PagesController)
+      elsif element == :roll_your_own
+        return false if (defined? @controller.roll_your_own).nil?
+        @controller.roll_your_own
       elsif element == :asset_pipeline
         return true if (defined? @controller.use_asset_pipeline).nil?
         @controller.use_asset_pipeline

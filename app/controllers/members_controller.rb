@@ -9,7 +9,10 @@ class MembersController < ApplicationController
   #
 
   def index
-    @view.locals = { members: Member.team_members,
+    members = Member.team_members
+    @view.locals = { members: members.paginate(page: params[:page],
+                                               per_page: 2),
+                     total_members: members.length,
                      teams: Installation.teams
                    }
     # authorize @view.members

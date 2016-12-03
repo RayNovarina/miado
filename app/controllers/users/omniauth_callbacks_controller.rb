@@ -86,21 +86,45 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     end
   end
 
-  # Simulate an add task slash command so that our deferred logic posts a
-  # current list to the taskbot channel.
   def sign_up_update_taskbot_channel
-    p_hash = make_parse_hash
-    p_hash[:func] = :add
-    p_hash[:ccb] = @view.channel
-    p_hash[:tcb] = @view.channel
-    p_hash[:mcb] = @view.member
-    p_hash[:assigned_member_id] = @view.member.slack_user_id
-    p_hash[:assigned_member_name] = @view.member.slack_user_name
-    p_hash[:url_params] = params
-    p_hash[:url_params][:team_id] = @view.member.slack_team_id
-    def_cmds = generate_after_action_cmds(parsed_hash: p_hash)
-    # NOTE: a new Thread is generated to run these deferred commands.
+    def_cmds = sign_up_taskbot_new_user if ListItem.all.empty?
+    def_cmds = sign_up_taskbot_returning_user unless ListItem.all.empty?
+    # NOTE: a new Thread may be generated to run these deferred commands.
     after_action_deferred_logic(def_cmds)
+  end
+
+  #   Simulate an add task slash command so that our deferred logic posts a
+  #   current list to the taskbot channel.
+  # Returns: def_cmds[]
+  def sign_up_taskbot_returning_user
+    p_hash = sign_up_taskbot_common_phash.merge!(
+      expedite_deferred_cmd: true,
+      func: :add)
+    generate_after_action_cmds(parsed_hash: p_hash)
+  end
+
+  # Send welcome aboard msg to installing user's Taskbot dm channel.
+  # Returns: def_cmds[]
+  def sign_up_taskbot_new_user
+    p_hash = sign_up_taskbot_common_phash.merge!(
+      expedite_deferred_cmd: true,
+      func: :onboarding)
+    generate_after_action_cmds(parsed_hash: p_hash)
+  end
+
+  # Returns: p_hash{} with base fields filled in.
+  def sign_up_taskbot_common_phash
+    make_parse_hash.merge!(
+      ccb: @view.channel,
+      tcb: @view.channel,
+      mcb: @view.member,
+      assigned_member_id: @view.member.slack_user_id,
+      assigned_member_name: @view.member.slack_user_name,
+      url_params: params.merge!(
+        team_id: @view.member.slack_team_id,
+        text: '',
+        user_id: @view.member.slack_user_id,
+        user_name: @view.member.slack_user_name))
   end
 
   # Note: The provider, user or team can already be in our db due to other
