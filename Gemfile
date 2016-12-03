@@ -98,6 +98,10 @@ gem 'local_time'
 group :development do
   gem 'web-console', '~> 2.0'
   gem 'pry-stack_explorer'
+  # How to get rid of 'apple-touch-icon.png' flooding my logs
+  # If you don’t care about /apple-touch-icon.png being a 404
+  # per: https://github.com/davidcelis/quiet_safari
+  gem 'quiet_safari'
 end
 
 #

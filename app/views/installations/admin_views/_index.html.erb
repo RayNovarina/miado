@@ -1,32 +1,9 @@
-<header class="css-body-header">
-  <%= render partial: 'shared/index_page_header',
-             locals: { locals: { title: 'Admin Dashboard - Installations' } }
+<% if @view.url_params[:options] == 'info' %>
+  <%= render partial: 'installations/admin_views/index_install_info',
+           locals: { locals: @view.locals }
   %>
-</header>
-
-<main class="css-body-main">
-  <div class="container">
-    <h2>Installations<%= " (#{locals[:installations].length}) of #{locals[:bot_info][:name]} into (#{locals[:teams].length}) " %>teams</h2>
-    <table class="table table-bordered table-hover">
-      <thead>
-        <tr>
-          <th>Team Name<br>(db recId)</th>
-          <th>Installed by<br>@Install Date<br>*Last Activity Time<br>[Server Time Now]</th>
-          <th>api auth_token</th>
-          <th>bot auth_token</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% locals[:installations].each do |installation| %>
-          <%= render partial: 'installations/admin_views/index_installation',
-                     locals: { locals: { installation: installation,
-                                         auth_info: installation.auth_json['info'],
-                                         last_activity: Channel.last_activity(slack_team_id: installation.slack_team_id)
-                                       }
-                             }
-          %>
-        <% end %>
-      </tbody>
-    </table>
-    </div>
-</main>
+<% else %>
+  <%= render partial: 'installations/admin_views/index_installations',
+           locals: { locals: @view.locals }
+  %>
+<% end %>

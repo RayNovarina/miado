@@ -1,6 +1,6 @@
 #
 class CommentMailer < ApplicationMailer
-  default from: 'admin@miado.net'
+  default from: Rails.env == 'staging' ? 'admin@qa.miado.net' : 'admin@miado.net'
   default to: 'RNova94037@gmail.com'
   default cc: 'Dawn.Novarina@wemeus.com'
 

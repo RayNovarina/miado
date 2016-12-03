@@ -38,27 +38,6 @@ def add_command(parsed)
   item.assigned_due_date, due_date_clause = add_due_date(parsed)
   item.description, description_clause = add_description(parsed)
 
-  text = ''
-  parsed[:response_headline] =
-    "#{task_num_clause} as: ` #{description_clause}#{assigned_to_clause} " \
-    "#{due_date_clause}`" # \
-  #{ }"\n`Type #{parsed[:slash_cmd_name]}<enter><enter> for a current list.`"
-  attachments = [
-    { response_type: 'ephemeral',
-      text: parsed[:response_headline],
-      fallback: 'Do not view list',
-      callback_id: 'add task',
-      color: '#3AA3E3',
-      attachment_type: 'default',
-      actions: [
-        { name: 'current',
-          text: 'View Current List',
-          type: 'button',
-          value: 'current'
-        }
-      ]
-    }
-  ]
   item.debug_trace =
     "From add command - Response:#{parsed[:response_headline]}  " \
     "trace_syntax:#{parsed[:trace_syntax]}"
@@ -66,6 +45,11 @@ def add_command(parsed)
   if item.save
     # We have a new list that is in context.
     list << item.id
+    text = ''
+    parsed[:response_headline] =
+      "#{task_num_clause} as: `#{description_clause}` #{assigned_to_clause} " \
+      "#{due_date_clause}"
+    attachments = add_response_headline_attachments(parsed, parsed[:response_headline], item.id, 'add')
     # Special case: just doing an add task for the redo command.
     parsed[:list] = list if parsed[:on_behalf_of_redo_cmd]
     return [text, attachments] if parsed[:on_behalf_of_redo_cmd]
@@ -88,7 +72,7 @@ end
 def add_assigned_member(parsed)
   return [nil, ''] if parsed[:assigned_member_id].nil?
   [parsed[:assigned_member_id], parsed[:assigned_member_name],
-   "| *Assigned* to @#{parsed[:assigned_member_name]}."
+   " *Assigned* to @#{parsed[:assigned_member_name]}."
   ]
 end
 
@@ -96,12 +80,90 @@ end
 def add_due_date(parsed)
   return [nil, ''] if parsed[:due_date].nil?
   [parsed[:due_date],
-   "| *Due* #{parsed[:due_date].strftime('%a, %d %b')}."
+   " *Due* #{parsed[:due_date].strftime('%a, %d %b')}."
   ]
 end
 
 def add_description(parsed)
   [parsed[:command], parsed[:command]]
+end
+
+# Returns: [attachment{}]
+def add_response_headline_attachments(_parsed, response_text = '', item_db_id = '', caller_id = 'add')
+  [{ response_type: 'ephemeral',
+     text: response_text,
+     fallback: 'A task has been added.',
+     callback_id: { id: 'add task',
+                    item_db_id: item_db_id,
+                    response_headline: response_text,
+                    caller_id: caller_id,
+                    debug: false
+                  }.to_json,
+     color: '#3AA3E3',
+     mrkdwn_in: ['text'],
+     attachment_type: 'default',
+     actions: [
+       { name: 'list',
+         text: 'Your To-Do\'s',
+         style: 'primary',
+         type: 'button',
+         value: { command: '@me open' }.to_json
+       },
+       { name: 'list',
+         text: 'Team To-Do\'s',
+         type: 'button',
+         value: { command: 'team open assigned' }.to_json
+       },
+       { name: 'list',
+         text: 'All Tasks',
+         type: 'button',
+         value: { command: 'team all assigned unassigned open done' }.to_json
+       },
+       { name: 'feedback',
+         text: 'Feedback',
+         type: 'button',
+         value: { resp_options: { replace_original: false } }.to_json
+       },
+       { name: 'help',
+         text: 'Button Help',
+         type: 'button',
+         value: { command: 'buttons' }.to_json
+       }
+     ]
+  }]
+end
+
+ADD_RESP_BUTTONS_HLP_TEXT =
+  '• `Your To-Do\'s`  ' \
+  "generates the command \'/do list @me open\' and " \
+  "Lists your ASSIGNED and OPEN tasks for THIS channel. \n" \
+  '• `Team To-Do\'s`  ' \
+  "generates the command \'/do list team open assigned\' and " \
+  "Lists all tasks that are ASSIGNED and OPEN for THIS channel. \n" \
+  '• `All Tasks`  ' \
+  "generates the command \'/do list team all assigned unassigned open done\' and " \
+  "Lists all tasks for ALL channels. \n" \
+  '• `Feedback`  tells you how to email MiaDo product support with suggestions, problems, etc.' \
+  "\n" \
+  '• `Button Help`  describes the purpose of each button.' \
+  "\n" \
+  "\n\n".freeze
+
+# Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], response_options]
+def add_response_buttons_help(parsed)
+  title = 'Add Task Buttons explained'
+  replacement_buttons_attachments =
+    add_response_headline_attachments(parsed,
+                                      parsed[:button_callback_id][:response_headline],
+                                      parsed[:button_callback_id][:item_db_id],
+                                      parsed[:button_callback_id][:caller_id])
+  button_help_attachments =
+    [{ fallback: 'Add Task Button Info',
+       text: ADD_RESP_BUTTONS_HLP_TEXT,
+       color: '#3AA3E3',
+       mrkdwn_in: ['text']
+    }]
+  [title, replacement_buttons_attachments, button_help_attachments, parsed[:first_button_value][:resp_options]]
 end
 
 def adjust_add_cmd_action_context(parsed)

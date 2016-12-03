@@ -1,0 +1,26 @@
+<% members = locals[:rtm_start_members]
+   channels = locals[:rtm_start_channels]
+%>
+
+<tr>
+  <td><u><%= link_to locals[:auth_info]['team'],
+              installation_path(locals[:installation]),
+              title: "" %>
+      </u>
+      <br>(<%= locals[:installation].id %>)
+  </td>
+  <td><u><%= link_to locals[:auth_info]['user'],
+              installation_path(locals[:installation]),
+              title: "" %>
+      </u>
+      <br>@<%= locals[:installation].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>
+      <br>*<%= locals[:installation].updated_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>
+      <br>[<%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>]
+  </td>
+  <td><%= "(#{members.size})" %><br>
+      <%= "#{members.map{|member|"#{member['name']} "}}" %>
+  </td>
+  <td><%= "(#{channels.size})" %><br>
+      <%= "#{channels.map{|channel|"#{channel['name']} "}}" %>
+  </td>
+</tr>

@@ -174,7 +174,7 @@
 </div>
 
 <% else %>
-<h1><%= "You are signed into the #{@view.running_on_qa? ? 'QA-' : ''}MiaDo web app as #{@view.user.name}. Click " %>
+<h1><%= "You are signed into the #{Rails.env == 'staging' ? 'QA-' : ''}MiaDo web app as #{@view.user.name}. Click " %>
 <%= link_to 'here',
       destroy_user_session_path(@view.current_user),
       method: :delete,

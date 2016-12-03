@@ -1,5 +1,7 @@
 <% channel = locals[:channel]
    member = locals[:member]
+   chan_name_creator = "#{channel.slack_channel_name} - #{member.slack_user_name}" unless member.nil?
+   chan_name_creator = "#{channel.slack_channel_name} - *member?*" if member.nil?
    if channel.taskbot_msg_to_slack_id.nil?
      taskbot_msg_to_name = ''
    elsif channel.taskbot_msg_to_slack_id.starts_with?('*failed')
@@ -14,7 +16,7 @@
 %>
 
 <tr>
-  <td><%= "#{channel.slack_channel_name} - #{member.slack_user_name}" %><br>(<%= channel.id %>)</td>
+  <td><%= chan_name_creator %><br>(<%= channel.id %>)</td>
   <td><%= channel.slack_channel_id %></td>
   <td><%= channel.created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %></td>
   <td><%= channel.last_activity_type %><br><%= channel.last_activity_date.nil? ? '' : "@#{channel.last_activity_date.in_time_zone('Pacific Time (US & Canada)').strftime('%a %B %e, %Y %l:%M%P - PT')}" %></td>

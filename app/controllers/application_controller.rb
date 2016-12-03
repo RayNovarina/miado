@@ -1,3 +1,42 @@
+=begin
+per: http://stackoverflow.com/questions/25841377/rescue-from-actioncontrollerroutingerror-in-rails4
+application_conroller.rb add the following:
+
+ # You want to get exceptions in development, but not in production.
+ unless Rails.application.config.consider_all_requests_local
+   rescue_from ActionController::RoutingError, with: -> { render_404  }
+ end
+
+ def render_404
+   respond_to do |format|
+     format.html { render template: 'errors/not_found', status: 404 }
+     format.all { render nothing: true, status: 404 }
+   end
+ end
+I usually also rescue following exceptions, but that's up to you:
+
+rescue_from ActionController::UnknownController, with: -> { render_404  }
+rescue_from ActiveRecord::RecordNotFound, with: -> { render_404  }
+Create the errors controller:
+
+class ErrorsController < ApplicationController
+ def error_404
+   render 'errors/not_found'
+ end
+end
+Then in routes.rb
+
+ unless Rails.application.config.consider_all_requests_local
+   # having created corresponding controller and action
+   get '*not_found', to: 'errors#error_404'
+ end
+And the last thing is to create not_found.html.haml (or whatever template engine you use) under /views/errors/:
+
+ %span 404
+ %br
+ Page Not Found
+=end
+
 #
 class ApplicationController < ActionController::Base
   before_action :make_view_helper
