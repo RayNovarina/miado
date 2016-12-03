@@ -95,10 +95,12 @@ class OmniauthSlackSetup
       #                ',chat:write:bot'\
       #                ',im:history'\
       #       }
-      return { scope: ' commands' \
-                      ',bot' \
-                      ',chat:write:bot'\
-             }
+      oauth_url_overrides =
+        { scope: ' commands' \
+                 ',bot' \
+                 ',chat:write:bot'\
+        }
+      return oauth_url_overrides
     end
     return { scope: 'identity.basic' } if query == 'state=sign_in'
     {}

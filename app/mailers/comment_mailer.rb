@@ -4,9 +4,10 @@ class CommentMailer < ApplicationMailer
   default to: 'RNova94037@gmail.com'
   default cc: 'Dawn.Novarina@wemeus.com'
 
-  def new_comment(submitted_comment)
+  def new_comment(view, submitted_comment)
+    @view = view
     @comment = submitted_comment
-    mail(subject: "New comment from #{submitted_comment.name} at " \
+    mail(subject: "#{Rails.env == 'staging' ? 'QA-' : ''}New comment from #{submitted_comment.name} at " \
                   "#{submitted_comment.email}")
   end
 end

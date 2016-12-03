@@ -1,7 +1,7 @@
 <div class="css-navbar-left">
   <ul class="nav navbar-nav">
     <li><%= image_tag 'dog_head_icon.png', size: '50x50' %></li>
-    <li><%= link_to 'MiaDo', welcome_path, class: 'navbar-brand' %></li>
+    <li><%= link_to "#{Rails.env == 'staging' ? 'QA-' : ''}MiaDo", welcome_path, class: 'navbar-brand' %></li>
 
   <% if @view.user_signed_in? %>
     <li><%= link_to users_path(@view.current_user) do %>
