@@ -15,6 +15,38 @@ module InstallationExtensions
   # User.find_by_email(email).authenticate(password).
   module ClassMethods
     attr_accessor :view
+    #======================
+    # DB update for Production release 12/02/2016
+    #=======================
+
+    # Trim Installation.rtm_start_json:
+    def update_installation_recs
+      Installation.all.each do |installation|
+        # NOTE: Installation.start_data_from_rtm_start trims out the stuff
+        #       we dont want to persist.
+        rtm_start_json = start_data_from_rtm_start(installation.bot_api_token)
+        next if rtm_start_json.nil?
+        installation.update(
+          rtm_start_json: rtm_start_json,
+          last_activity_type: 'refresh rtm_start_data',
+          last_activity_date: DateTime.current)
+      end
+    end
+
+    # taskbot channels: change channel name, set bot_api_token
+    def update_taskbot_channel_recs
+      Channel.where(is_taskbot: true).each do |tbot_chan|
+      member = Member.where(slack_team_id: tbot_chan.slack_team_id,
+                            slack_user_id: tbot_chan.slack_user_id).first
+      next if member.nil?
+      tbot_chan.update(
+        slack_channel_name: "taskbot_channel_for_@#{member.slack_user_name}",
+        slack_user_api_token: member.slack_user_api_token,
+        bot_api_token: member.bot_api_token,
+        bot_user_id: member.bot_user_id)
+      end
+    end
+    #=========
 
     def update_from_or_create_from(options)
       return update_from_or_create_from_omniauth_callback(options) if options[:source] == :omniauth_callback
