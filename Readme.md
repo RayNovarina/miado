@@ -1,6 +1,21 @@
-=====================
-Production Readme.md
+===================================
+Pushed to production: 8:30pm.
+1) Git push to heroku complained about unmerged changes in prod. Did a git pull
+   and empty?/directories for rake, other rails related came over. Caused by
+   rails update and ruby reinstall on ray's dev system? Pushed again with no
+   git complaints.
+2) Blowoff when installing @ray into ShadowHtracTeam.
+   Workaround: Channel.update_all(taskbot_msg_to_slack_id: nil)
+3) Blowoff when using "/do feedback" command. Problem with email. Log:
+   Sent mail to RNova94037@gmail.com (1105.5ms)
+   Completed 500 Internal Server Error in 1410ms (ActiveRecord: 8.4ms)
+   Net::SMTPFatalError (554 Sandbox subdomains are for test purposes only.
+   Please add your own domain or add the address to authorized recipients in
+   domain settings.
 
+   commands_controller.rb:241:in process_cmd
+   concerns/slash_commands/feedback.rb:16:in feedback_command
+   commands_controller.rb:55:in local_response
 
 ===================================
 Production Dec 02 2016 release spec:
@@ -99,4 +114,3 @@ x - Change to: '/do help'    'todo list management from MiaLabs'
                                                'subteams', 'dnd', 'url')
               end
    #=========================
-   
