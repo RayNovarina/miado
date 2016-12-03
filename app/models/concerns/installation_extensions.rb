@@ -47,6 +47,7 @@ module InstallationExtensions
       end
     end
     #=========
+<<<<<<< HEAD
 
     #======================
     # DB update for Production release 12/02/2016
@@ -80,6 +81,8 @@ module InstallationExtensions
       end
     end
     #=========
+=======
+>>>>>>> PROD-release-12-02-2016
 
     def update_from_or_create_from(options)
       return update_from_or_create_from_omniauth_callback(options) if options[:source] == :omniauth_callback
