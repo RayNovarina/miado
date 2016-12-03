@@ -87,4 +87,16 @@ x - Change to: '/do help'    'todo list management from MiaLabs'
         bot_user_id: member.bot_user_id)
       end
     end
+
+    ##############
+
+        also changed:
+        def trim_rtm_start_data(rtm_start_json)
+          return nil if rtm_start_json.nil?
+
+          unless rtm_start_json['self'].nil?
+            rtm_start_json['self'].except!('prefs', 'groups', 'read_only_channels',
+                                           'subteams', 'dnd', 'url')
+          end
+
     #=====================
