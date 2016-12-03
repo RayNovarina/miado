@@ -52,20 +52,24 @@ module TeamExtensions
     private
 
     def find_from_omniauth_provider(provider)
-      find_by_provider(provider).first
+      find_by_provider(provider)
     end
 
     def find_from_slack(options)
-      Team.where(slack_team_id: options[:slack_team_id], slack_user_id: options[:slack_user_id])
+      Team.where(slack_team_id: options[:slack_team_id],
+                 slack_user_id: options[:slack_user_id]
+                ).first
     end
 
     def find_from_slack_id(options)
       user, slack_team_id = options
-      Team.where(user: user, slack_team_id: slack_team_id)
+      Team.where(user: user,
+                 slack_team_id: slack_team_id
+                ).first
     end
 
     def find_or_create_from_omniauth_provider(provider)
-      find_by_provider(provider).first || create_from_provider(provider)
+      find_by_provider(provider) || create_from_provider(provider)
     end
 
     def find_or_create_from_slack_id(options)
@@ -74,7 +78,7 @@ module TeamExtensions
 
     def update_from_or_create_from_omniauth_provider(provider)
       # Case: We have not authenticated this team before.
-      return create_from_provider(provider) if (team = find_by_provider(provider).first).nil?
+      return create_from_provider(provider) if (team = find_by_provider(provider)).nil?
       # Case: We are reauthorizing. Update auth info.
       update_team_auth_info(team, make_auth_info(provider))
       team.save!

@@ -11,7 +11,9 @@ class ItemsController < ApplicationController
     @view.items = ListItem.all
     @view.teams = Installation.teams
     @view.channels = Channel.all
-    @view.locals = { items: @view.items,
+    @view.locals = { items: @view.items.paginate(page: params[:page],
+                                                 per_page: 2),
+                     total_items: @view.items.length,
                      teams: @view.teams,
                      channels: @view.channels
                    }

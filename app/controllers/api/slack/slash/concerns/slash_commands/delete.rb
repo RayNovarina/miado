@@ -56,19 +56,6 @@ def delete_task(id, parsed)
   parsed[:err_msg] = "Error: There was an error deleting this Task(id: #{id})."
 end
 
-def save_item_info(parsed, id)
-  if id == -1
-    parsed[:list_action_item_info] = []
-    return nil
-  end
-  item = ListItem.find(id)
-  parsed[:list_action_item_info] << {
-    db_id: item.id,
-    assigned_member_id: item.assigned_member_id
-  }
-  item
-end
-
 def delete_many(parsed)
   return parsed[:err_msg] = 'Error: Delete command requires \'task number\', \'team\' or \'all\' options.' unless parsed[:all_option] || parsed[:team_option]
   destroy_all_by_ids(parsed[:list], parsed)

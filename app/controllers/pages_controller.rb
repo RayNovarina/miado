@@ -15,6 +15,9 @@ class PagesController < ApplicationController
   def about
   end
 
+  def tutorials
+  end
+
   def welcome_new
     @view.user = @view.current_user
   end
@@ -39,11 +42,17 @@ class PagesController < ApplicationController
   def add_to_slack
   end
 
+  def roll_your_own
+    return true if @view.name == 'pages-tutorials'
+    false
+  end
+
   def use_asset_pipeline
     return true if @view.user_signed_in? && @view.name == 'pages-add_to_slack'
     return false if @view.name == 'pages-add_to_slack'
     return false if @view.name == 'pages-welcome_add_to_slack_new'
     return false if @view.name == 'pages-about'
+    return false if @view.name == 'pages-tutorials'
     true
   end
 
@@ -51,6 +60,7 @@ class PagesController < ApplicationController
     return false if @view.name == 'pages-add_to_slack'
     return false if @view.name == 'pages-welcome_add_to_slack_new'
     return false if @view.name == 'pages-about'
+    return false if @view.name == 'pages-tutorials'
     true
   end
 
@@ -58,12 +68,14 @@ class PagesController < ApplicationController
     return false if @view.name == 'pages-add_to_slack'
     return false if @view.name == 'pages-welcome_add_to_slack_new'
     return false if @view.name == 'pages-about'
+    return false if @view.name == 'pages-tutorials'
     true
   end
 
   def show_main
     return false if @view.name == 'pages-add_to_slack'
     return false if @view.name == 'pages-welcome_add_to_slack_new'
+    return false if @view.name == 'pages-tutorials'
     true
   end
 

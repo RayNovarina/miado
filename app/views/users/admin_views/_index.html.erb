@@ -1,12 +1,14 @@
 <header class="css-body-header">
   <%= render partial: 'shared/index_page_header',
-             locals: { locals: { title: 'Admin Dashboard - Users' } }
+             locals: { locals: { title: "Users (#{locals[:users].length})",
+                                 pagination_collection: locals[:users]
+                               }
+                     }
   %>
 </header>
 
 <main class="css-body-main">
   <div class="container">
-    <h2>Users<%= " (#{locals[:users].size})" %></h2>
     <table class="table table-bordered table-hover">
       <thead>
         <tr>
@@ -22,8 +24,8 @@
         <% User.all.each do |user| %>
           <%= render partial: 'users/admin_views/index_user',
                      locals: { locals: { user: user,
-                                         installations: locals[:installations],
-                                         teams: locals[:teams],
+                                         installations: [], # locals[:installations],
+                                         teams: [], # locals[:teams],
                                          last_activity: Channel.last_activity(user: user)
                                        }
                              }

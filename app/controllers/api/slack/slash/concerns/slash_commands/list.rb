@@ -1,6 +1,6 @@
 # Inputs: parsed = parsed command line info that has been verified.
 #         list = [ListItem.id] for the list that the user is referencing.
-# Returns: [text, attachments]
+# Returns: [text, attachments, options, list_cmd_after_action_list_context]
 #          parsed[:err_msg] if needed.
 #          parsed[:list_for_after_action] = based on the new parsed info.
 #-----------------------------------
@@ -12,10 +12,10 @@
 #------------------------------
 def list_command(parsed)
   adjust_list_cmd_action_context(parsed)
-  format_display_list(parsed, parsed, list_from_parsed(parsed))
+  format_display_list(parsed, parsed, list_from_parsed(parsed)) # list_from_parsed(parsed) in: list_item_query.rb
 end
 
-# Returns: [text, attachments], parsed[:err_msg] if needed.
+# Returns: [text, attachments, response_options], parsed[:err_msg] if needed.
 def prepend_text_to_list_command(parsed, prepend_text)
   list_text, list_attachments =
     format_display_list(
@@ -46,69 +46,158 @@ def redisplay_action_list(context)
     list_from_list_of_ids(context, context[:list]))
 end
 
-# Returns: [text, attachments]
+# Returns: [text, attachments{}, response_options{}]
 def format_display_list(parsed, context, list_of_records)
-  text, attachments, list_ids = one_channel_display(parsed, context, list_of_records) if context[:channel_scope] == :one_channel
-  text, attachments, list_ids = all_channels_display(parsed, context, list_of_records) if context[:channel_scope] == :all_channels
+  text, attachments, list_ids, options = list_formats(parsed, context, list_of_records)
   # Persist the channel.list_ids[] for the next transaction.
-  save_after_action_list_context(parsed, context, list_ids) unless parsed[:display_after_action_list]
+  save_after_action_list_context(parsed, context, list_ids) unless parsed[:display_after_action_list] # parser_class.rb
+  list_cmd_after_action_list_context = parsed[:after_action_list_context] unless parsed[:display_after_action_list] # parser_class.rb
+  list_cmd_after_action_list_context = after_action_list_context(parsed, list_ids) if parsed[:display_after_action_list]
   text.concat(parsed[:err_msg]) unless parsed[:err_msg].empty?
-  # //HACK - if pub command, pass back list context for taskbot msgs.
-  return [text, attachments] unless parsed[:due_first_option]
-  [text, attachments, after_action_list_context(context, list_ids)] if parsed[:due_first_option]
+  [text, attachments, options, list_cmd_after_action_list_context]
 end
 
-# Returns: [text, attachments]
-def one_channel_display(parsed, context, list_of_records)
-  text, attachments = button_action_one_chan_header(
-    parsed, context, list_of_records) unless parsed[:button_callback_id].nil?
-  text, attachments = default_one_chan_header(
-    parsed, context, list_of_records) if parsed[:button_callback_id].nil?
-  list_ids = []
-  list_of_records.each_with_index do |item, index|
-    list_add_item_to_display_list(parsed, attachments, attachments.length - 1, item, index + 1)
-    list_ids << item.id
+# Returns: [text, attachments{}, list_ids[], response_options{}]
+def list_formats(parsed, context, list_of_records)
+  if parsed[:button_actions].any?
+    # List generated via buttons have special formats.
+    return button_lists_taskbot_chan(parsed, list_of_records) if context[:button_callback_id][:id] == 'taskbot' # list_button_taskbot.rb
+    return button_lists_public_chan(parsed, list_of_records) # list_button_public.rb
   end
-  channel_display_footer(parsed, context, list_of_records, text, attachments)
-  [text, attachments, list_ids]
+  # Regular list commands.
+  return all_channels_taskbot_format(parsed, context, list_of_records) if parsed[:taskbot_rpt] # in list_all_chans_taskbot.rb
+  return one_channel_display(parsed, context, list_of_records) if context[:channel_scope] == :one_channel # list_one_chans.rb
+  all_channels_display(parsed, context, list_of_records) # list_all_chans.rb
 end
 
-# Returns [text, attachments]
-def default_one_chan_header(parsed, context, list_of_records)
-  # "<##{parsed[:url_params]['channel_id']}|#{parsed[:url_params]['channel_name']}> "
-  [channel_display_header(parsed, context, list_of_records, ''), []]
+# Top of report buttons and headline.
+# Returns: Replacement list headline [attachment{}]
+def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list')
+  # Set color of list buttons.
+  style_your_tasks, style_team_tasks = list_button_headline_colors(parsed)
+  [{ text: '',
+     fallback: 'Task list',
+     callback_id: { id: 'lists',
+                    response_headline: rpt_headline,
+                    caller_id: caller_id,
+                    debug: false
+                  }.to_json,
+     color: 'ffffff',
+     attachment_type: 'default',
+     actions: [
+       { name: 'list',
+         text: lib_button_text(text: 'Your To-Do\'s', parsed: parsed,
+                               name: 'list', match: '@me open',
+                               match_list_cmd: 'list'),
+         type: 'button',
+         value: { command: '@me open' }.to_json,
+         style: style_your_tasks
+       },
+       { name: 'list',
+         text: lib_button_text(text: 'Team To-Do\'s', parsed: parsed,
+                               name: 'list', match: 'team open assigned',
+                               match_list_cmd: 'list team'),
+         type: 'button',
+         value: { command: 'team open assigned' }.to_json,
+         style: style_team_tasks
+       },
+       { name: 'list',
+         text: lib_button_text(text: 'All Tasks', parsed: parsed,
+                               name: 'list', match: 'team all assigned unassigned open done',
+                               match_list_cmd: 'list team all open done'),
+         type: 'button',
+         value: { command: 'team all assigned unassigned open done' }.to_json
+       },
+       { name: 'feedback',
+         text: lib_button_text(text: 'Feedback', parsed: parsed, name: 'feedback'),
+         type: 'button',
+         # value: { resp_options: { replace_original: false } }.to_json
+         value: {}.to_json
+       },
+       { name: 'help',
+         text: lib_button_text(text: 'Button Help', parsed: parsed,
+                               name: 'help', match: 'buttons'),
+         type: 'button',
+         value: { command: 'buttons' }.to_json
+       }
+     ]
+   },
+   { pretext: rpt_headline,
+     text: '',
+     color: 'ffffff',
+     mrkdwn_in: ['pretext']
+   }]
 end
 
-# Returns [text, attachments]
-def button_action_one_chan_header(parsed, context, list_of_records)
-  ['', [{ text: "#{parsed[:response_headline]}\n\n" \
-                "#{channel_display_header(parsed, context, list_of_records, '')}",
-          color: '#3AA3E3',
-          mrkdwn_in: ['text']
-        }
-       ]
-  ]
+# Returns: [title, [replacement_buttons_attachments{}], [button_help_attachments{}], response_options]
+def list_response_buttons_help(parsed)
+  title = 'List Tasks Buttons explained'
+  replacement_buttons_attachments =
+    list_chan_headline_replacement(parsed,
+                                   parsed[:button_callback_id][:response_headline],
+                                   parsed[:button_callback_id][:caller_id])
+  button_help_attachments =
+    [{ fallback: 'List Tasks Button Info',
+       # title: msg,
+       text: ADD_RESP_BUTTONS_HLP_TEXT,
+       color: '#3AA3E3',
+       mrkdwn_in: ['text']
+    }]
+  [title, replacement_buttons_attachments, button_help_attachments, parsed[:first_button_value][:resp_options]]
 end
 
-def channel_display_header(_parsed, context, list_of_records, channel_name)
-  "#{channel_name}" \
-  "`to-do list#{format_owner_title(context)}`" \
-  "#{list_of_records.empty? ? ' (empty)' : ''}"
+# Returns: [style_your_tasks, style_team_tasks]
+def list_button_headline_colors(parsed)
+=begin
+  # Set color of list buttons.
+  style_your_tasks = 'primary' if parsed[:func] == :message_event
+  unless parsed[:func] == :message_event
+    style_your_tasks = 'default'
+    if !parsed[:button_callback_id].nil? &&
+       parsed[:button_callback_id][:id] == 'taskbot'
+      # A taskbot channel button has been clicked. We toggle between my lists
+      # and team lists as button default. (Green button means recommended one)
+      if !(parsed[:button_actions].first['name'] == 'list') ||
+         parsed[:list_scope] == :team
+        style_your_tasks = 'primary'
+      end
+    end
+  end
+  style_team_tasks = 'primary' if style_your_tasks == 'default'
+  style_team_tasks = 'default' unless style_your_tasks == 'default'
+  [style_your_tasks, style_team_tasks]
+=end
+  ['default', 'default']
 end
 
-def channel_display_footer(_parsed, context, list_of_records, _text, attachments)
+# Returns: text
+def list_format_headline_text(parsed, context, list_of_records, add_chan_name = false)
+  if add_chan_name.respond_to? :to_str
+    channel_name = add_chan_name
+  else
+    channel_name = add_chan_name ? "*##{parsed[:url_params][:channel_name]}* channel" : ''
+  end
+  "`to-do list#{list_format_owner_title(context)}`" \
+  "#{list_of_records.empty? ? ' (empty)' : ''}" \
+  " #{channel_name}"
+end
+
+def list_chan_footer(_parsed, context, list_of_records, _text, attachments)
   if list_of_records.size > 10
     attachments << {
-      text: "`to-do list#{format_owner_title(context)}`" \
+      text: "`to-do list#{list_format_owner_title(context)}`" \
             "#{list_of_records.empty? ? ' (empty)' : ''}",
+      color: '#3AA3E3',
       mrkdwn_in: ['text']
     }
   end
 end
 
-def format_owner_title(context)
+def list_format_owner_title(context)
   subtitle = ''
   subtitle.concat(' all') if context[:channel_scope] == :all_channels
+  subtitle.concat(' assigned') if context[:assigned_option]
+  subtitle.concat(' unassigned') if context[:unassigned_option]
   subtitle.concat(' open') if context[:open_option]
   subtitle.concat(' due') if context[:due_option]
   subtitle.concat(' done') if context[:done_option]
@@ -116,11 +205,16 @@ def format_owner_title(context)
   " (#{context[:list_owner_name]})" if subtitle.empty?
 end
 
-# Returns: updated attachments array.
+# Make a list of tasks as multiple lines of text.
+# Returns: length of text added to attachment.
+#          updates [attachments{}]
 def list_add_item_to_display_list(parsed, attachments, attch_idx, item, tasknum)
-  return list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, tasknum) if parsed[:func] == :pub
-  attachments << { text: '', mrkdwn_in: ['text'] } if attachments.empty?
-  attachments[attch_idx][:text].concat(list_add_attachment_text(parsed, item, tasknum))
+  # Create a new attachment for the task list, if needed.
+  attachments << { color: '#3AA3E3', text: '', mrkdwn_in: ['text'] } if attachments.empty? || attch_idx == 'new'
+  # Add task as another line of text in the specified attachment (usually the last one)
+  task_desc = list_add_attachment_text(parsed, item, tasknum)
+  attachments[(attch_idx == 'last' || attch_idx == 'new') ? attachments.length - 1 : attch_idx][:text].concat(task_desc)
+  # task_desc.length
 end
 
 def list_add_attachment_text(parsed, item, tasknum)
@@ -143,81 +237,13 @@ end
 
 def list_cmd_task_completed_clause(item)
   return '' unless item.done
-  ' | *Completed* '
-end
-
-# Returns: [text, attachments, list_ids]
-def all_channels_display(parsed, context, list_of_records)
-  text = channel_display_header(parsed, context, list_of_records, '#all-channels ')
-  list_ids = []
-  attachments = []
-  current_channel_id = ''
-  list_of_records.each_with_index do |item, index|
-    unless current_channel_id == item.channel_id
-      current_channel_id = item.channel_id
-      attachments << {
-        text: "---- ##{item.channel_name} channel ----------",
-        mrkdwn_in: ['text']
-      }
-    end
-    list_add_item_to_display_list(parsed, attachments, attachments.size - 1, item, index + 1)
-    list_ids << item.id
-  end
-  channel_display_footer(parsed, context, list_of_records, text, attachments)
-  [text, attachments, list_ids]
-end
-
-# all_channels_display(parsed, context, list_of_records)
-# last_add_item_to_taskbot_display_list(parsed, attachments, attachments.size - 1, item, index + 1)
-# def list_add_attachment_text(parsed, item, tasknum)
-#  "\n#{tasknum}) #{item.description}" \
-#  "#{list_cmd_assigned_to_clause(parsed, item)}" \
-#  "#{list_cmd_due_date_clause(item)}" \
-#  "#{list_cmd_task_completed_clause(item)}"
-# end
-=begin
-attachments = [
-  { response_type: 'ephemeral',
-    text: attachment_text,
-    fallback: 'Do not view list',
-    callback_id: 'add task',
-    color: '#3AA3E3',
-    attachment_type: 'default',
-    actions: [
-      { name: 'current',
-        text: 'View Current List',
-        type: 'button',
-        value: 'current'
-      }
-    ]
-  }
-]
-=end
-def list_add_item_to_taskbot_display_list(parsed, attachments, attch_idx, item, tasknum)
-  # attachments << { text: '', mrkdwn_in: ['text'] } if attachments.empty?
-  # attachments[attch_idx][:text].concat(list_add_attachment_text(parsed, item, tasknum))
-  attachment_text = list_add_attachment_text(parsed, item, nil)
-  attachments <<
-    { response_type: 'ephemeral',
-      text: attachment_text,
-      fallback: 'not done',
-      callback_id: 'task is done',
-      color: 'default',
-      attachment_type: 'default',
-      actions: [
-        { name: 'done',
-          text: 'Done',
-          style: 'primary',
-          type: 'button',
-          value: tasknum
-        }
-      ]
-    }
+  ' | *Completed*'
 end
 
 def adjust_list_cmd_action_context(parsed)
-  # list command defaults to OPEN tasks.
+  # list command defaults to OPEN  and ASSIGNED tasks.
   parsed[:open_option] = true unless parsed[:done_option] == true
+  parsed[:assigned_option] = true unless parsed[:unassigned_option] == true
   adjust_list_cmd_list_scope(parsed)
   adjust_list_cmd_channel_scope(parsed)
   implied_mentioned_member(parsed)

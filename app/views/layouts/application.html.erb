@@ -1,6 +1,13 @@
+<% # NOTE: policy method defined in /controllers/helpers/application_helper.rb  %>
+<% if @view.policy(:include, :roll_your_own) # Note: policy defined in pages_controller %>
+  <!-- # == Begin: yield :Roll Your Own Content == -->
+  <%= yield %>
+  <!-- # == End: yield :Roll Your Own Content -Default- == -->
+<% else %>
+
+<% if @view.policy(:include, :asset_pipeline) %>
 <!DOCTYPE html>
 <html lang="en">
-<% if @view.policy(:include, :asset_pipeline) # Note: policy defined in pages_controller %>
   <head>
     <!-- ==== Begin: HTML HEAD TAG === -->
     <meta charset="utf-8">
@@ -15,6 +22,8 @@
   <body class="css-<%= @view.name %>" >
 
 <% else %>
+<!DOCTYPE html>
+<html lang="en">
   <head>
     <!-- ==== Begin: HTML HEAD TAG === -->
     <meta charset="utf-8">
@@ -91,3 +100,4 @@
 
 </body>
 </html>
+<% end %>

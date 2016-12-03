@@ -81,16 +81,26 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       @view.installation = Installation.update_from_or_create_from(source: :omniauth_callback, request: request)
       @view.member = Member.update_from_or_create_from(source: :installation, installation: @view.installation)
       # Now that member has a taskbot installed, send it an updated list.
-      p_hash = make_parse_hash
-      p_hash[:func] = :add
-      p_hash[:assigned_member_id] = @view.installation.slack_user_id
-      p_hash[:assigned_member_name] = @view.installation.auth_json['info']['user']
-      p_hash[:url_params] = params
-      p_hash[:url_params][:team_id] = @view.installation.slack_team_id
-      def_cmds = generate_after_action_cmds(parsed_hash: p_hash)
-      # NOTE: a new Thread is generated to run these deferred commands.
-      after_action_deferred_logic(def_cmds)
+      @view.channel = Channel.find_or_create_taskbot_channel_from(source: :installation, installation: @view.installation)
+      sign_up_update_taskbot_channel
     end
+  end
+
+  # Simulate an add task slash command so that our deferred logic posts a
+  # current list to the taskbot channel.
+  def sign_up_update_taskbot_channel
+    p_hash = make_parse_hash
+    p_hash[:func] = :add
+    p_hash[:ccb] = @view.channel
+    p_hash[:tcb] = @view.channel
+    p_hash[:mcb] = @view.member
+    p_hash[:assigned_member_id] = @view.member.slack_user_id
+    p_hash[:assigned_member_name] = @view.member.slack_user_name
+    p_hash[:url_params] = params
+    p_hash[:url_params][:team_id] = @view.member.slack_team_id
+    def_cmds = generate_after_action_cmds(parsed_hash: p_hash)
+    # NOTE: a new Thread is generated to run these deferred commands.
+    after_action_deferred_logic(def_cmds)
   end
 
   # Note: The provider, user or team can already be in our db due to other
@@ -100,8 +110,8 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   def sign_in_from_omniauth
     @view.provider = OmniauthProvider.find_or_create_from(:omniauth_callback, request.env)
     unless @view.provider.user.nil?
-      @view.user = User.find_from(:omniauth_provider, @view.provider).first
-      @view.team = Team.find_from(:omniauth_provider, @view.provider).first
+      @view.user = User.find_from(:omniauth_provider, @view.provider)
+      @view.team = Team.find_from(:omniauth_provider, @view.provider)
       return
     end
     # We have not authenticated with this oauth server for the oauth user
@@ -116,7 +126,7 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
     # And link the OmniauthProvider to the user.
     @view.user.omniauth_providers << @view.provider
     @view.user.save!
-    @view.team = Team.find_from(:omniauth_provider, @view.provider).first
+    @view.team = Team.find_from(:omniauth_provider, @view.provider)
   end
 
   def make_view_helper

@@ -8,7 +8,10 @@ class ChannelsController < ApplicationController
   #   index, show, new, edit, create, update and destroy.
   #
   def index
-    @view.locals = { team_channels: Channel.team_channels,
+    team_channels = Installation.team_channels
+    @view.locals = { team_channels: team_channels.paginate(page: params[:page],
+                                                           per_page: 2),
+                     total_team_channels: team_channels.length,
                      teams: Installation.teams
                    }
     # authorize @view.channels

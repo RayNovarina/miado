@@ -98,7 +98,9 @@ class OmniauthSlackSetup
       oauth_url_overrides =
         { scope: ' commands' \
                  ',bot' \
-                 ',chat:write:bot'\
+                 ',chat:write:bot' \
+                 # ',im:history' \
+                 # ',chat:write:user' \
         }
       return oauth_url_overrides
     end

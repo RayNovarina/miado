@@ -42,7 +42,7 @@ module InstallationExtensions
           last_activity_date: DateTime.current)
         installation.rtm_start_json['users'].each do |slack_member|
           next if slack_member['name'] == 'slackbot' || slack_member['deleted'] || slack_member['is_bot']
-          Member.find_or_create_from(
+          Member.fnd_or_create_from(
             source: :rtm_data,
             installation_slack_user_id: installation.slack_user_id,
             slack_user_name: slack_member['name'],
@@ -74,26 +74,112 @@ module InstallationExtensions
 
     # Various methods to support Installations and Team and Members models.
 
+    # Returns: [Installation records]
     def installations(options = {})
       if options.key?(:slack_user_id)
         return Installation.where(slack_team_id: options[:slack_team_id],
                                   slack_user_id: options[:slack_user_id])
-                           .reorder('slack_team_id ASC')
+        # .reorder('slack_team_id ASC')
       end
       if options.key?(:slack_team_id)
         return Installation.where(slack_team_id: options[:slack_team_id])
-                           .reorder('slack_team_id ASC')
+        # .reorder('slack_team_id ASC')
       end
-      Installation.all.reorder('slack_team_id ASC')
+      Installation.all # .reorder('slack_team_id ASC')
     end
 
+    # Returns: [Installation records]
     def teams
       Installation.select('DISTINCT ON(slack_team_id)*')
-                  .reorder('slack_team_id ASC')
+      # .reorder('slack_team_id ASC')
+    end
+
+    # Returns: [Channel records]
+    def team_channels(options = {})
+      Channel.where(slack_team_id: options[:slack_team_id])
+             .reorder('slack_channel_name ASC')
+    end
+
+    def team_lists(_options = {})
+      # options.key?(:slack_team_id)
+      []
+    end
+
+    # Returns: [Channel records]
+    def shared_team_channels(options)
+      channels = team_channels(options)
+      shared_channels = []
+      channels.each do |channel|
+        shared_channels << channel unless channel.slack_channel_id.starts_with?('D')
+      end
+      shared_channels
+    end
+
+    # Returns: [Channel records]
+    def dm_team_channels(options)
+      channels = team_channels(options)
+      dm_channels = []
+      channels.each do |channel|
+        dm_channels << channel if channel.slack_channel_id.starts_with?('D')
+      end
+      dm_channels
+    end
+
+    # Returns: [Channel records]
+    def bot_team_channels(options)
+      Channel.where(slack_team_id: options[:slack_team_id], is_taskbot: true)
+             .reorder('slack_channel_name ASC')
+    end
+
+    # Get a new "TRiMMED" copy of the rtm_start data from Slack for this team.
+    # Returns: [rtm_start_json, Installation record]
+    def refresh_rtm_start_data(options)
+      return nil if (installation = installations(options).first).nil?
+      return nil if (rtm_start_json = start_data_from_rtm_start(options[:bot_api_token])).nil?
+      installation.update(
+        rtm_start_json: rtm_start_json,
+        last_activity_type: 'refresh rtm_start_data',
+        last_activity_date: DateTime.current)
+      [rtm_start_json, installation]
+    end
+
+    def trim_rtm_start_data(rtm_start_json)
+      rtm_start_json['self'].except!('prefs', 'groups', 'read_only_channels',
+                                     'subteams', 'dnd', 'url')
+
+      unless rtm_start_json['team'].nil?
+        rtm_start_json['team'].except!('prefs', 'icon')
+      end
+      unless rtm_start_json['channels'].nil?
+        rtm_start_json['channels'].each do |channel|
+          channel.except!('latest', 'members', 'topic', 'purpose')
+        end
+      end
+      unless rtm_start_json['ims'].nil?
+        rtm_start_json['ims'].each do |im|
+          next if im['latest'].nil?
+          im['latest'].except!('text', 'attachments')
+        end
+      end
+      unless rtm_start_json['users'].nil?
+        rtm_start_json['users'].each do |user|
+          next if user['profile'].nil?
+          user['profile'].except!(
+            'email', 'image_24', 'image_32', 'image_48', 'image_72',
+            'image_192', 'image_512', 'image_1024', 'image_original','fields')
+        end
+      end
+      unless rtm_start_json['bots'].nil?
+        rtm_start_json['bots'].each do |bot|
+          bot.except!('icons')
+        end
+      end
+      rtm_start_json
     end
 
     private
 
+    # Returns: Installation record or nil
     def find_from_omniauth_callback(options)
       @view ||= options[:view]
       Installation.where(slack_user_id: options[:request].env['omniauth.auth'].uid,
@@ -101,13 +187,14 @@ module InstallationExtensions
                         ).first
     end
 
+    # Returns: Installation record or nil
     def find_from_slack(options)
       @view ||= options[:view]
       return Installation.where(slack_user_id: options[:slack_user_id],
                                 slack_team_id: options[:slack_team_id]
-                               ) if options.key?(:slack_user_id) && options.key?(:slack_team_id)
+                               ).first if options.key?(:slack_user_id) && options.key?(:slack_team_id)
       return Installation.where(slack_team_id: options[:slack_team_id]
-                               ) if options.key?(:slack_team_id)
+                               ).first if options.key?(:slack_team_id)
       nil
     end
 
@@ -146,9 +233,9 @@ module InstallationExtensions
       )
     end
 
-    # response is an array of hashes. Team, users, channels, dms.
+    # Response: TRiMMED array of hashes. Team, users, channels, dms.
     def start_data_from_rtm_start(api_token)
-      slack_api('rtm.start', api_token)
+      trim_rtm_start_data(slack_api('rtm.start', api_token))
     end
 
     def slack_api(method_name, api_token)

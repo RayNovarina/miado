@@ -93,11 +93,25 @@ gem 'slack-ruby-client'
 # per: https://github.com/basecamp/local_time
 gem 'local_time'
 #-----------------------------------------------------
+# will_paginate is a pagination library that integrates with Ruby on Rails,
+# Sinatra, Merb, DataMapper and Sequel.
+# per: https://github.com/mislav/will_paginate
+## Gemfile for Rails 3+, Sinatra, and Merb
+gem 'will_paginate', '~> 3.1.0'
+# Hooks into will_paginate to format the html to match Twitter Bootstrap
+# styling. Extension code was originally written by Isaac Bowen
+# per: https://rubygems.org/gems/bootstrap-will_paginate/versions/0.0.10
+gem 'bootstrap-will_paginate', '0.0.10'
+#-----------------------------------------------------
 #
 #============== DEVELOPMENT only GEMS =================
 group :development do
   gem 'web-console', '~> 2.0'
   gem 'pry-stack_explorer'
+  # How to get rid of 'apple-touch-icon.png' flooding my logs
+  # If you don't care about /apple-touch-icon.png being a 404
+  # per: https://github.com/davidcelis/quiet_safari
+  gem 'quiet_safari'
 end
 
 #
