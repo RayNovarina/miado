@@ -15,6 +15,7 @@ module InstallationExtensions
   # User.find_by_email(email).authenticate(password).
   module ClassMethods
     attr_accessor :view
+=begin
     #======================
     # DB update for Production release 12/02/2016
     #=======================
@@ -47,6 +48,7 @@ module InstallationExtensions
       end
     end
     #=========
+=end
 
     def update_from_or_create_from(options)
       return update_from_or_create_from_omniauth_callback(options) if options[:source] == :omniauth_callback
@@ -68,19 +70,18 @@ module InstallationExtensions
       if options.key?(:slack_user_id)
         return Installation.where(slack_team_id: options[:slack_team_id],
                                   slack_user_id: options[:slack_user_id])
-        # .reorder('slack_team_id ASC')
       end
       if options.key?(:slack_team_id)
         return Installation.where(slack_team_id: options[:slack_team_id])
-        # .reorder('slack_team_id ASC')
       end
-      Installation.all # .reorder('slack_team_id ASC')
+      Installation.all
     end
 
     # Returns: [Installation records]
     def teams
-      Installation.select('DISTINCT ON(slack_team_id)*')
-      # .reorder('slack_team_id ASC')
+      # Installation.select('DISTINCT ON(slack_team_id) *').reorder('slack_team_id ASC')
+      Installation.select('DISTINCT ON(slack_team_id) *').reorder('slack_team_id ASC').order('created_at DESC')
+      # Installation.select('DISTINCT ON(slack_team_id, created_at) *').reorder('created_at DESC')
     end
 
     # Returns: [Channel records]

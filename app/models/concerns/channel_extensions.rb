@@ -63,7 +63,7 @@ module ChannelExtensions
         last_active = Channel.all.last
         # .reorder('updated_at ASC').last
       end
-      return last_active.updated_at unless last_active.nil?
+      return last_active.last_activity_date unless last_active.nil?
       nil
     end
 
@@ -72,6 +72,9 @@ module ChannelExtensions
       if options.key?(:installations)
         return b_hash if options[:installations].empty? || options[:installations][0].bot_user_id.nil?
         install_channel = options[:installations][options[:installations].length-1]
+      elsif options.key?(:installation)
+        return b_hash if options[:installation].nil? ||
+                         (install_channel = options[:installation]).bot_user_id.nil?
       elsif options.key?(:slack_team_id)
         install_channel = installations(options)
       end
