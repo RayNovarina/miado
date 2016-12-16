@@ -1,6 +1,6 @@
 <header class="css-body-header">
   <%= render partial: 'shared/index_page_header',
-             locals: { locals: { title: "Teams(#{locals[:total_teams]}) whose members have installed MiaDo #{locals[:installations].length} times.",
+             locals: { locals: { title: "Teams(#{locals[:total_teams]}) whose members have installed MiaDo #{locals[:num_installations]} times.",
                                  pagination_collection: locals[:teams]
                                }
                      }
