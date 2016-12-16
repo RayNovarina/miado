@@ -93,6 +93,7 @@ Rails.application.configure do
   #
   # For smtp server settings.
   # SendGrid email lib and credentials are in the production environment.
+  # or in config/initializers/setup_mail.rb
   # config.action_mailer.delivery_method = :smtp
   # ActionMailer::Base.smtp_settings = {
   #  address:        'smtp.sendgrid.net',
@@ -112,5 +113,5 @@ Rails.application.configure do
   # Ref: 2.6 Generating URLs in Action Mailer Views at
   # http://guides.rubyonrails.org/action_mailer_basics.html
   config.action_mailer.default_url_options =
-    { host: 'miado.net' }
+    { host: 'miado.herokuapp.com' }
 end
