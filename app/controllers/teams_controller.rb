@@ -11,11 +11,18 @@ class TeamsController < ApplicationController
   #                    or /user/:user_id/teams for "My Teams" link
   def index
     teams = Installation.teams
+    # HACK: use installations instead of teams for reporting. Teams dont get
+    # sorted in the same order as the installations report. We want both to
+    # show most recently installed team first. Just easier to use
+    # Installation.installations instead of Installation.teams.
+    installations = Installation.installations
     @view.locals = { user: current_user,
-                     teams: teams.paginate(page: params[:page],
-                                           per_page: 1),
+                     # HACK:
+                     # teams: teams.paginate(page: params[:page],
+                     teams: installations.paginate(page: params[:page],
+                                                   per_page: 1),
                      total_teams: teams.length,
-                     installations: Installation.installations
+                     num_installations: installations.length # Installation.count
                    }
     # @view.teams = @view.url_params.key?('user_id') \
     #  ? Team.where('user_id = ?', current_user.id) \

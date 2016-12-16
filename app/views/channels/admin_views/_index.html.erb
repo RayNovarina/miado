@@ -1,7 +1,7 @@
 <header class="css-body-header">
   <%= render partial: 'shared/index_page_header',
-             locals: { locals: { title: "#{locals[:num_team_channels]} Active #{'Channel'.pluralize(locals[:num_team_channels])} in #{locals[:teams].length} #{'Team'.pluralize(locals[:teams].length)}",
-                                 pagination_collection: locals[:team_channels]
+             locals: { locals: { title: "#{locals[:num_channels]} #{'Channel'.pluralize(locals[:num_channels])} in #{locals[:num_teams]} #{'Team'.pluralize(locals[:num_teams])}",
+                                 pagination_collection: locals[:teams]
                                }
                      }
   %>

@@ -1,7 +1,7 @@
 <header class="css-body-header">
   <%= render partial: 'shared/index_page_header',
-             locals: { locals: { title: "#{locals[:total_members]} Members in #{locals[:teams].length} Teams",
-                                 pagination_collection: locals[:members]
+             locals: { locals: { title: "#{locals[:num_members]} Members in #{locals[:num_teams]} Teams",
+                                 pagination_collection: locals[:teams]
                                }
                      }
   %>

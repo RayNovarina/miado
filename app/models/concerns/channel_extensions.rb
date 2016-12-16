@@ -49,22 +49,27 @@ module ChannelExtensions
     # Various methods to support Installations and Team and Members models.
 
     def last_activity(options = {})
+      last = last_active(options)
+      return last.last_activity_date unless last.nil?
+      nil
+    end
+
+    def last_active(options = {})
       # if options.key?(:slack_user_id)
       #  return Channel.where(slack_team_id: options[:slack_team_id])
       #                .where(updated_by_slack_user_id: options[:slack_user_id])
       #                .reorder('updated_at ASC').last.updated_at
       # end
       if options.key?(:slack_team_id)
-        last_active = Channel.where(slack_team_id: options[:slack_team_id])
-                             .last
+        last = Channel.where(slack_team_id: options[:slack_team_id])
+                      .last
         # .reorder('updated_at ASC').last
       end
       if options.key?(:user)
-        last_active = Channel.all.last
+        last = Channel.all.last
         # .reorder('updated_at ASC').last
       end
-      return last_active.last_activity_date unless last_active.nil?
-      nil
+      last
     end
 
     def bot_info(options)

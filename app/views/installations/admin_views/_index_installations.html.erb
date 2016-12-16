@@ -13,7 +13,6 @@
       <%= render partial: 'installations/admin_views/index_installation_team',
                  locals: { locals: { installation: installation,
                                      auth_info: installation.auth_json['info'],
-                                     last_activity: Channel.last_activity(slack_team_id: installation.slack_team_id)
                                    }
                          }
       %>
