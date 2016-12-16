@@ -9,12 +9,10 @@
 
 <main class="css-body-main">
   <div class="container">
-    <br>
     <% locals[:teams].each do |installation| %>
       <%= render partial: 'teams/admin_views/show_team',
                  locals: { locals: { team: installation,
-                                     members: Member.team_members(slack_user_id: installation.slack_user_id,
-                                                                  slack_team_id: installation.slack_team_id),
+                                     members: Member.team_members(slack_team_id: installation.slack_team_id),
                                      channels: Installation.team_channels(slack_team_id: installation.slack_team_id),
                                      lists: Installation.team_lists(slack_team_id: installation.slack_team_id),
                                      installations: Installation.installations(slack_team_id: installation.slack_team_id),

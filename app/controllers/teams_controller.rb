@@ -13,7 +13,7 @@ class TeamsController < ApplicationController
     teams = Installation.teams
     @view.locals = { user: current_user,
                      teams: teams.paginate(page: params[:page],
-                                           per_page: 2),
+                                           per_page: 1),
                      total_teams: teams.length,
                      installations: Installation.installations
                    }

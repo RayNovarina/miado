@@ -1,45 +1,115 @@
-<h3><u><%= link_to locals[:auth_info]['team'],
-                team_path(locals[:team]),
-                title: "Created on #{locals[:team].created_at.strftime('%c')}" %></u>
-<%= " - #{locals[:installations].length} #{locals[:installations].length == 1 ? 'member has' : 'members have'} installed MiaDo." %></h3>
-<table class="table table-bordered table-hover">
-  <thead>
-    <tr>
-      <th>First<br>Added By</th>
-      <th>Added On</th>
-      <th>Last Activity (now)<br>(<%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>)</th>
-      <th>Api Token(last 25 digits)</th>
-      <th>Members</th>
-      <th>Active<br>Channels</th>
-    </tr>
-  </thead>
-  <tbody>
-    <%= render partial: 'teams/admin_views/index_team_line1',
-               locals: { locals: { team: locals[:team],
-                                   members: locals[:members],
-                                   channels: locals[:channels],
-                                   auth_info: locals[:auth_info],
-                                   last_activity: locals[:last_activity]
-                                 }
-                       }
-    %>
-  </tbody>
-</table>
+<div class="row text-left" style="padding: 0px; margin: 0px;">
+  <div class="col-sm-12">
+    <h3><u><%= link_to locals[:auth_info]['team'],
+                       team_path(locals[:team]),
+               title: "Created on #{locals[:team].created_at.strftime('%c')}" %></u>
+        <%= " - #{locals[:installations].length} #{locals[:installations].length == 1 ? 'member has' : 'members have'} installed MiaDo." %>
+    </h3>
+  </div>
+</div>
 
-<table class="table table-bordered table-hover">
-  <thead>
-    <tr>
-      <th>Bot Name</th>
-      <th>Bot Token</th>
-    </tr>
-  </thead>
-  <tbody>
-    <%= render partial: 'teams/admin_views/index_team_line2',
-               locals: { locals: { team: locals[:team],
-                                   auth_info: locals[:auth_info],
-                                   auth_extra: locals[:auth_extra]
-                                 }
-                       }
-    %>
-  </tbody>
-</table>
+<div class="row text-left">
+  <div class="col-sm-12">
+    <div class="col-sm-3">
+      <h4>First Added By:</h4>
+    </div>
+     <div class="col-sm-9" style="padding-top: 0px;">
+       <h4><u><%= link_to locals[:auth_info]['user'], '' %></u></h4>
+    </div>
+  </div>
+</div>
+
+<div class="row text-left">
+  <div class="col-sm-12">
+    <div class="col-sm-3">
+      <h4>Added On:</h4>
+    </div>
+     <div class="col-sm-9" style="padding-top: 0px;">
+       <h5><%= locals[:team].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %></h5>
+    </div>
+  </div>
+</div>
+
+<% last_activity = '*none*' if locals[:last_activity].nil?
+   last_activity = locals[:last_activity].in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') unless locals[:last_activity].nil?
+%>
+<div class="row text-left">
+  <div class="col-sm-12">
+    <div class="col-sm-3">
+      <h4>Last Activity:</h4>
+    </div>
+     <div class="col-sm-9" style="padding-top: 0px;">
+       <h5><%= last_activity %></h5>
+    </div>
+  </div>
+</div>
+
+<div class="row text-left">
+  <div class="col-sm-12">
+    <div class="col-sm-3">
+      <h4>Current Time:</h4>
+    </div>
+     <div class="col-sm-9" style="padding-top: 0px;">
+       <h5><%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %></h5>
+    </div>
+  </div>
+</div>
+
+<div class="row text-left">
+  <div class="col-sm-12">
+    <div class="col-sm-3">
+      <h4>Api User Token:</h4>
+    </div>
+     <div class="col-sm-9" style="padding-top: 0px;">
+       <h5><%= locals[:team].slack_user_api_token %></h5>
+    </div>
+  </div>
+</div>
+
+<div class="row text-left">
+  <div class="col-sm-12">
+    <div class="col-sm-3">
+      <h4><u><%= link_to 'Members', team_members_path(locals[:team]) %></u>
+             <%= " (#{locals[:members].length})" %>:</h4>
+    </div>
+     <div class="col-sm-9" style="padding-top: 0px;">
+       <h5><%= "#{locals[:members].map{|member|"@#{member.slack_user_name} "}}" %></h5>
+    </div>
+  </div>
+</div>
+
+<div class="row text-left">
+  <div class="col-sm-12">
+    <div class="col-sm-3">
+      <h4><u><%= link_to 'Active Channels', team_channels_path(locals[:team]) %></u>
+             <%= " (#{locals[:channels].length})" %>:</h4>
+    </div>
+     <div class="col-sm-9" style="padding-top: 0px;">
+       <h5><%= "#{locals[:channels].map{|channel|"##{channel.slack_channel_name} "}}" %></h5>
+    </div>
+  </div>
+</div>
+
+<% bot_name = "@#{locals[:auth_extra]['bot_info']['bot_user_id']}"
+%>
+<div class="row text-left">
+  <div class="col-sm-12">
+    <div class="col-sm-3">
+      <h4>Bot User Id:</h4>
+    </div>
+     <div class="col-sm-9" style="padding-top: 0px;">
+       <h5><u><%= link_to bot_name, '#' %></u></h5>
+    </div>
+  </div>
+</div>
+
+<div class="row text-left">
+  <div class="col-sm-12">
+    <div class="col-sm-3">
+      <h4>Api Bot Token:</h4>
+    </div>
+     <div class="col-sm-9" style="padding-top: 0px;">
+       <h5><%= locals[:team].bot_api_token %></h5>
+    </div>
+  </div>
+</div>

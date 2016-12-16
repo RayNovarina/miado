@@ -1,6 +1,6 @@
 <header class="css-body-header">
   <%= render partial: 'shared/index_page_header',
-             locals: { locals: { title: "Installations(#{locals[:total_installations]}) of #{locals[:bot_info][:name]} into (#{locals[:teams].length}) teams",
+             locals: { locals: { title: "Installations(#{locals[:total_installations]}) of #{locals[:bot_info][:name]} into (#{locals[:total_teams]}) teams",
                                  pagination_collection: locals[:installations]
                                }
                      }
@@ -9,26 +9,14 @@
 
 <main class="css-body-main">
   <div class="container">
-    <table class="table table-bordered table-hover">
-      <thead>
-        <tr>
-          <th>Team Name<br>(db recId)</th>
-          <th>Installed by<br>@Install Date<br>*Last Activity Time<br>[Server Time Now]</th>
-          <th>api auth_token</th>
-          <th>bot auth_token</th>
-        </tr>
-      </thead>
-      <tbody>
-        <% locals[:installations].each do |installation| %>
-          <%= render partial: 'installations/admin_views/index_installation_team',
-                     locals: { locals: { installation: installation,
-                                         auth_info: installation.auth_json['info'],
-                                         last_activity: Channel.last_activity(slack_team_id: installation.slack_team_id)
-                                       }
-                             }
-          %>
-        <% end %>
-      </tbody>
-    </table>
+    <% locals[:installations].each do |installation| %>
+      <%= render partial: 'installations/admin_views/index_installation_team',
+                 locals: { locals: { installation: installation,
+                                     auth_info: installation.auth_json['info'],
+                                     last_activity: Channel.last_activity(slack_team_id: installation.slack_team_id)
+                                   }
+                         }
+      %>
+    <% end %>
     </div>
 </main>
