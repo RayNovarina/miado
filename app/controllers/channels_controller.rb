@@ -14,7 +14,7 @@ class ChannelsController < ApplicationController
     # show most recently installed team first. Just easier to use
     # Installation.installations instead of Installation.teams.
     teams = Installation.installations
-    @view.locals = { teams: teams.paginate(page: params[:page],
+    @view.locals = { teams: teams.paginate(page: params[:team_page],
                                            per_page: 1),
                      num_channels: Channel.count,
                      num_teams: Installation.teams.length

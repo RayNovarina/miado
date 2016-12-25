@@ -1,7 +1,8 @@
 <header class="css-body-header">
   <%= render partial: 'shared/index_page_header',
-             locals: { locals: { title: "#{locals[:num_channels]} #{'Channel'.pluralize(locals[:num_channels])} in #{locals[:num_teams]} #{'Team'.pluralize(locals[:num_teams])}",
-                                 pagination_collection: locals[:teams]
+             locals: { locals: { title: "#{locals[:num_channels]} Active #{'channel'.pluralize(locals[:num_channels])} in #{locals[:num_teams]} #{'Team'.pluralize(locals[:num_teams])}",
+                                 pagination_collection: locals[:teams],
+                                 page_param_name: 'team_page'
                                }
                      }
   %>
@@ -9,11 +10,13 @@
 
 <main class="css-body-main">
   <div class="container">
-    <hr>
     <% locals[:teams].each do |installation| %>
       <%= render partial: 'channels/admin_views/index_team',
                  locals: { locals: { team: installation,
-                                     shared_channels: Installation.shared_team_channels(slack_team_id: installation.slack_team_id),
+                                     num_team_channels: Channel.num_team_channels(slack_team_id: installation.slack_team_id),
+                                     num_team_members: Member.num_team_members(slack_team_id: installation.slack_team_id),
+                                     team_members_paginated: Member.team_members(slack_team_id: installation.slack_team_id)
+                                                                   .paginate(page: params[:member_page], per_page: 1)
                                    }
                          }
       %>

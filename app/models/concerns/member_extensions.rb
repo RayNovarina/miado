@@ -52,6 +52,11 @@ module MemberExtensions
       Member.all.reorder('slack_team_id ASC, slack_user_name ASC')
     end
 
+    # Returns: String from ActiveRecord count()
+    def num_team_members(options = {})
+      Member.where(slack_team_id: options[:slack_team_id]).count
+    end
+
     # Note: This code is based on the observation of rtm_start data returned
     # when using a bot api token from the miado installer. In that case, the
     # im channels seem to be team bot channels and a matching user_id would be

@@ -1,0 +1,5 @@
+<h3>
+  <u><%= link_to "#{locals[:channel].slack_channel_name}", channel_path(locals[:channel]) %></u>
+  <%= ": (dbId-#{locals[:channel].id} #{locals[:channel].slack_channel_id})" %>&nbsp;&nbsp;
+  <%= " #{locals[:num_channel_tasks]} #{'Task'.pluralize(locals[:num_channel_tasks])}" %>
+</h3>

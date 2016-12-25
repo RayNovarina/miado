@@ -48,6 +48,28 @@ module ChannelExtensions
 
     # Various methods to support Installations and Team and Members models.
 
+    # Returns: [Channel records]
+    def team_channels(options = {})
+      Channel.where(slack_team_id: options[:slack_team_id])
+             .reorder('slack_user_id, is_taskbot, slack_channel_name ASC')
+    end
+
+    # Returns: String from ActiveRecord count()
+    def num_team_channels(options = {})
+      Channel.where(slack_team_id: options[:slack_team_id]).count
+    end
+
+    # Returns: [Channel records]
+    def member_channels(options = {})
+      Channel.where(slack_user_id: options[:slack_user_id])
+             .reorder('is_taskbot, slack_channel_name ASC')
+    end
+
+    # Returns: String from ActiveRecord count()
+    def num_member_channels(options = {})
+      Channel.where(slack_user_id: options[:slack_user_id]).count
+    end
+
     def last_activity(options = {})
       last = last_active(options)
       return last.last_activity_date unless last.nil?

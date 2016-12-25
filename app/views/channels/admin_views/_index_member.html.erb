@@ -1,0 +1,32 @@
+<h3 style="padding-left: 14px;">
+  <u><%= link_to "#{locals[:member].slack_user_name}", member_path(locals[:member]) %></u>
+  <%= ": (dbId-#{locals[:member].id} #{locals[:member].slack_user_id})" %>&nbsp;&nbsp;
+  <% unless locals[:member_installation].nil? %>
+    <span style="font-size: 16px;">
+      <u><%= link_to 'Added MiaDo', '' %></u>
+      On: <%= locals[:member_installation].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>
+    </span>
+  <% end %>
+</h3>
+<h4 style ="margin-top: 6px;">
+  <%= " #{locals[:num_member_tasks]} #{'Task'.pluralize(locals[:num_member_tasks])} for #{locals[:num_member_channels]} Active Channels." %>
+</h4>
+
+<% unless locals[:num_member_channels] == 0 %>
+  <div class="row" style="margin-bottom: 0px; margin-top: 0px; padding-left: 28px;">
+    <div class="css-index-top-pagination">
+      <%= will_paginate locals[:member_channels_paginated],
+                        :style => 'margin: 0px; padding: 0px;',
+                        :param_name => 'channel_page' %>
+    </div>
+  </div>
+  <% locals[:member_channels_paginated].each do |channel| %>
+    <%= render partial: 'channels/admin_views/index_member_channel',
+               locals: { locals: { channel: channel,
+                                   num_tasks: ListItem.num_items(slack_user_id: channel.slack_user_id,
+                                                                 slack_channel_id: channel.slack_channel_id)
+                                 }
+                           }
+    %>
+  <% end %>
+<% end %>

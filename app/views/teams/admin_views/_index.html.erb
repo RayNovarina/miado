@@ -12,13 +12,13 @@
     <% locals[:teams].each do |installation| %>
       <%= render partial: 'teams/admin_views/show_team',
                  locals: { locals: { team: installation,
-                                     members: Member.team_members(slack_team_id: installation.slack_team_id),
-                                     channels: Installation.team_channels(slack_team_id: installation.slack_team_id),
-                                     lists: Installation.team_lists(slack_team_id: installation.slack_team_id),
+                                     team_members: Member.team_members(slack_team_id: installation.slack_team_id),
+                                     team_channels: Channel.team_channels(slack_team_id: installation.slack_team_id),
+                                     team_list_items: [], # ListItem.team_lists(slack_team_id: installation.slack_team_id),
                                      installations: Installation.installations(slack_team_id: installation.slack_team_id),
                                      auth_info: installation.auth_json['info'],
                                      auth_extra: installation.auth_json['extra'],
-                                     last_activity: Channel.last_activity(slack_team_id: installation.slack_team_id)
+                                     last_active: Channel.last_active(slack_team_id: installation.slack_team_id)
                                    }
                          }
       %>

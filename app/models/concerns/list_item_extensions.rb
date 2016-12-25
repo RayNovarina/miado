@@ -83,6 +83,27 @@ module ListItemExtensions
       return last_active_item.updated_at unless last_active_item.nil?
       nil
     end
+
+    def num_items(options = {})
+      if options.key?(:slack_team_id)
+        if options.key?(:slack_channel_id)
+          return ListItem.where(team_id: options[:slack_team_id])
+                         .where(channel_id: options[:slack_channel_id])
+                         .count
+        end
+        return ListItem.where(team_id: options[:slack_team_id])
+                       .count
+      elsif options.key?(:slack_user_id)
+        if options.key?(:slack_channel_id)
+          return ListItem.where(slack_user_id: options[:slack_user_id])
+                         .where(channel_id: options[:slack_channel_id])
+                         .count
+        end
+        return ListItem.where(slack_user_id: options[:slack_user_id])
+                       .count
+      end
+      ListItem.count
+    end
     #
   end # module ClassMethods
 
