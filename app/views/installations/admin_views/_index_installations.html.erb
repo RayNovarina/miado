@@ -1,7 +1,9 @@
 <header class="css-body-header">
-  <%= render partial: 'shared/index_page_header',
-             locals: { locals: { title: "#{locals[:total_installations]} Installations of #{locals[:bot_info][:name]}, #{locals[:total_teams]} teams.",
-                                 pagination_collection: locals[:installations]
+  <%= render partial: 'shared/paginate_page_header',
+             locals: { locals: {
+  title: "#{pluralize(locals[:num_installations], '*Installation')}* of #{locals[:bot_info][:name]}, #{pluralize(locals[:num_teams], 'team')}.",
+                                 path: method(:installations_path),
+                                 pagination_collection: locals[:installations_paginated]
                                }
                      }
   %>
@@ -9,13 +11,30 @@
 
 <main class="css-body-main">
   <div class="container">
-    <% locals[:installations].each do |installation| %>
-      <%= render partial: 'installations/admin_views/index_installation_team',
-                 locals: { locals: { installation: installation,
-                                     auth_info: installation.auth_json['info'],
-                                   }
-                         }
-      %>
-    <% end %>
+    <table class="table table-bordered table-hover">
+      <thead>
+        <tr>
+          <th>Idx</th>
+          <th>Name</th>
+          <th>recId</th>
+          <th>Installed Date</th>
+          <th>Last Activity (type)<br>Now:&nbsp;&nbsp;<%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %></th>
+        </tr>
+      </thead>
+      <tbody>
+        <% locals[:installations_paginated].each_with_index do |installation, index| %>
+          <%= render partial: 'installations/admin_views/index_installation_team',
+                     locals: { locals: { index: index,
+                                         per_page: locals[:per_page],
+                                         page: locals[:page],
+                                         installation: installation,
+                                         auth_info: installation.auth_json['info'],
+                                       }
+                             }
+          %>
+        <% end %>
+      </tbody>
+    </table>
+
     </div>
 </main>

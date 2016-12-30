@@ -3,12 +3,14 @@ class InstallationsController < ApplicationController
 
   def index
     installations = Installation.installations
-    per_page = 1 # if @view.url_params[:options] == 'info'
+    per_page = 10 # if @view.url_params[:options] == 'info'
     # per_page = 2 unless @view.url_params[:options] == 'info'
-    @view.locals = { installations: installations.paginate(page: params[:page],
-                                                           per_page: per_page),
-                     total_installations: installations.length,
-                     total_teams: Installation.teams.length,
+    @view.locals = { installations_paginated: installations.paginate(page: params[:page],
+                                                                     per_page: per_page),
+                     page: params[:page] || '1',
+                     per_page: per_page,
+                     num_installations: installations.length,
+                     num_teams: Installation.num_teams,
                      bot_info: Channel.bot_info(installation: installations.empty? ? nil : installations[0])
                    }
   end

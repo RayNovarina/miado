@@ -8,17 +8,20 @@ class ChannelsController < ApplicationController
   #   index, show, new, edit, create, update and destroy.
   #
   def index
+    per_page = 1
     # team_channels = Installation.team_channels
     # HACK: use installations instead of teams for reporting. Teams dont get
     # sorted in the same order as the installations report. We want both to
     # show most recently installed team first. Just easier to use
     # Installation.installations instead of Installation.teams.
     teams = Installation.installations
-    @view.locals = { teams: teams.paginate(page: params[:team_page],
-                                           per_page: 1),
+    @view.locals = { teams_paginated: teams.paginate(page: params[:team_page],
+                                                     per_page: per_page),
+                     page: params[:page] || '1',
+                     per_page: per_page,
                      num_channels: Channel.count,
-                     num_teams: Installation.teams.length
-                   }
+                     num_teams: teams.length
+                 }
     # authorize @view.channels
     # Response: Controller will forward_to
     #           /views/channels/index.html.erb with @view

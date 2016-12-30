@@ -39,22 +39,26 @@ module MemberExtensions
     # Various methods to support Installations and Team and Members models.
 
     # Returns: [Member records]
-    def team_members(options = {})
+    def members(options = {})
       # Case: specified member for specified team, i.e. @dawn on MiaDo Team.
       return Member.where(slack_user_id: options[:slack_user_id],
                           slack_team_id: options[:slack_team_id]
                          ) if options.key?(:slack_user_id) && options.key?(:slack_team_id)
       # Case: all members for specified team, i.e. MiaDo Team.
-      return Member.where(slack_team_id: options[:slack_team_id])
+      return Member.where(slack_team_id: options[:slack_team_id]
+                         ) if options.key?(:slack_team_id)
+      return Member.where(slack_team_id: options[:installation].slack_team_id)
                    .reorder('slack_user_name ASC'
-                           ) if options.key?(:slack_team_id)
+                           ) if options.key?(:installation)
       # Case: all member records.
       Member.all.reorder('slack_team_id ASC, slack_user_name ASC')
     end
 
     # Returns: String from ActiveRecord count()
-    def num_team_members(options = {})
-      Member.where(slack_team_id: options[:slack_team_id]).count
+    def num_members(options = {})
+      return Channel.where(slack_team_id: options[:installation].slack_team_id)
+                    .count if options.key?(:installation)
+      '0'
     end
 
     # Note: This code is based on the observation of rtm_start data returned

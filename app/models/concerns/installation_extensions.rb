@@ -77,11 +77,24 @@ module InstallationExtensions
       Installation.all
     end
 
+    # Returns: String from ActiveRecord count()
+    def num_installations(options = {})
+      if options.key?(:slack_team_id)
+        return Installation.where(slack_team_id: options[:slack_team_id]).count
+      end
+      Installation.count
+    end
+
     # Returns: [Installation records]
     def teams
       # Installation.select('DISTINCT ON(slack_team_id) *').reorder('slack_team_id ASC')
       Installation.select('DISTINCT ON(slack_team_id) *').reorder('slack_team_id ASC').order('created_at DESC')
       # Installation.select('DISTINCT ON(slack_team_id, created_at) *').reorder('created_at DESC')
+    end
+
+    # Returns: String from ActiveRecord count()
+    def num_teams(_options = {})
+      Installation.select('DISTINCT ON(slack_team_id) *').reorder('').length.to_s
     end
 
     # Get a new "TRiMMED" copy of the rtm_start data from Slack for this team.

@@ -1,4 +1,4 @@
-<h3>
+<h3 style="margin-top: 0px;">
   <u><%= link_to "#{locals[:team].auth_json['info']['team']}", team_path(locals[:team]) %>
   </u>
   <%= ": (dbId-#{locals[:team].id} #{locals[:team].slack_team_id})" %>&nbsp;
@@ -7,27 +7,25 @@
     On: <%= locals[:team].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>
   </span>
 </h3>
-<h4 style ="margin-top: 6px;">
-  <%= " #{locals[:num_team_members]} Active members with #{locals[:num_team_channels]} Active Channels}" %>
-</h4>
 
 <% unless locals[:num_team_members] == 0 %>
-  <div class="row" style="margin-bottom: 0px; margin-top: 0px; padding-left: 28px;">
-    <div class="css-index-top-pagination">
-      <%= will_paginate locals[:team_members_paginated],
-                        :style => 'margin: 0px; padding: 0px;',
-                        :param_name => 'member_page' %>
-    </div>
-  </div>
+  <%= render partial: 'shared/paginate_page_sub1',
+             locals: { locals: { title: "#{locals[:num_team_members]} Active #{'*member'.pluralize(locals[:num_team_members])}* with #{locals[:num_team_channels]} Active Channels",
+                                 path: method(:members_path),
+                                 total_records: locals[:num_team_members],
+                                 pagination_collection: locals[:team_members_paginated],
+                                 page_param_name: 'member_page'
+                               }
+                     }
+  %>
   <% locals[:team_members_paginated].each do |member| %>
     <%= render partial: 'channels/admin_views/index_member',
                locals: { locals: { member: member,
-                                   num_member_channels: Channel.num_member_channels(slack_team_id: member.slack_team_id),
-                                   member_channels_paginated: Channel.member_channels(slack_team_id: locals[:team].slack_team_id)
+                                   num_member_channels: Channel.num_channels(member: member),
+                                   member_channels_paginated: Channel.channels(member: member)
                                                                      .paginate(page: params[:channel_page], per_page: 1),
                                    num_member_tasks: ListItem.num_items(slack_user_id: member.slack_user_id),
-                                   member_installation: Installation.installations(slack_team_id: member.slack_team_id,
-                                                                                   slack_user_id: member.slack_user_id).first
+                                   member_installation: Installation.installations(member: member).first
                                  }
                            }
     %>

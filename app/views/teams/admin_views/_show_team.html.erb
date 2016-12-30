@@ -3,7 +3,7 @@
     <h3><u><%= link_to locals[:auth_info]['team'],
                        team_path(locals[:team]),
                title: "Created on #{locals[:team].created_at.strftime('%c')}" %></u>
-        <%= " - #{locals[:installations].length} #{locals[:installations].length == 1 ? 'member has' : 'members have'} installed MiaDo." %>
+        <%= " - #{locals[:num_team_installations]} #{locals[:num_team_installations] == 1 ? 'member has' : 'members have'} installed MiaDo." %>
     </h3>
   </div>
 </div>
@@ -11,7 +11,7 @@
 <div class="row text-left">
   <div class="col-sm-12">
     <div class="col-sm-3">
-      <h4>First Added By:</h4>
+      <h4>Added By:</h4>
     </div>
      <div class="col-sm-9" style="padding-top: 0px;">
        <h4><u><%= link_to locals[:auth_info]['user'], '' %></u></h4>
@@ -96,7 +96,7 @@
   <div class="col-sm-12">
     <div class="col-sm-3">
       <h4><u><%= link_to 'Tasks', team_channels_path(locals[:team]) %></u>
-             <%= " (#{locals[:team_list_items].length})" %>:</h4>
+             <%= " (#{locals[:num_team_items]})" %>:</h4>
     </div>
      <div class="col-sm-9" style="padding-top: 0px;">
        <h5><%= last_activity_type %></h5>

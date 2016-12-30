@@ -8,18 +8,19 @@ class MembersController < ApplicationController
   #   index, show, new, edit, create, update and destroy.
   #
   def index
-    members = Member.team_members
+    per_page = 1
     # HACK: use installations instead of teams for reporting. Teams dont get
     # sorted in the same order as the installations report. We want both to
     # show most recently installed team first. Just easier to use
     # Installation.installations instead of Installation.teams.
     teams = Installation.installations
-    @view.locals = { teams: teams.paginate(page: params[:page],
-                                           per_page: 1),
-                     num_members: members.length,
-                     # teams: Installation.teams
-                     num_teams: teams.length
-                   }
+    @view.locals = { teams_paginated: teams.paginate(page: params[:page],
+                                                     per_page: per_page),
+                     page: params[:page] || '1',
+                     per_page: per_page,
+                     num_teams: teams.length,
+                     num_members: Member.count
+                 }
     # authorize @view.members
     # Response: Controller will forward_to
     #           /views/members/index.html.erb with @view

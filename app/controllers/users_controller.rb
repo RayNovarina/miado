@@ -4,7 +4,11 @@ class UsersController < ApplicationController
   before_action :make_view_helper
 
   def index
-    @view.locals = { users: User.paginate(page: params[:page], per_page: 2),
+    per_page = 1
+    @view.locals = { users_paginated: User.paginate(page: params[:page], per_page: per_page),
+                     page: params[:page] || '1',
+                     per_page: per_page,
+                     num_users: User.count,
                      installations: Installation.installations,
                      teams: Installation.teams
                    }

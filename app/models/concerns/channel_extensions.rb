@@ -49,25 +49,23 @@ module ChannelExtensions
     # Various methods to support Installations and Team and Members models.
 
     # Returns: [Channel records]
-    def team_channels(options = {})
-      Channel.where(slack_team_id: options[:slack_team_id])
-             .reorder('slack_user_id, is_taskbot, slack_channel_name ASC')
+    def channels(options = {})
+      return Channel.where(slack_team_id: options[:installation].slack_team_id)
+                    .reorder('slack_user_id, is_taskbot, slack_channel_name ASC'
+                    ) if options.key?(:installation)
+      return Channel.where(slack_user_id: options[:member].slack_user_id)
+                    .reorder('is_taskbot, slack_channel_name ASC'
+                    ) if options.key?(:member)
+      []
     end
 
     # Returns: String from ActiveRecord count()
-    def num_team_channels(options = {})
-      Channel.where(slack_team_id: options[:slack_team_id]).count
-    end
-
-    # Returns: [Channel records]
-    def member_channels(options = {})
-      Channel.where(slack_user_id: options[:slack_user_id])
-             .reorder('is_taskbot, slack_channel_name ASC')
-    end
-
-    # Returns: String from ActiveRecord count()
-    def num_member_channels(options = {})
-      Channel.where(slack_user_id: options[:slack_user_id]).count
+    def num_channels(options = {})
+      return Channel.where(slack_team_id: options[:installation].slack_team_id)
+                    .count if options.key?(:installation)
+      return Channel.where(slack_user_id: options[:member].slack_user_id)
+                    .count if options.key?(:member)
+      '0'
     end
 
     def last_activity(options = {})

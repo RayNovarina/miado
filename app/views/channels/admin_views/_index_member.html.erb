@@ -1,4 +1,4 @@
-<h3 style="padding-left: 14px;">
+<h3 style="padding-left: 20px; margin-top: 0px;">
   <u><%= link_to "#{locals[:member].slack_user_name}", member_path(locals[:member]) %></u>
   <%= ": (dbId-#{locals[:member].id} #{locals[:member].slack_user_id})" %>&nbsp;&nbsp;
   <% unless locals[:member_installation].nil? %>
@@ -8,21 +8,23 @@
     </span>
   <% end %>
 </h3>
-<h4 style ="margin-top: 6px;">
-  <%= " #{locals[:num_member_tasks]} #{'Task'.pluralize(locals[:num_member_tasks])} for #{locals[:num_member_channels]} Active Channels." %>
-</h4>
 
 <% unless locals[:num_member_channels] == 0 %>
-  <div class="row" style="margin-bottom: 0px; margin-top: 0px; padding-left: 28px;">
-    <div class="css-index-top-pagination">
-      <%= will_paginate locals[:member_channels_paginated],
-                        :style => 'margin: 0px; padding: 0px;',
-                        :param_name => 'channel_page' %>
-    </div>
-  </div>
+  <%= render partial: 'shared/paginate_page_sub2',
+             locals: { locals: { title: "#{locals[:num_member_channels]} Active #{'*Channel'.pluralize(locals[:num_member_channels])}* with #{pluralize(locals[:num_member_tasks], 'Task')}.",
+                                 path: method(:channels_path),
+                                 total_records: locals[:num_member_channels],
+                                 pagination_collection: locals[:member_channels_paginated],
+                                 page_param_name: 'channel_page'
+                               }
+                     }
+  %>
   <% locals[:member_channels_paginated].each do |channel| %>
     <%= render partial: 'channels/admin_views/index_member_channel',
                locals: { locals: { channel: channel,
+                                   channel_items_paginated: ListItem.items(slack_team_id: channel.slack_team_id,
+                                                                           slack_channel_id: channel.slack_channel_id)
+                                                                    .paginate(page: params[:item_page], per_page: 1),
                                    num_tasks: ListItem.num_items(slack_user_id: channel.slack_user_id,
                                                                  slack_channel_id: channel.slack_channel_id)
                                  }
