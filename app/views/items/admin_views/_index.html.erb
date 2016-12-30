@@ -1,7 +1,9 @@
 <header class="css-body-header">
-  <%= render partial: 'shared/index_page_header',
-             locals: { locals: { title: "#{locals[:total_items]} Tasks in #{locals[:channels].length} Channels in #{locals[:teams].length} Team",
-                                 pagination_collection: locals[:items]
+  <%= render partial: 'shared/paginate_page_header',
+             locals: { locals: { title: "#{pluralize(locals[:num_items], '*Task')}* in #{pluralize(locals[:num_channels], 'Channel')} in #{pluralize(locals[:num_teams], 'Team')}",
+                                 path: method(:teams_path),
+                                 pagination_collection: locals[:teams_paginated],
+                                 page_param_name: 'team_page'
                                }
                      }
   %>
@@ -9,15 +11,20 @@
 
 <main class="css-body-main">
   <div class="container">
-    <hr>
-    <% locals[:teams].each do |installation| %>
+    <% locals[:teams_paginated].each_with_index do |installation, index| %>
       <%= render partial: 'items/admin_views/index_team',
-                 locals: { locals: { installation: installation,
+                 locals: { locals: { index: index,
+                                     per_page: locals[:per_page],
+                                     page: locals[:page],
+                                     installation: installation,
                                      auth_info: installation.auth_json['info'],
-                                     items: ListItem.items(slack_team_id: installation.slack_team_id),
+                                     num_team_channels: Channel.num_channels(installation: installation),
+                                     num_team_members: Member.num_members(installation: installation),
+                                     num_team_items: ListItem.num_items(slack_team_id: installation.slack_team_id),
+                                     team_items: ListItem.items(slack_team_id: installation.slack_team_id)
                                    }
                          }
       %>
     <% end %>
-    </div>
+  </div>
 </main>

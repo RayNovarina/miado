@@ -1,15 +1,23 @@
-<% if locals[:items].length == 0 %>
+<% if locals[:num_team_items] == 0 %>
   <h3><u><%= link_to locals[:auth_info]['team'],
                   team_path(locals[:installation]),
                   title: "Created on #{locals[:installation].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')}" %>
-      </u> - no active channels.
+      </u>
+      &nbsp;&nbsp;<%= "#{locals[:num_team_members]} Active #{'member'.pluralize(locals[:num_team_members])} with #{pluralize(locals[:num_team_items], 'Task')} in #{locals[:num_team_channels]} Active #{'*Channel'.pluralize(locals[:num_team_channels])}*" %>
   </h3>
 <% else %>
+<h3 style="padding-bottom: 14px; margin-top: 0px;">
+    <u><%= link_to locals[:auth_info]['team'],
+                team_path(locals[:installation]),
+                title: "Created on #{locals[:installation].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')}" %>
+    </u>
+    &nbsp;&nbsp;<%= "#{locals[:num_team_members]} Active #{'member'.pluralize(locals[:num_team_members])} with #{pluralize(locals[:num_team_items], 'Task')} in #{locals[:num_team_channels]} Active #{'*Channel'.pluralize(locals[:num_team_channels])}*" %>
+</h3>
 <%
   current_channel_id = ''
   task_num = 0
   most_recent_task = nil
-  locals[:items].each_with_index do |item, index|
+  locals[:team_items].each_with_index do |item, index|
     unless current_channel_id == item.channel_id
       unless current_channel_id == '' %>
            </tbody>
@@ -18,16 +26,16 @@
       <% end %>
       <% current_channel_id = item.channel_id
          task_num = 1
-         most_recent_task = locals[:items][index]
-         locals[:items][index..-1].each do |item_for_this_channel|
+         most_recent_task = locals[:team_items][index]
+         locals[:team_items][index..-1].each do |item_for_this_channel|
            break unless item_for_this_channel.channel_id == current_channel_id
            most_recent_task = item_for_this_channel if item_for_this_channel.updated_at > most_recent_task.updated_at
          end
       %>
-      <h3><u><%= link_to locals[:auth_info]['team'],
-                      team_path(locals[:installation]),
-                      title: "Created on #{locals[:installation].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')}" %></u>
-        <%= "Channel: ##{item.channel_name}(#{current_channel_id})" %></h3>
+      <h4 style="margin-top: 0px;">
+          Channel: <u><%= link_to "##{item.channel_name}" %>"</u>
+          <%= "(#{current_channel_id})" %>
+      </h4>
         <table class="table table-bordered table-hover">
           <thead>
             <tr>
