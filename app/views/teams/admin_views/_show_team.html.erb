@@ -30,10 +30,10 @@
   </div>
 </div>
 
-<% last_activity_time = '*none*' if locals[:last_active].nil?
-   last_activity_type = '' if locals[:last_active].nil?
-   last_activity_time = locals[:last_active].last_activity_date.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') unless locals[:last_active].nil?
-   last_activity_type = "last_activity_type: \"#{locals[:last_active].last_activity_type}\"" unless locals[:last_active].nil?
+<% last_activity_time = '*none*' if locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+   last_activity_type = '' if locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+   last_activity_time = locals[:last_active].last_activity_date.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') unless locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+   last_activity_type = "last_activity_type: \"#{locals[:last_active].last_activity_type}\"" unless locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
 %>
 <div class="row text-left">
   <div class="col-sm-12">
