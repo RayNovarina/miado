@@ -22,6 +22,8 @@
   <% locals[:member_channels_paginated].each do |channel| %>
     <%= render partial: 'channels/admin_views/index_member_channel',
                locals: { locals: { channel: channel,
+                                   last_active: Channel.last_active(slack_team_id: channel.slack_team_id,
+                                                                    slack_channel_id: channel.slack_channel_id),
                                    channel_items_paginated: ListItem.items(slack_team_id: channel.slack_team_id,
                                                                            slack_channel_id: channel.slack_channel_id)
                                                                     .paginate(page: params[:item_page], per_page: 1),
