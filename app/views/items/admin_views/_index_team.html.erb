@@ -1,17 +1,42 @@
+<% this_page_team_page = params[locals[:this_page_teams_page_param_name]] || '1'
+  ui_page_num = ((this_page_team_page.to_i - 1) * locals[:paginate_per_page].to_i) + locals[:index] + 1
+  last_activity_time = '*none*' if locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+  last_activity_type = '' if locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+  last_activity_time = locals[:last_active].last_activity_date.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') unless locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+  last_activity_type = "#{locals[:last_active].last_activity_type}" unless locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+%>
 <% if locals[:num_team_items] == 0 %>
   <h3><u><%= link_to locals[:auth_info]['team'],
-                  team_path(locals[:installation]),
+                  "#{teams_path}?#{locals[:teams_page_param_name]}=#{ui_page_num}",
                   title: "Created on #{locals[:installation].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')}" %>
       </u>
       &nbsp;&nbsp;<%= "#{locals[:num_team_members]} Active #{'member'.pluralize(locals[:num_team_members])} with #{pluralize(locals[:num_team_items], 'Task')} in #{locals[:num_team_channels]} Active #{'*Channel'.pluralize(locals[:num_team_channels])}*" %>
+      <br>
+      <span style="font-size: 16px; padding-left: 20px;">
+        Last Activity at:&nbsp;<%= "#{last_activity_time}." %>&nbsp;&nbsp;Type:&nbsp;<%= "\"#{last_activity_type}\"" %>
+      </span>
+      <% if locals[:num_team_channels] == 1
+        channel = Channel.channels(installation: locals[:installation]).first
+      %>
+        <span style="font-size: 16px; padding-left: 10px;">
+          Channel: <u><%= link_to "##{channel.slack_channel_name}",
+                          '' %>
+                   </u>
+                   <%= "(#{channel.id})" %>
+        </span>
+      <% end %>
   </h3>
 <% else %>
 <h3 style="padding-bottom: 14px; margin-top: 0px;">
     <u><%= link_to locals[:auth_info]['team'],
-                team_path(locals[:installation]),
+                "#{teams_path}?#{locals[:teams_page_param_name]}=#{ui_page_num}",
                 title: "Created on #{locals[:installation].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')}" %>
     </u>
     &nbsp;&nbsp;<%= "#{locals[:num_team_members]} Active #{'member'.pluralize(locals[:num_team_members])} with #{pluralize(locals[:num_team_items], 'Task')} in #{locals[:num_team_channels]} Active #{'*Channel'.pluralize(locals[:num_team_channels])}*" %>
+    <br>
+    <span style="font-size: 16px; padding-left: 20px;">
+      Last Activity at:&nbsp;<%= "#{last_activity_time}." %>&nbsp;&nbsp;Type:&nbsp;<%= "\"#{last_activity_type}\"" %>
+    </span>
 </h3>
 <%
   current_channel_id = ''

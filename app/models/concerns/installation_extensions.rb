@@ -74,7 +74,12 @@ module InstallationExtensions
       if options.key?(:slack_team_id)
         return Installation.where(slack_team_id: options[:slack_team_id])
       end
-      Installation.all
+      if options[:sort_by] == 'alpha'
+        return Installation.reorder("auth_json -> 'info' -> 'team' ASC")
+      elsif options[:sort_by] == 'activity'
+        return Installation.reorder('last_activity_date DESC')
+      end
+      Installation.reorder('created_at DESC')
     end
 
     # Returns: String from ActiveRecord count()

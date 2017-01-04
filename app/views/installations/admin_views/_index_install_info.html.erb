@@ -1,7 +1,8 @@
 <header class="css-body-header">
-  <%= render partial: 'shared/index_page_header',
-             locals: { locals: { title: "Install info: #{locals[:total_installations]} installations of #{locals[:bot_info][:name]}. #{locals[:teams].length} teams",
-                                 pagination_collection: locals[:installations]
+  <%= render partial: 'shared/paginate_page_header',
+             locals: { locals: { title: "#{pluralize(locals[:num_installations], '*Installation_info')}* from #{locals[:bot_info][:name]}, #{pluralize(locals[:num_teams], 'team')}. Sorted by *#{locals[:sort_by_param]}*.",
+                                 path: method(:installations_path),
+                                 pagination_collection: locals[:installations_paginated]
                                }
                      }
   %>
@@ -19,13 +20,18 @@
         </tr>
       </thead>
       <tbody>
-        <% locals[:installations].each do |installation| %>
+        <% locals[:installations_paginated].each_with_index do |installation, index| %>
           <%= render partial: 'installations/admin_views/index_install_info_team',
-                     locals: { locals: { installation: installation,
+                     locals: { locals: { index: index,
+                                         installation: installation,
                                          auth_info: installation.auth_json['info'],
                                          rtm_start_members: installation.rtm_start_json['users'],
                                          rtm_start_channels: installation.rtm_start_json['channels'],
-                                         last_activity: Channel.last_activity(slack_team_id: installation.slack_team_id)
+                                         last_active: Channel.last_active(slack_team_id: installation.slack_team_id),
+                                         paginate_per_page: locals[:paginate_per_page],
+                                         this_page_teams_page_param_name: 'page',
+                                         teams_page_param_name: 'page',
+                                         sort_by_param: locals[:sort_by_param]
                                        }
                              }
           %>

@@ -1,7 +1,7 @@
 <header class="css-body-header">
   <%= render partial: 'shared/paginate_page_header',
-             locals: { locals: { title: "#{pluralize(locals[:num_items], '*Task')}* in #{pluralize(locals[:num_channels], 'Channel')} in #{pluralize(locals[:num_teams], 'Team')}",
-                                 path: method(:teams_path),
+             locals: { locals: { title: "#{pluralize(locals[:num_items], '*Task')}* in #{pluralize(locals[:num_channels], 'Channel')} in #{pluralize(locals[:num_teams], 'Team')}. Sorted by *#{locals[:sort_by_param]}*.",
+                                 path: method(:items_path),
                                  pagination_collection: locals[:teams_paginated],
                                  page_param_name: 'team_page'
                                }
@@ -14,14 +14,16 @@
     <% locals[:teams_paginated].each_with_index do |installation, index| %>
       <%= render partial: 'items/admin_views/index_team',
                  locals: { locals: { index: index,
-                                     per_page: locals[:per_page],
-                                     page: locals[:page],
+                                     paginate_per_page: locals[:paginate_per_page],
                                      installation: installation,
+                                     last_active: Channel.last_active(slack_team_id: installation.slack_team_id),
                                      auth_info: installation.auth_json['info'],
                                      num_team_channels: Channel.num_channels(installation: installation),
                                      num_team_members: Member.num_members(installation: installation),
                                      num_team_items: ListItem.num_items(slack_team_id: installation.slack_team_id),
-                                     team_items: ListItem.items(slack_team_id: installation.slack_team_id)
+                                     team_items: ListItem.items(slack_team_id: installation.slack_team_id),
+                                     this_page_teams_page_param_name: 'team_page',
+                                     teams_page_param_name: 'page'
                                    }
                          }
       %>

@@ -1,9 +1,10 @@
-<% ui_page_num = ((locals[:page].to_i - 1) * locals[:per_page].to_i) + locals[:index] + 1
+<% this_page_team_page = params[locals[:this_page_teams_page_param_name]] || '1'
+   ui_page_num = ((this_page_team_page.to_i - 1) * locals[:paginate_per_page].to_i) + locals[:index] + 1
 %>
 <tr>
   <td><%= ui_page_num %>
   <td><u><%= link_to locals[:auth_info]['team'],
-                     "#{teams_path}?page=#{ui_page_num}",
+                     "#{teams_path}?page=#{ui_page_num}&sortby=#{locals[:sort_by_param]}",
              title: "" %></u>
   </td>
   <td><%= locals[:installation].id %></td>

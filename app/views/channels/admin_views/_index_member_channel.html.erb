@@ -3,30 +3,28 @@
   <%= ": (dbId-#{locals[:channel].id} #{locals[:channel].slack_channel_id})" %>&nbsp;&nbsp;
   <%= " #{locals[:num_tasks]} #{'*Task'.pluralize(locals[:num_tasks])}*" %>
   <div style="font-size: 16px;">
-  <% last_activity_time = '*none*' if locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
-     last_activity_type = '' if locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
-     last_activity_time = locals[:last_active].last_activity_date.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') unless locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
-     last_activity_type = "#{locals[:last_active].last_activity_type}" unless locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
-  %>
-  Last Activity at:&nbsp;<%= "#{last_activity_time}." %>&nbsp;&nbsp;Type:&nbsp;<%= "\"#{last_activity_type}\"" %>
-</div>
+    <% last_activity_time = '*none*' if locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+       last_activity_type = '' if locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+       last_activity_time = locals[:last_active].last_activity_date.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') unless locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+       last_activity_type = "#{locals[:last_active].last_activity_type}" unless locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+    %>
+    Last Activity at:&nbsp;<%= "#{last_activity_time}." %>&nbsp;&nbsp;Type:&nbsp;<%= "\"#{last_activity_type}\"" %>
+  </div>
 </h3>
 
-<% unless locals[:num_tasks] == 0 %>
-  <%= render partial: 'shared/paginate_page_sub3',
-             locals: { locals: { title: "",
-                                 path: method(:items_path),
-                                 total_records: locals[:num_tasks],
-                                 pagination_collection: locals[:channel_items_paginated],
-                                 page_param_name: 'item_page'
+<%= render partial: 'shared/paginate_page_sub3',
+           locals: { locals: { title: "",
+                               path: method(:items_path),
+                               total_records: locals[:num_tasks],
+                               pagination_collection: locals[:channel_items_paginated],
+                               page_param_name: 'item_page'
+                             }
+                 }
+%>
+<% locals[:channel_items_paginated].each do |item| %>
+  <%= render partial: 'channels/admin_views/index_member_channel_item.html',
+              locals: { locals: { item: item
                                }
-                   }
+                         }
   %>
-  <% locals[:channel_items_paginated].each do |item| %>
-    <%= render partial: 'channels/admin_views/index_member_channel_item.html',
-               locals: { locals: { item: item
-                                 }
-                           }
-    %>
-  <% end %>
 <% end %>

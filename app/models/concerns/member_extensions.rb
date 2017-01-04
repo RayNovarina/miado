@@ -56,8 +56,8 @@ module MemberExtensions
 
     # Returns: String from ActiveRecord count()
     def num_members(options = {})
-      return Channel.where(slack_team_id: options[:installation].slack_team_id)
-                    .count if options.key?(:installation)
+      return Member.where(slack_team_id: options[:installation].slack_team_id)
+                   .count if options.key?(:installation)
       '0'
     end
 

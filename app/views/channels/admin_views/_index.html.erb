@@ -1,9 +1,9 @@
 <header class="css-body-header">
   <%= render partial: 'shared/paginate_page_header',
-             locals: { locals: { title: "#{locals[:num_channels]} Active #{'*channel'.pluralize(locals[:num_channels])}* in #{locals[:num_teams]} #{'Team'.pluralize(locals[:num_teams])}",
-                                 path: method(:teams_path),
+             locals: { locals: { title: "#{locals[:num_channels]} Active #{'*channel'.pluralize(locals[:num_channels])}* in #{locals[:num_teams]} #{'Team'.pluralize(locals[:num_teams])}. Sorted by *#{locals[:sort_by_param]}*",
+                                 path: method(:channels_path),
                                  pagination_collection: locals[:teams_paginated],
-                                 page_param_name: 'team_page'
+                                 page_param_name: locals[:paginate_page_param_name]
                                }
                      }
   %>
@@ -11,16 +11,29 @@
 
 <main class="css-body-main">
   <div class="container">
+    <% paginate_param_name = 'member_page'
+      if params[:clicked] == 'team_page' # locals[:paginate_page_param_name]
+        paginate_page_num = '1'
+      else
+        paginate_page_num = params[paginate_param_name]
+      end
+    %>
     <% locals[:teams_paginated].each_with_index do |installation, index| %>
       <%= render partial: 'channels/admin_views/index_team',
                  locals: { locals: { index: index,
-                                     per_page: locals[:per_page],
-                                     page: locals[:page],
                                      team: installation,
+                                     last_active: Channel.last_active(slack_team_id: installation.slack_team_id),
                                      num_team_channels: Channel.num_channels(installation: installation),
                                      num_team_members: Member.num_members(installation: installation),
+                                     paginate_per_page: locals[:paginate_per_page],
+                                     paginate_param_name: paginate_param_name,
+                                     paginate_page_num: params[paginate_param_name] || '1',
                                      team_members_paginated: Member.members(installation: installation)
-                                                                   .paginate(page: params[:member_page], per_page: 1)
+                                                                   .paginate(page: paginate_page_num, per_page: 1),
+                                     this_page_teams_page_param_name: 'team_page',
+                                     teams_page_param_name: 'page',
+                                     info_page_param_name: 'page',
+                                     members_page_param_name: 'page'
                                    }
                          }
       %>

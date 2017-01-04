@@ -1,6 +1,6 @@
 <header class="css-body-header">
   <%= render partial: 'shared/paginate_page_header',
-             locals: { locals: { title: "#{pluralize(locals[:num_teams], '*Team')}* whose members have installed MiaDo #{pluralize(locals[:num_installations], 'time')}.",
+             locals: { locals: { title: "#{pluralize(locals[:num_teams], '*Team')}* have installed MiaDo #{pluralize(locals[:num_installations], 'time')}.  Sorted by *#{locals[:sort_by_param]}*.",
                                  path: method(:teams_path),
                                  pagination_collection: locals[:teams_paginated]
                                }
@@ -13,8 +13,6 @@
     <% locals[:teams_paginated].each_with_index do |installation, index| %>
       <%= render partial: 'teams/admin_views/show_team',
                  locals: { locals: { index: index,
-                                     per_page: locals[:per_page],
-                                     page: locals[:page],
                                      team: installation,
                                      team_members: Member.members(installation: installation),
                                      team_channels: Channel.channels(installation: installation),
@@ -22,7 +20,14 @@
                                      num_team_installations: Installation.num_installations(slack_team_id: installation.slack_team_id),
                                      auth_info: installation.auth_json['info'],
                                      auth_extra: installation.auth_json['extra'],
-                                     last_active: Channel.last_active(slack_team_id: installation.slack_team_id)
+                                     last_active: Channel.last_active(slack_team_id: installation.slack_team_id),
+                                     paginate_per_page: locals[:paginate_per_page],
+                                     this_page_info_page_param_name: 'page',
+                                     info_page_param_name: 'page',
+                                     members_page_param_name: 'page',
+                                     channels_page_param_name: 'team_page',
+                                     tasks_page_param_name: 'team_page',
+                                     sort_by_param: locals[:sort_by_param]
                                    }
                          }
       %>

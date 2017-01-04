@@ -1,7 +1,6 @@
 <header class="css-body-header">
   <%= render partial: 'shared/paginate_page_header',
-             locals: { locals: {
-  title: "#{pluralize(locals[:num_installations], '*Installation')}* of #{locals[:bot_info][:name]}, #{pluralize(locals[:num_teams], 'team')}.",
+             locals: { locals: { title: "#{pluralize(locals[:num_installations], '*Installation')}* of #{locals[:bot_info][:name]}, #{pluralize(locals[:num_teams], 'team')} sorted by *#{locals[:sort_by_param]}*.",
                                  path: method(:installations_path),
                                  pagination_collection: locals[:installations_paginated]
                                }
@@ -25,10 +24,12 @@
         <% locals[:installations_paginated].each_with_index do |installation, index| %>
           <%= render partial: 'installations/admin_views/index_installation_team',
                      locals: { locals: { index: index,
-                                         per_page: locals[:per_page],
-                                         page: locals[:page],
                                          installation: installation,
                                          auth_info: installation.auth_json['info'],
+                                         paginate_per_page: locals[:paginate_per_page],
+                                         this_page_teams_page_param_name: 'page',
+                                         teams_page_param_name: 'page',
+                                         sort_by_param: locals[:sort_by_param]
                                        }
                              }
           %>

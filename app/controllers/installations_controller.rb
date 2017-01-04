@@ -2,16 +2,19 @@ class InstallationsController < ApplicationController
   before_action :make_view_helper
 
   def index
-    installations = Installation.installations
-    per_page = 10 # if @view.url_params[:options] == 'info'
-    # per_page = 2 unless @view.url_params[:options] == 'info'
-    @view.locals = { installations_paginated: installations.paginate(page: params[:page],
-                                                                     per_page: per_page),
-                     page: params[:page] || '1',
-                     per_page: per_page,
+    sort_by_param = params[:sortby] || 'install_date'
+    installations = Installation.installations(sort_by: sort_by_param)
+    paginate_page_param_name = 'page'
+    paginate_per_page = 1 if @view.url_params[:options] == 'info'
+    paginate_per_page = 10 unless @view.url_params[:options] == 'info'
+    @view.locals = { paginate_page_param_name: paginate_page_param_name,
+                     paginate_per_page: paginate_per_page,
+                     installations_paginated: installations.paginate(page: params[paginate_page_param_name],
+                                                                     per_page: paginate_per_page),
                      num_installations: installations.length,
                      num_teams: Installation.num_teams,
-                     bot_info: Channel.bot_info(installation: installations.empty? ? nil : installations[0])
+                     bot_info: Channel.bot_info(installation: installations.empty? ? nil : installations[0]),
+                     sort_by_param: sort_by_param
                    }
   end
 

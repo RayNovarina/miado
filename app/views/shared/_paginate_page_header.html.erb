@@ -1,6 +1,7 @@
 <div style="padding-left: 14px; font-size: 20px; margin-top: 44px;">
   <span style="font-size: 14px;">
-    Sort by: &nbsp;
+    <%= link_to 'Back', @view.back_path, class: 'btn btn-xs btn-primary' %>
+    &nbsp;&nbsp;&nbsp;&nbsp;Sort by: &nbsp;
     <u><%= link_to 'Install Date', locals[:path].call(sortby: 'install_date') %></u>&nbsp;&nbsp;
     <u><%= link_to 'Alpha', locals[:path].call(sortby: 'alpha') %></u>&nbsp;&nbsp;
     <u><%= link_to 'Activity', locals[:path].call(sortby: 'activity') %></u>&nbsp;&nbsp;
@@ -19,5 +20,7 @@
                       :inner_window => '2',
                       :outer_window => '1',
                       :link_separator => ' ',
-                      :param_name => page_param_name %>
+                      :param_name => page_param_name,
+                      :params => { :clicked => "#{page_param_name}" }
+  %>
 </div>

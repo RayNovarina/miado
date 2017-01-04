@@ -10,23 +10,23 @@ class TeamsController < ApplicationController
   # Note: we get here via /teams to display all teams in system (admin link)
   #                    or /user/:user_id/teams for "My Teams" link
   def index
+    sort_by_param = params[:sortby] || 'install_date'
     teams = Installation.teams
-    per_page = 1
     # HACK: use installations instead of teams for reporting. Teams dont get
     # sorted in the same order as the installations report. We want both to
     # show most recently installed team first. Just easier to use
     # Installation.installations instead of Installation.teams.
-    installations = Installation.installations
-    @view.locals = { user: current_user,
-                     # HACK:
-                     # teams: teams.paginate(page: params[:page],
-                     teams_paginated: installations.paginate(page: params[:page],
-                                                             per_page: per_page),
-                     page: params[:page] || '1',
-                     per_page: per_page,
+    installations = Installation.installations(sort_by: sort_by_param)
+    paginate_per_page = 1
+    paginate_page_param_name = 'page'
+    @view.locals = { paginate_page_param_name: paginate_page_param_name,
+                     paginate_per_page: paginate_per_page,
+                     teams_paginated: installations.paginate(page: params[paginate_page_param_name],
+                                                     per_page: paginate_per_page),
+                     num_installations: installations.length,
                      num_teams: teams.length,
-                     num_installations: installations.length # Installation.count
-                   }
+                     sort_by_param: sort_by_param
+                 }
     # @view.teams = @view.url_params.key?('user_id') \
     #  ? Team.where('user_id = ?', current_user.id) \
     #  : Channel.teams

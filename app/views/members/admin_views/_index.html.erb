@@ -1,7 +1,7 @@
 <header class="css-body-header">
   <%= render partial: 'shared/paginate_page_header',
-             locals: { locals: { title: "#{pluralize(locals[:num_members], '*Member')}* in #{pluralize(locals[:num_teams], 'Team')}",
-                                 path: method(:teams_path),
+             locals: { locals: { title: "#{pluralize(locals[:num_members], '*Member')}* in #{pluralize(locals[:num_teams], 'Team')}. Sorted by *#{locals[:sort_by_param]}*",
+                                 path: method(:members_path),
                                  pagination_collection: locals[:teams_paginated]
                                }
                      }
@@ -14,10 +14,11 @@
     <% locals[:teams_paginated].each_with_index do |installation, index| %>
       <%= render partial: 'members/admin_views/index_team',
                  locals: { locals: { index: index,
-                                     per_page: locals[:per_page],
-                                     page: locals[:page],
+                                     paginate_per_page: locals[:paginate_per_page],
                                      team: installation,
-                                     members: Member.members(slack_team_id: installation.slack_team_id)
+                                     members: Member.members(slack_team_id: installation.slack_team_id),
+                                     this_page_teams_page_param_name: 'page',
+                                     teams_page_param_name: 'page'
                                    }
                          }
       %>
