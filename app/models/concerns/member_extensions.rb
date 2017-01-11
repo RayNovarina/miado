@@ -61,33 +61,6 @@ module MemberExtensions
       '0'
     end
 
-    # Note: This code is based on the observation of rtm_start data returned
-    # when using a bot api token from the miado installer. In that case, the
-    # im channels seem to be team bot channels and a matching user_id would be
-    # the taskbot channel even if miado is not installed by that user.
-    # NOTE: if a bot token is used, the slack_user_id will find the Taskbot DM
-    #       channel for that user. IF a user token is used, the slack_user_id
-    #       will return the user's dm channel.
-    # Returns: slackUserObj{}
-    def slack_user_from_rtm_start(options)
-      options[:rtm_start]['users'].each do |user|
-        if options.key?(:slack_user_id)
-          next unless user['id'] == options[:slack_user_id]
-        elsif options.key?(:slack_user_name)
-          next unless user['name'] == options[:slack_user_name]
-        end
-        return user
-      end
-      nil
-    end
-
-    # Returns: slackDMchanObj{}
-    def slack_user_dm_chan_from_rtm_start(options)
-      find_dm_channel_from_rtm_start(
-        slack_user_id: options[:slack_user_id],
-        rtm_start: options[:rtm_start])
-    end
-
     private
 
     # Returns: Member record or nil
@@ -170,7 +143,7 @@ module MemberExtensions
     def create_from_installation(options)
       rtm_start = options[:installation].rtm_start_json
       auth_json = options[:installation].auth_json
-      user = slack_user_from_rtm_start(rtm_start: rtm_start, slack_user_id: options[:installation].slack_user_id)
+      user = Installation.slack_user_from_rtm_start(rtm_start: rtm_start, slack_user_id: options[:installation].slack_user_id)
       return nil if user.nil?
       member = Member.new(
         slack_user_id: auth_json['info']['user_id'],
@@ -183,14 +156,6 @@ module MemberExtensions
       member
     end
 
-=begin
-member = Member.fnd_or_create_from(
-  source: :rtm_data,
-  installation_slack_user_id: parsed[:url_params][:user_id],
-  slack_user_name: name,
-  slack_team_id: parsed[:url_params][:team_id]
-)
-=end
     # Inputs: options = { :installation_slack_user_id, :slack_team_id, :slack_user_name }
     # Returns: member record or nil
     # Case1: ray installs, mentions @dawnnova: look her up in ray's install rec.
@@ -216,12 +181,12 @@ member = Member.fnd_or_create_from(
       return nil if installation.nil?
       rtm_start = installation.rtm_start_json
       auth_json = installation.auth_json
-      user = slack_user_from_rtm_start(rtm_start: rtm_start, slack_user_name: options[:slack_user_name])
+      user = Installation.slack_user_from_rtm_start(rtm_start: rtm_start, slack_user_name: options[:slack_user_name])
       if user.nil?
         # Case3: member just joined team, has not installed, not in any previous
         # install rec. Get new install info unless not known by Slack.
-        rtm_start = start_data_from_rtm_start(auth_json['extra']['bot_info']['bot_access_token'])
-        return nil if (user = slack_user_from_rtm_start(rtm_start: rtm_start, slack_user_name: options[:slack_user_name])).nil?
+        rtm_start = Installation.start_data_from_rtm_start(auth_json['extra']['bot_info']['bot_access_token'])
+        return nil if (user = Installation.slack_user_from_rtm_start(rtm_start: rtm_start, slack_user_name: options[:slack_user_name])).nil?
         # update team install recs.
         Installation.where(slack_team_id: installation.slack_team_id)
                     .update_all(rtm_start_json: rtm_start,
@@ -250,74 +215,13 @@ member = Member.fnd_or_create_from(
         slack_user_api_token: options[:auth_json]['credentials']['token'],
         bot_api_token: options[:auth_json]['extra']['bot_info']['bot_access_token'],
         bot_user_id: options[:auth_json]['extra']['bot_info']['bot_user_id'],
-        bot_dm_channel_id: find_bot_dm_channel_id_from_rtm_start(
+        bot_dm_channel_id: Installation.find_bot_dm_channel_id_from_rtm_start(
           slack_user_id: options[:member].slack_user_id, rtm_start: options[:rtm_start]),
-        bot_msgs_json: bot_msgs_from_rtm_start(
+        bot_msgs_json: Installation.bot_msgs_from_rtm_start(
           slack_user_id: options[:member].slack_user_id, rtm_start: options[:rtm_start]),
         last_activity_type: options[:type],
         last_activity_date: DateTime.current)
     end
-
-    # Returns: [msg{}]
-    def bot_msgs_from_rtm_start(options)
-      msgs = []
-      options[:rtm_start]['ims'].each do |im|
-        next if im[:is_user_deleted]
-        next unless im['user'] == options[:slack_user_id]
-        next unless im.key?('latest')
-        next if im['latest'].nil?
-        msgs << {
-          'text' => im['latest']['text'],
-          'username' => im['latest']['username'],
-          'bot_id' => im['latest']['bot_id'],
-          'type' => im['latest']['type'],
-          'subtype' => im['latest']['subtype'],
-          'ts' => im['latest']['ts']
-        }
-      end
-      msgs
-    end
-
-    # Returns: String
-    def find_bot_dm_channel_id_from_rtm_start(options)
-      return nil if (im = find_dm_channel_from_rtm_start(
-        slack_user_id: options[:slack_user_id],
-        rtm_start: options[:rtm_start])).nil?
-      im['id']
-    end
-
-    # Note: This code is based on the observation of rtm_start data returned
-    # when using a bot api token from the miado installer. In that case, the
-    # im channels seem to be team bot channels and a matching user_id would be
-    # the taskbot channel even if miado is not installed by that user.
-    # NOTE: if a bot token is used, the slack_user_id will find the Taskbot DM
-    #       channel for that user. IF a user token is used, the slack_user_id
-    #       will return the user's dm channel.
-    # Returns: slackImObj{} or nil
-    def find_dm_channel_from_rtm_start(options)
-      return nil if options[:slack_user_id].nil?
-      slack_dm_channels = options[:rtm_start]['ims']
-      slack_dm_channels.each do |im|
-        next if im[:is_user_deleted]
-        return im if im['user'] == options[:slack_user_id]
-      end
-      nil
-    end
-
-    # Response: TRIMMED array of hashes. Team, users, channels, dms.
-    def start_data_from_rtm_start(api_token)
-      Installation.trim_rtm_start_data(slack_api('rtm.start', api_token))
-    end
-
-    def slack_api(method_name, api_token)
-      uri = URI.parse('https://slack.com')
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      request = Net::HTTP::Get.new("/api/#{method_name}?token=#{api_token}")
-      response = http.request(request)
-      JSON.parse(response.body)
-    end
-
     #
   end # module ClassMethods
 
