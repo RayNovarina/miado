@@ -181,6 +181,20 @@ module InstallationExtensions
       Installation.select('DISTINCT ON(slack_team_id) *').reorder('').length.to_s
     end
 
+    def last_active(options = {})
+      reorder_clause = 'updated_at DESC'
+      last = Installation.all.reorder(reorder_clause).first
+      if options.key?(:info)
+        return { model: 'Installation',
+                 last_active_rec: nil, # last,
+                 last_activity_date: last.last_activity_date || '*none*',
+                 last_activity_date_jd: last.last_activity_date.nil? ? '*none*' : last.last_activity_date.to_s(:number).to_i,
+                 last_activity_type: last.last_activity_type || '*none*',
+                 last_active_team: last.auth_json['info']['team'] }
+      end
+      last
+    end
+
     def slack_api(method_name, api_token)
       uri = URI.parse('https://slack.com')
       http = Net::HTTP.new(uri.host, uri.port)

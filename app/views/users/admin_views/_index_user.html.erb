@@ -1,3 +1,5 @@
+<%
+%>
 <tr>
   <td><%= ((locals[:page].to_i - 1) * locals[:per_page].to_i) + locals[:index] + 1 %>
   <td><u><%= link_to locals[:user].name,
@@ -6,7 +8,15 @@
   </td>
   <td><%= locals[:user].email %></td>
   <td><%= locals[:user].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %></td>
-  <td><%= locals[:last_active].nil? ? '' :locals[:last_active].updated_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %></td>
+  <td>Team:&nbsp;&nbsp;
+        <%= locals[:last_activity_info][:last_active_team] %><br>
+      Model:&nbsp;
+        <%= locals[:last_activity_info][:last_active_model] %><br>
+      Date:&nbsp;&nbsp;&nbsp;
+        <%= locals[:last_activity_info][:last_activity_date].in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %><br>
+      Type:&nbsp;&nbsp;&nbsp;
+        <%= locals[:last_activity_info][:last_activity_type] %>
+  </td>
   <td><u><%= link_to locals[:num_installations], installations_path %></u></td>
   <td><u><%= link_to locals[:num_teams], teams_path %></u></td>
 </tr>

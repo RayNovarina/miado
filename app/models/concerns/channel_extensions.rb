@@ -88,6 +88,14 @@ module ChannelExtensions
                       .reorder(reorder_clause).first
       else
         last = Channel.all.reorder(reorder_clause).first
+        if options.key?(:info)
+          return { model: 'Channel',
+                   last_active_rec: nil, # last,
+                   last_activity_date: last.last_activity_date || '*none*',
+                   last_activity_date_jd: last.last_activity_date.nil? ? '*none*' : last.last_activity_date.to_s(:number).to_i,
+                   last_activity_type: last.last_activity_type || '*none*',
+                   last_active_team: Installation.installations(slack_team_id: last.slack_team_id).first.auth_json['info']['team'] }
+        end
       end
       last
     end

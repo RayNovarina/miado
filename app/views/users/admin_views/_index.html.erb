@@ -32,7 +32,7 @@
                                          page: locals[:page],
                                          num_installations: Installation.num_installations(user: user),
                                          num_teams: Installation.num_teams(user: user),
-                                         last_active: Channel.last_active(user: user)
+                                         last_activity_info: User.last_activity(info: true)
                                        }
                              }
           %>

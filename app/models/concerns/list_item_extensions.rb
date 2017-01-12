@@ -65,17 +65,27 @@ module ListItemExtensions
     end
 
     def last_active(options = {})
+      reorder_clause = 'updated_at DESC'
       if options.key?(:slack_channel_id)
-        return ListItem.where(team_id: options[:slack_team_id])
-                       .where(channel_id: options[:slack_channel_id])
-                       .reorder('updated_at ASC').last
+        last = ListItem.where(team_id: options[:slack_team_id],
+                              channel_id: options[:slack_channel_id])
+                       .reorder(reorder_clause).first
+      elsif options.key?(:slack_user_id)
+        last = ListItem.where(team_id: options[:slack_team_id],
+                              slack_user_id: options[:slack_user_id])
+                       .reorder(reorder_clause).first
+      else
+        last = ListItem.all.reorder(reorder_clause).first
+        if options.key?(:info)
+          return { model: 'ListItem',
+                   last_active_rec: nil, # last,
+                   last_activity_date: last.updated_at || '*none*',
+                   last_activity_date_jd: last.updated_at.nil? ? '*none*' : last.updated_at.to_s(:number).to_i,
+                   last_activity_type: "#{last.debug_trace} #{last.description}",
+                   last_active_team: Installation.installations(slack_team_id: last.team_id).first.auth_json['info']['team'] }
+        end
       end
-      if options.key?(:slack_user_id)
-        return ListItem.where(team_id: options[:slack_team_id])
-                       .where(slack_user_id: options[:slack_user_id])
-                       .reorder('updated_at ASC').last
-      end
-      nil
+      last
     end
 
     def last_activity(options = {})
