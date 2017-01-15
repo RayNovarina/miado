@@ -81,7 +81,7 @@ module ListItemExtensions
                    last_active_rec: last,
                    last_active_rec_name: '',
                    last_activity_date: last.updated_at || '*none*',
-                   last_activity_date_jd: last.updated_at.nil? ? '*none*' : last.updated_at.to_s(:number).to_i,
+                   last_activity_date_jd: last.updated_at.nil? ? 0 : last.updated_at.to_s(:number).to_i,
                    last_activity_type: "#{last.debug_trace} #{last.description}",
                    last_active_team: Installation.installations(slack_team_id: last.team_id).first.auth_json['info']['team'] }
         end
