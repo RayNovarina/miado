@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170111042206) do
+ActiveRecord::Schema.define(version: 20170115043033) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -41,6 +41,7 @@ ActiveRecord::Schema.define(version: 20170111042206) do
     t.jsonb    "slack_messages"
     t.boolean  "is_taskbot",              default: false
     t.jsonb    "after_action_parse_hash"
+    t.boolean  "is_dm_channel",           default: false
   end
 
   add_index "channels", ["team_id"], name: "index_channels_on_team_id", using: :btree

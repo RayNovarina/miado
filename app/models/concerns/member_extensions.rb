@@ -64,9 +64,10 @@ module MemberExtensions
     def last_active(options = {})
       reorder_clause = 'updated_at DESC'
       last = Member.all.reorder(reorder_clause).first
-      if options.key?(:info)
-        return { model: 'Member',
-                 last_active_rec: nil, # last,
+      unless last.nil? || !options.key?(:info)
+        return { last_active_model: 'Member',
+                 last_active_rec: last,
+                 last_active_rec_name: "@#{last.slack_user_name}",
                  last_activity_date: last.last_activity_date || '*none*',
                  last_activity_date_jd: last.last_activity_date.nil? ? '*none*' : last.last_activity_date.to_s(:number).to_i,
                  last_activity_type: last.last_activity_type || '*none*',

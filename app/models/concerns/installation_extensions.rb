@@ -15,7 +15,7 @@ module InstallationExtensions
   # User.find_by_email(email).authenticate(password).
   module ClassMethods
     attr_accessor :view
-=begin
+
     #======================
     # DB update for Production update 01/??/2017
     #=======================
@@ -34,95 +34,20 @@ module InstallationExtensions
     end
 
     def update_dm_channel(channel, installation, im_list, member)
-=begin
-      if installation.nil? ||
-         !(installation.slack_user_id == channel.slack_user_id)
-        installation = Installation.installations(
-          slack_team_id: channel.slack_team_id,
-          slack_user_id: channel.slack_user_id).first
-        im_list = ims_from_im_list(installation.bot_api_token)
-        member = Member.find_from(
-          source: :slack,
-          slack_user_id: channel.slack_user_id,
-          slack_team_id: channel.slack_team_id)
-      end
-      return [nil, nil, nil] if installation.nil?
-      im = find_dm_channel_from_im_list(
-        im_list: im_list,
-        slack_channel_id: channel.slack_channel_id)
-
-      is_user_dm_channel = (im['user'] == channel.slack_user_id) unless im.nil?
-      is_member_dm_channel = !is_user_dm_channel
-      new_name = "dm_channel_for_@#{member.slack_user_name}" if is_user_dm_channel && !member.nil?
-      new_name = "dm_channel_#{channel.slack_channel_id}" if is_member_dm_channel || member.nil?
-
-      return installation if (member = Member.find_from(
-        source: :installation,
-        installation: installation)).nil?
-      return installation if (slack_user_obj = Member.slack_user_from_rtm_start(
-        rtm_start: installation.rtm_start_json,
-        slack_user_id: channel.slack_user_id)).nil?
-
-      # ray's(U0VLZ5P51) devbot channel:
-      #    channel_id	D18E3GH2P
-      # ray's(U0VLZ5P51) dm channel
-      #    channel_id	D1KE6BLG5
-      # dawn's(U0VNMUXNZ) DM channel
-      #    channel_id	D18FG2WUQ
-
-      # Channel created in DB:
-      # slack_channel_name: "directmessage",
-      # slack_channel_id: "D1KE6BLG5",
-      # slack_user_id: "U0VLZ5P51",
-
-      # rtm_start['ims'] with bot token:
-      # "id": "D18E3GH2P",
-      # "is_im": true,
-      # "user": "U0VLZ5P51",
-      # rtm_start_bot = start_data_from_rtm_start(installation.bot_api_token)
-
-      # rtm_start['ims'] with user token:
-      # "id": "D1KE6BLG5",
-      # "is_im": true,
-      # "user": "U0VLZ5P51",
-      # rtm_start_user = ERROR:
-      #    { "ok"=>false,
-      #      "error"=>"missing_scope",
-      #      "needed"=>"rtm:stream",
-      #      "provided"=>"identify,bot,commands,channels:history,im:history,chat:write:user,chat:write:bot"}
-      # rtm_start_user = start_data_from_rtm_start(installation.slack_user_api_token)
-
-      # is_user_dm_channel = (channel.slack_user_id == slack_user_obj['id'])
-      is_user_dm_channel = (member.slack_user_name == slack_user_obj['name'])
-      is_member_dm_channel = !is_user_dm_channel
-      new_name = "dm_channel_for_@#{slack_user_obj['name']}" if is_user_dm_channel
-      new_name = "dm_channel_for_#{channel.slack_user_id}" unless is_user_dm_channel
-=end
-=begin
       channel.update(
-        # slack_channel_name: new_name,
-        is_dm_channel: true,
-        is_user_dm_channel: false, # is_user_dm_channel,
-        is_member_dm_channel: false # is_member_dm_channel
-      )
-      [nil, nil, nil] # [installation, im_list, member]
+        is_dm_channel: true)
     end
 
     def update_taskbot_channel(channel)
       channel.update(
-        is_dm_channel: true,
-        is_user_dm_channel: false,
-        is_member_dm_channel: false)
+        is_dm_channel: true)
     end
 
     def update_public_channel(channel)
       channel.update(
-        is_dm_channel: false,
-        is_user_dm_channel: false,
-        is_member_dm_channel: false)
+        is_dm_channel: false)
     end
     #====================================
-=end
 
     def update_from_or_create_from(options)
       return update_from_or_create_from_omniauth_callback(options) if options[:source] == :omniauth_callback
@@ -184,9 +109,10 @@ module InstallationExtensions
     def last_active(options = {})
       reorder_clause = 'updated_at DESC'
       last = Installation.all.reorder(reorder_clause).first
-      if options.key?(:info)
-        return { model: 'Installation',
-                 last_active_rec: nil, # last,
+      unless last.nil? || !options.key?(:info)
+        return { last_active_model: 'Installation',
+                 last_active_rec: last,
+                 last_active_rec_name: '',
                  last_activity_date: last.last_activity_date || '*none*',
                  last_activity_date_jd: last.last_activity_date.nil? ? '*none*' : last.last_activity_date.to_s(:number).to_i,
                  last_activity_type: last.last_activity_type || '*none*',

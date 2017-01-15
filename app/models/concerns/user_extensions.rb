@@ -33,9 +33,10 @@ module UserExtensions
     def last_active(options = {})
       reorder_clause = 'updated_at DESC'
       last = User.all.reorder(reorder_clause).first
-      if options.key?(:info)
-        return { model: 'User',
-                 last_active_rec: nil, # last,
+      unless last.nil? || !options.key?(:info)
+        return { last_active_model: 'User',
+                 last_active_rec: last,
+                 last_active_rec_name: last.name,
                  last_activity_date: last.updated_at,
                  last_activity_date_jd: last.updated_at.to_s(:number).to_i,
                  last_activity_type: 'login',
@@ -47,17 +48,19 @@ module UserExtensions
     # Inputs: options = { user: }
     # Returns: [last_active_db, last_activity_date, last_activity_type]
     def last_activity(_options = {})
-      tables_last_active =
+      return [] if (tables_last_active = [
         User.last_active(info: :record),
         Installation.last_active(info: :record),
         Member.last_active(info: :record),
         Channel.last_active(info: :record),
         ListItem.last_active(info: :record)
+      ].compact).empty?
 
       last =
         tables_last_active.sort_by { |h| h[:last_activity_date_jd] }.last
-      { last_active_model: last[:model],
-        last_active_rec: last[:last_active],
+      { last_active_model: last[:last_active_model],
+        last_active_rec: last[:last_active_rec],
+        last_active_rec_name: last[:last_active_rec_name],
         last_activity_date: last[:last_activity_date],
         last_activity_type: last[:last_activity_type],
         last_active_team: last[:last_active_team]

@@ -76,9 +76,10 @@ module ListItemExtensions
                        .reorder(reorder_clause).first
       else
         last = ListItem.all.reorder(reorder_clause).first
-        if options.key?(:info)
-          return { model: 'ListItem',
-                   last_active_rec: nil, # last,
+        unless last.nil? || !options.key?(:info)
+          return { last_active_model: 'ListItem',
+                   last_active_rec: last,
+                   last_active_rec_name: '',
                    last_activity_date: last.updated_at || '*none*',
                    last_activity_date_jd: last.updated_at.nil? ? '*none*' : last.updated_at.to_s(:number).to_i,
                    last_activity_type: "#{last.debug_trace} #{last.description}",

@@ -69,9 +69,30 @@ module ChannelExtensions
     end
 
     def last_activity(options = {})
-      last = last_active(options)
-      return last.last_activity_date unless last.nil?
-      nil
+      unless options.key?(:info)
+        return nil if (last = last_active(options)).nil?
+        last.last_activity_date
+      end
+      return nil if options[:info][:last_active_model] == 'User'
+      if options[:info][:last_active_model] == 'ListItem'
+        args = { slack_team_id: options[:info][:last_active_rec].team_id,
+                 slack_channel_id: options[:info][:last_active_rec].channel_id
+               }
+      elsif options[:info][:last_active_model] == 'Installation'
+        args = { slack_team_id: options[:info][:last_active_rec].auth_json['info']['team_id'],
+                 slack_user_id: options[:info][:last_active_rec].auth_json['info']['user_id']
+               }
+      else
+        args = { slack_team_id: options[:info][:last_active_rec].slack_team_id,
+                 slack_user_id: options[:info][:last_active_rec].slack_user_id
+               }
+      end
+      return nil if (last = last_active(args)).nil?
+
+      { date:  last.last_activity_date,
+        type:  last.last_activity_type,
+        about: "##{last.slack_channel_name} (#{last.slack_channel_id})"
+      }
     end
 
     def last_active(options = {})
@@ -79,6 +100,10 @@ module ChannelExtensions
       if options.key?(:slack_user_id) && options.key?(:slack_team_id)
         last = Channel.where(slack_team_id: options[:slack_team_id],
                              slack_user_id: options[:slack_user_id])
+                      .reorder(reorder_clause).first
+      elsif options.key?(:slack_channel_id) && options.key?(:slack_team_id)
+        last = Channel.where(slack_team_id: options[:slack_team_id],
+                             slack_channel_id: options[:slack_channel_id])
                       .reorder(reorder_clause).first
       elsif options.key?(:slack_team_id)
         last = Channel.where(slack_team_id: options[:slack_team_id])
@@ -88,9 +113,10 @@ module ChannelExtensions
                       .reorder(reorder_clause).first
       else
         last = Channel.all.reorder(reorder_clause).first
-        if options.key?(:info)
+        unless last.nil? || !options.key?(:info)
           return { model: 'Channel',
-                   last_active_rec: nil, # last,
+                   last_active_rec: last,
+                   last_active_rec_name: "##{last.slack_channel_name}",
                    last_activity_date: last.last_activity_date || '*none*',
                    last_activity_date_jd: last.last_activity_date.nil? ? '*none*' : last.last_activity_date.to_s(:number).to_i,
                    last_activity_type: last.last_activity_type || '*none*',
@@ -98,6 +124,10 @@ module ChannelExtensions
         end
       end
       last
+    end
+
+    def last_taskbot_activity(_options = {})
+      nil
     end
 
     def bot_info(options)
@@ -244,19 +274,13 @@ module ChannelExtensions
 
     # Return: new Channel record
     def create_from_slack(options)
-      # Can not happen if normal install/not in dev testing but a taskbot
-      # channel can be detected if we look it up in the installation.rtm_start
-      # data?
-      # slack_channel_name: "directmessage",
-      # slack_channel_id: "D18FG2WUQ",
-      # return create_taskbot_channel_from_slack(options) if options[:slash_url_params]['channel_name'] == 'directmessage' &&
-      #                                                      it is a taskbot channel.
       @view ||= options[:view]
       Channel.new(
         slack_channel_name: options[:slash_url_params]['channel_name'],
         slack_channel_id: options[:slash_url_params]['channel_id'],
         slack_user_id: options[:slash_url_params]['user_id'],
-        slack_team_id: options[:slash_url_params]['team_id']
+        slack_team_id: options[:slash_url_params]['team_id'],
+        is_dm_channel: options[:slash_url_params]['channel_name'] == 'directmessage'
       )
     end
 
@@ -300,6 +324,7 @@ module ChannelExtensions
       member = Member.find_from(source: :installation, installation: options[:installation])
       Channel.create!(
         is_taskbot: true,
+        is_dm_channel: true,
         slack_channel_name: "taskbot_channel_for_@#{member.slack_user_name}",
         slack_channel_id: member.bot_dm_channel_id,
         slack_user_id: member.slack_user_id,
