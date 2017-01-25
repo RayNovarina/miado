@@ -280,9 +280,10 @@ end
 
 def scan4_due_date(p_hash)
   return unless p_hash[:err_msg].empty?
-  slash_pos = p_hash[:command].index('/')
+  slash_pos = p_hash[:command].index(' /')
   return p_hash[:err_msg] = 'Error: due date is required.' if slash_pos.nil? && p_hash[:requires_due_date]
   return if slash_pos.nil?
+  slash_pos += 1
   blank_pos = p_hash[:command].index(' ', slash_pos)
 
   end_of_date_pos = p_hash[:command].length - 1 if blank_pos.nil?
