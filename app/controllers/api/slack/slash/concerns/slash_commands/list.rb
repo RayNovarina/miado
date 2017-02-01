@@ -48,6 +48,10 @@ end
 
 # Returns: [text, attachments{}, response_options{}]
 def format_display_list(parsed, context, list_of_records)
+
+# NOTE: HACK: 
+list_of_records = [] if list_of_records.nil?
+
   text, attachments, list_ids, options = list_formats(parsed, context, list_of_records)
   # Persist the channel.list_ids[] for the next transaction.
   save_after_action_list_context(parsed, context, list_ids) unless parsed[:display_after_action_list] # parser_class.rb
