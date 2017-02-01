@@ -9,7 +9,7 @@ def list_from_parsed(parsed)
   return [] if parsed[:func] == :help
   params = parsed[:url_params]
 
-  parsed[:list_query_trace_info] = 'list_of_??' if parsed[:debug]
+  parsed[:list_query_trace_info] = 'yylist_of_??' if parsed[:debug]
   where_clause = {}
   where_not_clause = {}
   # No sort options currently.
@@ -67,7 +67,7 @@ def list_from_parsed(parsed)
 # HACK:
 #  if parsed[:debug]
     # 'list_of_assigned_open_tasks_for_one_member_in_one_channel'
-    parsed[:list_query_trace_info] = 'list_of'
+    parsed[:list_query_trace_info] = 'xxlist_of'
 
     parsed[:list_query_trace_info].concat('_unassigned') if where_clause.key?(:assigned_member_id) &&
                                                             where_clause[:assigned_member_id].nil?
