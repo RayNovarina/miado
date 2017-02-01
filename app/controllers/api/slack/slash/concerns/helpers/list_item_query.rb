@@ -96,10 +96,13 @@ def list_from_parsed(parsed)
       "        .reorder(#{reorder_string})\n")
     puts "\n#{parsed[:list_query_trace_info]}\n\n"
   end
-
-  ListItem.where(where_clause)
-          .where.not(where_not_clause)
-          .reorder(reorder_string)
+# NOTE: HACK: fixup for debug.
+  items =
+    ListItem.where(where_clause)
+            .where.not(where_not_clause)
+            .reorder(reorder_string)
+  items = [] if items.nil?
+  items
 end
 
 def list_from_list_of_ids(parsed, array_of_ids)
