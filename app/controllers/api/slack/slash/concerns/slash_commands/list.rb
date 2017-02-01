@@ -49,7 +49,7 @@ end
 # Returns: [text, attachments{}, response_options{}]
 def format_display_list(parsed, context, list_of_records)
 
-# NOTE: HACK: 
+# NOTE: HACK:
 list_of_records = [] if list_of_records.nil?
 
   text, attachments, list_ids, options = list_formats(parsed, context, list_of_records)
@@ -102,7 +102,7 @@ def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list'
                                name: 'list', match: 'team open assigned',
                                match_list_cmd: 'list team'),
          type: 'button',
-         value: { command: 'team open assigned', label: 'Team To-Do\'s', label: 'Your To-Do\'s' }.to_json,
+         value: { command: 'team open assigned', label: 'Team To-Do\'s' }.to_json,
          style: style_team_tasks
        },
        { name: 'list',

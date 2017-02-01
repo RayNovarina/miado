@@ -9,7 +9,7 @@ def list_from_parsed(parsed)
   return [] if parsed[:func] == :help
   params = parsed[:url_params]
 
-  parsed[:list_query_trace_info] = 'list_of_assigned_tasks_for_one_member_in_one_channel' if parsed[:debug]
+  parsed[:list_query_trace_info] = 'list_of_??' if parsed[:debug]
   where_clause = {}
   where_not_clause = {}
   # No sort options currently.
@@ -64,7 +64,8 @@ def list_from_parsed(parsed)
   # 11) if not parsed[:archived_option]
   where_clause[:archived] = false unless parsed[:archived_option]
 
-  if parsed[:debug]
+# HACK:
+#  if parsed[:debug]
     # 'list_of_assigned_open_tasks_for_one_member_in_one_channel'
     parsed[:list_query_trace_info] = 'list_of'
 
@@ -72,6 +73,8 @@ def list_from_parsed(parsed)
                                                             where_clause[:assigned_member_id].nil?
     parsed[:list_query_trace_info].concat('_assigned')   if where_not_clause.key?(:assigned_member_id) &&
                                                             where_not_clause[:assigned_member_id].nil?
+
+    parsed[:list_query_trace_info].concat('_assigned')   if where_clause.key?(:assigned_member_id)
 
     parsed[:list_query_trace_info].concat('_done')       if where_clause.key?(:done) &&
                                                             where_clause[:done]
@@ -95,7 +98,8 @@ def list_from_parsed(parsed)
       "        .where.not(#{where_not_clause})\n" \
       "        .reorder(#{reorder_string})\n")
     puts "\n#{parsed[:list_query_trace_info]}\n\n"
-  end
+#  end
+
 # NOTE: HACK: fixup for debug.
   items =
     ListItem.where(where_clause)
