@@ -178,7 +178,7 @@ def list_format_headline_text(parsed, context, list_of_records, add_chan_name = 
     channel_name = add_chan_name ? "*##{parsed[:url_params][:channel_name]}* channel" : ''
   end
   "`to-do list#{list_format_owner_title(context)}`" \
-  "#{list_of_records.empty? ? ' (empty)' : ''}" \
+  "#{list_of_records.nil? ? ' (nil)' : list_of_records.empty? ? ' (empty)' : ''}" \
   "#{lib_format_archived_text(parsed: parsed, ccb: parsed[:ccb])}" \
   " #{channel_name}"
 end
