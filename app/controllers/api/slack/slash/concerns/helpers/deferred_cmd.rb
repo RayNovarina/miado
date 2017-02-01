@@ -7,9 +7,9 @@ def after_action_deferred_logic(def_cmds)
   if def_cmds[0][:p_hash][:expedite_deferred_cmd]
     send_after_action_deferred_cmds(def_cmds)
   else
-    Thread.new do
+    # Thread.new do
       send_after_action_deferred_cmds(def_cmds)
-    end
+    # end
   end
 end
 
@@ -141,6 +141,10 @@ end
 #    update the user's/assigned_member_id's list dm. If someone else's task,
 #    then update both someone else's list dm and the user's list dm.
 
+# If archive - if tasknum specified: same as for append, impacts one member. If
+#              group of archived tasks, same as for group delete, impacts
+#              multiple members.
+
 # If due, same as for append.
 
 # If assign, always update the assigned_member_id's list dm.
@@ -189,9 +193,16 @@ def determine_impacted_members(parsed, deferred_cmd)
     return [] if impacted_task.nil?
     return build_taskbot_button_done_impacted_members(parsed, am_hash) if parsed[:button_actions].any?
     return build_impacted_team_members(parsed, am_hash)
+  when :archive
+    return build_many_impacted_members_for_item_info_list(parsed) if parsed[:list_action_item_info].size > 1
+    update_ccb_chan_taskbot_msg_info(
+      { 'error' => 'Task not impacted: determine_impacted_members().:archive - impacted_task[:done]' },
+      p_hash: { ccb: parsed[:ccb] }) if impacted_task[:done]
+    return [] if impacted_task[:done]
+    return build_impacted_team_members(parsed, am_hash)
   when :delete
     # delete command has already deleted the impacted task.
-    return build_many_impacted_members_for_deleted_tasks(parsed) if parsed[:list_action_item_info].size > 1
+    return build_many_impacted_members_for_item_info_list(parsed) if parsed[:list_action_item_info].size > 1
     update_ccb_chan_taskbot_msg_info(
       { 'error' => 'Task not impacted: determine_impacted_members().:delete - impacted_task[:done]' },
       p_hash: { ccb: parsed[:ccb] }) if impacted_task[:done]
@@ -230,16 +241,17 @@ end
 #                   doesn't require the taskbot list be updated.
 #   impacted_task{} = ListItem record info means we have an updated task to
 #                   process that may require the taskbot list to be updated.
-CMD_FUNCS_IGNORED_IF_TASK_HAS_NO_ASSIGNED_MEMBER = [:append, :done, :due].freeze
-# CMD_FUNCS_WE_ALWAYS_GET_impacted_task_FOR = [:assign, :unassign].freeze
+CMD_FUNCS_CHECKED_FOR_ASSIGNED_MEMBER = [:append, :due].freeze
 # Returns: impacted_task{}
 def taskbot_list_item(parsed)
-  return impacted_task_if_no_assigned_member(parsed) if CMD_FUNCS_IGNORED_IF_TASK_HAS_NO_ASSIGNED_MEMBER.include?(parsed[:func])
-  # add, assign and unassign commands include the name of the impacted member,
-  # don't need to ask db. delete and redo commands have already deleted the
+  return impacted_task_if_assigned_member(parsed) if CMD_FUNCS_CHECKED_FOR_ASSIGNED_MEMBER.include?(parsed[:func])
+  # :add, :assign and :unassign commands include the name of the impacted member,
+  # don't need to ask db. :delete and :redo commands have already deleted the
   # impacted task.
+  # :done and :archive have already stored db info in item_info_list[]
   return parsed[:list_action_item_info][0] if parsed[:func] == :delete ||
                                               parsed[:func] == :done ||
+                                              parsed[:func] == :archive ||
                                               parsed[:func] == :redo
   nil
 end
@@ -249,7 +261,7 @@ end
 #   impacted_task{} = ListItem record info means we have an updated task to
 #                   process that may require the taskbot list to be updated.
 # Returns: impacted_task{}
-def impacted_task_if_no_assigned_member(parsed)
+def impacted_task_if_assigned_member(parsed)
   return impacted_task_if_taskbot_done(parsed) if parsed[:button_actions].any? &&
                                                   (parsed[:button_actions].first['name'] == 'done and delete' ||
                                                    parsed[:button_actions].first['name'] == 'done')
@@ -258,7 +270,7 @@ def impacted_task_if_no_assigned_member(parsed)
     return nil if parsed[:func] == :redo && parsed[:assigned_member_id].nil? &&
                   task.assigned_member_id.nil?
     return nil if task.assigned_member_id.nil?
-    return { db_id: task.id, assigned_member_id: task.assigned_member_id }
+    return { db_id: task.id, assigned_member_id: task.assigned_member_id, done: task.done }
   end
   nil
 end
@@ -431,7 +443,7 @@ def build_taskbot_button_done_impacted_members(parsed, done_task_am_hash)
 end
 
 # Returns: [ impacted_member_id, impacted_member{} ]
-def build_many_impacted_members_for_deleted_tasks(parsed)
+def build_many_impacted_members_for_item_info_list(parsed)
   taskbot_trace_msg = ''
   impacted_members = []
   parsed[:list_action_item_info].each do |task_info|
@@ -441,9 +453,10 @@ def build_many_impacted_members_for_deleted_tasks(parsed)
       reason = "impacted_members.include?(#{am_hash['slack_user_id']}): " \
                "#{impacted_members.include?(am_hash['slack_user_id'])}" unless am_hash.nil?
       taskbot_trace_msg.concat(
+        'build_many_impacted_members_for_item_info_list().' \
         "Member.SlackId:#{task_info[:assigned_member_id]} we already saw " \
         'this member or member is not looking at taskbot list. list_scope: ' \
-        "#{am_hash['taskbot_list_scope']}.  #{reason}")
+        "#{am_hash.nil? ? '*unknown*' : am_hash['taskbot_list_scope']}.  #{reason}")
     end
     # skip if we already saw this member or member is not looking at taskbot list
     next if am_hash.nil? ||
@@ -454,7 +467,7 @@ def build_many_impacted_members_for_deleted_tasks(parsed)
     impacted_members << impacted_member
   end
   update_ccb_chan_taskbot_msg_info(
-    { 'error' => "Task not impacted: build_many_impacted_members_for_deleted_tasks().#{taskbot_trace_msg}" },
+    { 'error' => "Task not impacted: build_many_impacted_members_for_item_info_list().#{taskbot_trace_msg}" },
     p_hash: { ccb: parsed[:ccb] }) unless taskbot_trace_msg.empty?
   impacted_members
 end

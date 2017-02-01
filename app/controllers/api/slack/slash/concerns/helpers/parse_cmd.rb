@@ -32,6 +32,10 @@ def perform_scans_for_functions(p_hash)
     scan4_task_num(p_hash)
     scan4_mentioned_member(p_hash)
     scan4_due_date(p_hash)
+  when :archive
+    scan4_task_num(p_hash)
+    scan4_mentioned_member(p_hash)
+    scan4_options(p_hash)
   when :assign
     p_hash[:requires_task_num] = true
     scan4_task_num(p_hash)
@@ -90,7 +94,7 @@ end
 #       'delete all open tasks for @susan is a new task'
 # Case: command is as entered from command line.
 #       'a new task', 'list team'
-CMD_FUNCS = %w(append assign delete done due feedback help hints list list_taskbot lists redo unassign).freeze
+CMD_FUNCS = %w(append archive assign delete done due feedback help hints list list_taskbot lists redo unassign).freeze
 def scan4_command_func(p_hash)
   return command_func_from_button(p_hash) if p_hash[:button_actions].any?
   return command_func_from_event(p_hash) unless p_hash[:event_type].empty?
@@ -193,11 +197,11 @@ end
 #       'open' was 'list open', '' was 'list ', '4' was 'delete team 4',
 #       'open team' was 'list open team', 'team all' was 'list team all',
 #       'all open tasks for @susan is a new task' was 'delete all open tasks for @susan is a new task'
-CMD_OPTIONS = %w(all assigned done due due_first open team unassigned).freeze
+CMD_OPTIONS = %w(all archived assigned done due due_first open team unassigned).freeze
 def scan4_options(p_hash)
   return unless p_hash[:err_msg].empty?
   # Have to be adding task if command is longer than a reasonable number of
-  # options. i.e. 'list team all assigned unassigned open done'
+  # options. i.e. 'list team all assigned unassigned open done archived'
   return p_hash[:func] = :add if p_hash[:cmd_splits].length > 6 # CMD_OPTIONS.length - 1
   CMD_OPTIONS.each_with_index do |option, _index|
     next unless p_hash[:cmd_splits].include?(option)
@@ -212,10 +216,11 @@ end
 def adjust_cmd_options_for_add_cmd(p_hash)
   # OR?? remove each option as it is processed and see if anything left over.
   #      task num, due date and mentioned_member_name removed too?
-  # Have to be adding task if command is longer than a "reasonable" numboer of
+  # Have to be adding task if command is longer than a "reasonable" number of
   # options.
   num_options = 0
   num_options += 1 if p_hash[:all_option]
+  num_options += 1 if p_hash[:archived_option]
   num_options += 1 if p_hash[:assigned_option]
   num_options += 1 if p_hash[:done_option]
   num_options += 1 if p_hash[:due_option]

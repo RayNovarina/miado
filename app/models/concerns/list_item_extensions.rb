@@ -115,6 +115,21 @@ module ListItemExtensions
       end
       ListItem.count
     end
+
+    def num_archived(options = {})
+      if options.key?(:slack_team_id)
+        if options.key?(:slack_channel_id)
+          return ListItem.where(team_id: options[:slack_team_id],
+                                channel_id: options[:slack_channel_id],
+                                archived: true)
+                         .count
+        end
+        return ListItem.where(team_id: options[:slack_team_id],
+                              archived: true)
+                       .count
+      end
+      ListItem.where(archived: true).count
+    end
     #
   end # module ClassMethods
 

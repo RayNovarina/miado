@@ -107,33 +107,6 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
     [@view.channel, '']
   end
 
-=begin
-channel_id	=> wordpress: plugin; name: contact-form-slack
-channel_name	general
-command	/do
-response_url
-team_domain	shadowhtracteam => 'Shadow Htrac Team'
-team_id	WordPress for Attack Cats
-text	@ray wordpress Contact Us message. Name: visitor 1, Email: visitor1@example.com, Message: hi from visitor 1.
-token	page-contact-us.php: 0.1
-user_id	contact-form-slack
-user_name	wordpress => 'ray'
-
-def find_from_slack(options)
-  @view ||= options[:view]
-  Channel.where(slack_user_id: options[:slash_url_params]['user_id'],
-                slack_team_id: options[:slash_url_params]['team_id'],
-                slack_channel_id: options[:slash_url_params]['channel_id'])
-end
-def create_from_slack(options)
-  @view ||= options[:view]
-  channel = Channel.new(
-    slack_channel_name: options[:slash_url_params]['channel_name'],
-    slack_channel_id: options[:slash_url_params]['channel_id'],
-    slack_user_id: options[:slash_url_params]['user_id'],
-    slack_team_id: options[:slash_url_params]['team_id'],
-  )
-=end
   # Returns: [channel, error_message]
   # //HACK
   def channel_control_block_from_wordpress_plugin
@@ -233,6 +206,7 @@ def create_from_slack(options)
     return add_command(parsed) if parsed[:func] == :add
     return after_action_list_command(parsed) if parsed[:func] == :last_action_list
     return append_command(parsed) if parsed[:func] == :append
+    return archive_command(parsed) if parsed[:func] == :archive
     return assign_command(parsed) if parsed[:func] == :assign
     return delete_command(parsed) if parsed[:func] == :delete
     return discuss_command(parsed) if parsed[:func] == :discuss

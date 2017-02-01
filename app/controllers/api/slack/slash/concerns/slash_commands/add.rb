@@ -108,33 +108,33 @@ def add_response_headline_attachments(parsed, response_text = '', item_db_id = '
                                name: 'list', match: '@me open',
                                match_list_cmd: 'list'),
          type: 'button',
-         value: { command: '@me open' }.to_json
+         value: { command: '@me open', label: 'Your To-Do\'s' }.to_json
        },
        { name: 'list',
          text: lib_button_text(text: 'Team To-Do\'s', parsed: parsed,
                                name: 'list', match: 'team open assigned',
                                match_list_cmd: 'list team'),
          type: 'button',
-         value: { command: 'team open assigned' }.to_json
+         value: { command: 'team open assigned', label: 'Team To-Do\'s' }.to_json
        },
        { name: 'list',
          text: lib_button_text(text: 'All Tasks', parsed: parsed,
                                name: 'list', match: 'team all assigned unassigned open done',
                                match_list_cmd: 'list team all open done'),
          type: 'button',
-         value: { command: 'team all assigned unassigned open done' }.to_json
+         value: { command: 'team all assigned unassigned open done', label: 'All Tasks' }.to_json
        },
        { name: 'feedback',
          text: lib_button_text(text: 'Feedback', parsed: parsed, name: 'feedback'),
          type: 'button',
          # value: { resp_options: { replace_original: false } }.to_json
-         value: {}.to_json
+         value: { label: 'Feedback' }.to_json
        },
        { name: 'help',
          text: lib_button_text(text: 'Button Help', parsed: parsed,
                                name: 'help', match: 'buttons'),
          type: 'button',
-         value: { command: 'buttons' }.to_json
+         value: { command: 'buttons', label: 'Button Help' }.to_json
        }
      ]
   }]

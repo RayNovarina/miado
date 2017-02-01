@@ -8,7 +8,7 @@ end
 
 # Returns: [text, attachments]
 def all_chans_header(parsed, context, list_of_records, caller_id)
-  parsed[:response_headline] = list_format_headline_text(parsed, context, list_of_records, true) # in list.rb
+  parsed[:response_headline] = list_format_headline_text(parsed, context, list_of_records, false) # in list.rb
   # [list_chan_header(parsed, context, list_of_records, '#all-channels '), []] # in list.rb
   ['', list_chan_headline_replacement(parsed, parsed[:response_headline], caller_id)] # in list.rb
 end

@@ -2,6 +2,8 @@ def check_for_debug(url_params)
   command = url_params[:text]
   debug = command.starts_with?('$')
   command = command.slice(1, command.length).lstrip if debug
+# HACK
+# debug = true
   [command, debug]
 end
 
@@ -33,17 +35,18 @@ def debug_headers(parsed)
     "`  Slack Team: #{params['team_domain']}. " \
     "Member: #{params['user_name']}. Channel: #{params['channel_name']}`\n"
   parse_trace_info =
-    "`  parse trace: [#{params[:command]} #{params[:text]}] " \
-    "[func: #{parsed[:func]}]  [list_scope: #{parsed[:list_scope]}]  " \
+    "`  parse trace: [#{params[:command]} #{params[:text]}] `\n" \
+    "`               [func: #{parsed[:func]}]  [list_scope: #{parsed[:list_scope]}]  " \
     "[channel_scope: #{parsed[:channel_scope]}]  " \
     "[list_owner_name: #{parsed[:list_owner_name]}] `\n" \
     "`               [mentioned_member_name: #{parsed[:mentioned_member_name]}] " \
     "   options:  [team: #{parsed[:team_option]}]  " \
     "[all: #{parsed[:all_option]}]  " \
-    "[assigned: #{parsed[:assigned_option]}]  " \
-    "[done: #{parsed[:done_option]}] `\n" \
-    "`               [due: #{parsed[:due_option]}]  " \
-    "[open: #{parsed[:open_option]}]  " \
+    "[archived: #{parsed[:archived_option]}]  " \
+    "[assigned: #{parsed[:assigned_option]}] `\n" \
+    "`               [done: #{parsed[:done_option]}] " \
+    "[due: #{parsed[:due_option]}]  " \
+    "[open: #{parsed[:open_option]}] " \
     "[unassigned: #{parsed[:unassigned_option]}] `\n"
   query_info =
     "`  query via: #{parsed[:list_query_trace_info]}" \
@@ -188,6 +191,20 @@ def update_member_record_activity(options_or_mcb, activity_type, bot_msgs_json =
              last_activity_date: DateTime.current)
 end
 
+def lib_num_archived_tasks(options)
+  ListItem.num_archived(slack_team_id: options[:slack_team_id])
+end
+
+def lib_format_archived_text(options)
+  return '' if (button_info = lib_button_info_from_click(options[:parsed])).nil?
+  return '' unless button_info[:label] == 'All Tasks'
+  slack_team_id = options[:tcb].slack_team_id if options.key?(:tcb)
+  slack_team_id = options[:ccb].slack_team_id if options.key?(:ccb)
+  num_archived = lib_num_archived_tasks(slack_team_id: slack_team_id)
+  return " (#{num_archived} archived)" if num_archived > 0
+  ''
+end
+
 def lib_slack_api(method_name, api_token)
   uri = URI.parse('https://slack.com')
   http = Net::HTTP.new(uri.host, uri.port)
@@ -244,7 +261,6 @@ def log2chan_update(options)
   options[:cb].slack_messages = options[:msg_bufr]
 end
 
-
 def lib_button_text(options)
   parsed = options[:parsed]
   unless (actions = parsed[:button_actions]).empty?
@@ -265,4 +281,14 @@ def lib_button_active(button_text, parsed)
   parsed[:active_button_label] = button_text
   # "· #{button_text} ·"
   "• #{button_text} •"
+end
+
+# Returns: button_info {}
+def lib_button_info_from_click(parsed)
+  return nil if parsed[:button_callback_id].nil?
+  { func_id: parsed[:button_callback_id][:id],
+    func_name: parsed[:button_actions].first['name'],
+    value: parsed[:first_button_value],
+    label: parsed[:first_button_value][:label] || ''
+  }
 end

@@ -21,9 +21,9 @@
         <% unless (last_channel_activity = Channel.last_activity(info: locals[:last_activity_info])).nil? %>
         <b>Last channel activity:</b><br>&nbsp;&nbsp;
           Date:&nbsp;
-            <%= last_channel_activity[:date].in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %><br>&nbsp;&nbsp;
+            <%= last_channel_activity[:date].nil? ? '*none*' : last_channel_activity[:date].in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %><br>&nbsp;&nbsp;
           Type:&nbsp;
-            <%= last_channel_activity[:type] %><br>&nbsp;&nbsp;
+            <%= last_channel_activity[:type] || '*none*' %><br>&nbsp;&nbsp;
           About:&nbsp;
             <%= last_channel_activity[:about] %><br>
         <% end %>

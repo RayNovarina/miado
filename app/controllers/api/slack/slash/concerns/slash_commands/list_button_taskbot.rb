@@ -25,7 +25,7 @@ def list_button_taskbot_header_replacement(options)
                                  name: 'list', match: '@me all',
                                  match_list_cmd: 'list_taskbot @me all due_first'),
            type: 'button',
-           value: { command: '@me all' }.to_json,
+           value: { command: '@me all', label: 'Your To-Do\'s' }.to_json,
            style: style_your_tasks
          },
          { name: 'list',
@@ -33,7 +33,7 @@ def list_button_taskbot_header_replacement(options)
                                  name: 'list', match: 'team all',
                                  match_list_cmd: 'list_taskbot team all due_first'),
            type: 'button',
-           value: { command: 'team all' }.to_json,
+           value: { command: 'team all', label: 'Team To-Do\'s' }.to_json,
            style: style_team_tasks
          },
          { name: 'list',
@@ -41,7 +41,8 @@ def list_button_taskbot_header_replacement(options)
                                  name: 'list', match: 'team all assigned unassigned open done',
                                  match_list_cmd: 'list_taskbot team all assigned unassigned open done'),
            type: 'button',
-           value: { command: 'team all assigned unassigned open done' }.to_json
+           value: { command: 'team all assigned unassigned open done',
+                    label: 'All Tasks' }.to_json
          },
          # { name: 'feedback',
          # text: 'Feedback',
@@ -57,13 +58,13 @@ def list_button_taskbot_header_replacement(options)
            text: lib_button_text(text: 'Reset', parsed: options[:parsed],
                                  name: 'list', match: '@me'),
            type: 'button',
-           value: { command: '@me' }.to_json
+           value: { command: '@me', label: 'Reset' }.to_json
          },
          { name: 'help',
            text: lib_button_text(text: 'Button Help', parsed: options[:parsed],
                                  name: 'help', match: 'buttons'),
            type: 'button',
-           value: { command: 'buttons' }.to_json
+           value: { command: 'buttons', label: 'Button Help' }.to_json
          }
        ]
      },

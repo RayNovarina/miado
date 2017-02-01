@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20170115043033) do
+ActiveRecord::Schema.define(version: 20170130021849) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -65,8 +65,8 @@ ActiveRecord::Schema.define(version: 20170115043033) do
     t.string   "description"
     t.datetime "due_date"
     t.integer  "member_id"
-    t.datetime "created_at",                  null: false
-    t.datetime "updated_at",                  null: false
+    t.datetime "created_at",                                  null: false
+    t.datetime "updated_at",                                  null: false
     t.string   "channel_name"
     t.string   "command_text"
     t.string   "team_domain"
@@ -80,6 +80,7 @@ ActiveRecord::Schema.define(version: 20170115043033) do
     t.string   "debug_trace"
     t.boolean  "done"
     t.string   "updated_by_slack_user_id"
+    t.boolean  "archived",                    default: false
   end
 
   add_index "list_items", ["member_id"], name: "index_list_items_on_member_id", using: :btree
