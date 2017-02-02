@@ -30,6 +30,50 @@ module UserExtensions
       return find_from_omniauth_provider(data) if source == :omniauth_provider
     end
 
+    def last_active(options = {})
+      reorder_clause = 'updated_at DESC'
+      last = User.all.reorder(reorder_clause).first
+      unless last.nil? || !options.key?(:info)
+        return { last_active_model: 'User',
+                 last_active_rec: last,
+                 last_active_rec_name: last.name,
+                 last_activity_date: last.updated_at,
+                 last_activity_date_jd: last.updated_at.to_s(:number).to_i,
+                 last_activity_type: 'login',
+                 last_active_team: '*user*' }
+      end
+      last
+    end
+
+    # Inputs: options = { user: }
+    # Returns: [last_active_db, last_activity_date, last_activity_type]
+    def last_activity(_options = {})
+      return [] if (tables_last_active = [
+        User.last_active(info: :record),
+        Installation.last_active(info: :record),
+        Member.last_active(info: :record),
+        Channel.last_active(info: :record),
+        ListItem.last_active(info: :record)
+      ].compact).empty?
+
+      last =
+        tables_last_active.sort_by { |h| h[:last_activity_date_jd] }.last
+      { last_active_model: last[:last_active_model],
+        last_active_rec: last[:last_active_rec],
+        last_active_rec_name: last[:last_active_rec_name],
+        last_activity_date: last[:last_activity_date],
+        last_activity_type: last[:last_activity_type],
+        last_active_team: last[:last_active_team]
+      }
+=begin
+      tables_last_active =
+        [{ last_activity_date_jd: 20170110004953 }, { last_activity_date_jd: 20170110004953 },
+         { last_activity_date_jd: 20170110192151 }, { last_activity_date_jd: 20170109150608 } ]
+      tables_last_active.sort_by { |h| h[:last_activity_date_jd] }
+      tables_last_active.last
+=end
+    end
+
     private
 
     def find_or_create_from_omniauth_provider(provider)

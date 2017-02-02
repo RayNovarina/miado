@@ -15,40 +15,39 @@ module InstallationExtensions
   # User.find_by_email(email).authenticate(password).
   module ClassMethods
     attr_accessor :view
-=begin
+
     #======================
-    # DB update for Production release 12/02/2016
+    # DB update for Production update 01/??/2017
     #=======================
 
-    # Trim Installation.rtm_start_json:
-    def update_installation_recs
-      Installation.all.each do |installation|
-        # NOTE: Installation.start_data_from_rtm_start trims out the stuff
-        #       we dont want to persist.
-        rtm_start_json = start_data_from_rtm_start(installation.bot_api_token)
-        next if rtm_start_json.nil?
-        installation.update(
-          rtm_start_json: rtm_start_json,
-          last_activity_type: 'refresh rtm_start_data',
-          last_activity_date: DateTime.current)
+    def update_dm_channel_recs
+      installation, im_list, member = nil
+      Channel.all.each do |channel|
+        if channel.is_taskbot
+          update_taskbot_channel(channel)
+        elsif channel.slack_channel_name == 'directmessage'
+          installation, im_list, member = update_dm_channel(channel, installation, im_list, member)
+        else
+          update_public_channel(channel)
+        end
       end
     end
 
-    # taskbot channels: change channel name, set bot_api_token
-    def update_taskbot_channel_recs
-      Channel.where(is_taskbot: true).each do |tbot_chan|
-      member = Member.where(slack_team_id: tbot_chan.slack_team_id,
-                            slack_user_id: tbot_chan.slack_user_id).first
-      next if member.nil?
-      tbot_chan.update(
-        slack_channel_name: "taskbot_channel_for_@#{member.slack_user_name}",
-        slack_user_api_token: member.slack_user_api_token,
-        bot_api_token: member.bot_api_token,
-        bot_user_id: member.bot_user_id)
-      end
+    def update_dm_channel(channel, installation, im_list, member)
+      channel.update(
+        is_dm_channel: true)
     end
-    #=========
-=end
+
+    def update_taskbot_channel(channel)
+      channel.update(
+        is_dm_channel: true)
+    end
+
+    def update_public_channel(channel)
+      channel.update(
+        is_dm_channel: false)
+    end
+    #====================================
 
     def update_from_or_create_from(options)
       return update_from_or_create_from_omniauth_callback(options) if options[:source] == :omniauth_callback
@@ -74,7 +73,25 @@ module InstallationExtensions
       if options.key?(:slack_team_id)
         return Installation.where(slack_team_id: options[:slack_team_id])
       end
-      Installation.all
+      if options.key?(:member)
+        return Installation.where(slack_team_id: options[:member].slack_team_id,
+                                  slack_user_id: options[:member].slack_user_id)
+      end
+      # Must be All option.
+      if options[:sort_by] == 'alpha'
+        return Installation.reorder("auth_json -> 'info' -> 'team' ASC")
+      elsif options[:sort_by] == 'activity'
+        return Installation.reorder('last_activity_date DESC')
+      end
+      Installation.reorder('created_at DESC')
+    end
+
+    # Returns: String from ActiveRecord count()
+    def num_installations(options = {})
+      if options.key?(:slack_team_id)
+        return Installation.where(slack_team_id: options[:slack_team_id]).count
+      end
+      Installation.count
     end
 
     # Returns: [Installation records]
@@ -84,44 +101,47 @@ module InstallationExtensions
       # Installation.select('DISTINCT ON(slack_team_id, created_at) *').reorder('created_at DESC')
     end
 
-    # Returns: [Channel records]
-    def team_channels(options = {})
-      Channel.where(slack_team_id: options[:slack_team_id])
-             .reorder('slack_channel_name ASC')
+    # Returns: String from ActiveRecord count()
+    def num_teams(_options = {})
+      Installation.select('DISTINCT ON(slack_team_id) *').reorder('').length.to_s
     end
 
-    def team_lists(_options = {})
-      # options.key?(:slack_team_id)
-      []
-    end
-
-    # Returns: [Channel records]
-    def shared_team_channels(options)
-      channels = team_channels(options)
-      shared_channels = []
-      channels.each do |channel|
-        shared_channels << channel unless channel.slack_channel_id.starts_with?('D')
+    def last_active(options = {})
+      reorder_clause = 'updated_at DESC'
+      last = Installation.all.reorder(reorder_clause).first
+      unless last.nil? || !options.key?(:info)
+        return { last_active_model: 'Installation',
+                 last_active_rec: last,
+                 last_active_rec_name: '',
+                 last_activity_date: last.last_activity_date || '*none*',
+                 last_activity_date_jd: last.last_activity_date.nil? ? 0 : last.last_activity_date.to_s(:number).to_i,
+                 last_activity_type: last.last_activity_type || '*none*',
+                 last_active_team: last.auth_json['info']['team'] }
       end
-      shared_channels
+      last
     end
 
-    # Returns: [Channel records]
-    def dm_team_channels(options)
-      channels = team_channels(options)
-      dm_channels = []
-      channels.each do |channel|
-        dm_channels << channel if channel.slack_channel_id.starts_with?('D')
-      end
-      dm_channels
+    def slack_api(method_name, api_token)
+      uri = URI.parse('https://slack.com')
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = true
+      request = Net::HTTP::Get.new("/api/#{method_name}?token=#{api_token}")
+      response = http.request(request)
+      JSON.parse(response.body)
     end
 
-    # Returns: [Channel records]
-    def bot_team_channels(options)
-      Channel.where(slack_team_id: options[:slack_team_id], is_taskbot: true)
-             .reorder('slack_channel_name ASC')
+    # Response: TRiMMED array of hashes. Team, users, channels, dms.
+    def start_data_from_rtm_start(api_token)
+      trim_rtm_start_data(slack_api('rtm.start', api_token))
     end
 
-    # Get a new "TRiMMED" copy of the rtm_start data from Slack for this team.
+    # Inputs: api_token
+    # Returns: slack im_list object
+    def ims_from_im_list(api_token)
+      slack_api('im.list', api_token)['ims']
+    end
+
+    # Get a new "TRIMMED" copy of the rtm_start data from Slack for this team.
     # Returns: [rtm_start_json, Installation record]
     def refresh_rtm_start_data(options)
       return nil if (installation = installations(options).first).nil?
@@ -169,6 +189,108 @@ module InstallationExtensions
         end
       end
       rtm_start_json
+    end
+
+    # Note: This code is based on the observation of rtm_start data returned
+    # when using a bot api token from the miado installer. In that case, the
+    # im channels seem to be team bot channels and a matching user_id would be
+    # the taskbot channel even if miado is not installed by that user.
+    # NOTE: if a bot token is used, the slack_user_id will find the Taskbot DM
+    #       channel for that user. IF a user token is used, the slack_user_id
+    #       will return the user's dm channel.
+    # Returns: slackUserObj{}
+    def slack_user_from_rtm_start(options)
+      options[:rtm_start]['users'].each do |user|
+        if options.key?(:slack_user_id)
+          next unless user['id'] == options[:slack_user_id]
+        elsif options.key?(:slack_user_name)
+          next unless user['name'] == options[:slack_user_name]
+        end
+        return user
+      end
+      nil
+    end
+
+    # Inputs: slack_user_id
+    # Returns: slackDMchanObj{}
+    def slack_user_dm_chan_from_rtm_start(options)
+      find_dm_channel_from_rtm_start(
+        slack_user_id: options[:slack_user_id],
+        rtm_start: options[:rtm_start])
+    end
+
+    # Inputs: slack_user_id
+    # Returns: [msg{}]
+    def bot_msgs_from_rtm_start(options)
+      msgs = []
+      options[:rtm_start]['ims'].each do |im|
+        next if im[:is_user_deleted]
+        next unless im['user'] == options[:slack_user_id]
+        next unless im.key?('latest')
+        next if im['latest'].nil?
+        msgs << {
+          'text' => im['latest']['text'],
+          'username' => im['latest']['username'],
+          'bot_id' => im['latest']['bot_id'],
+          'type' => im['latest']['type'],
+          'subtype' => im['latest']['subtype'],
+          'ts' => im['latest']['ts']
+        }
+      end
+      msgs
+    end
+
+    # Inputs: rtm_start, slack_user_id
+    # Returns: String
+    def find_bot_dm_channel_id_from_rtm_start(options)
+      return nil if (im = find_dm_channel_from_rtm_start(
+        slack_user_id: options[:slack_user_id],
+        rtm_start: options[:rtm_start])).nil?
+      im['id']
+    end
+
+=begin
+im_list = Installation.slack_api('im.list', installation.bot_api_token)
+=> {"ok"=>true,
+ "ims"=>
+  [{"id"=>"D18F7T2TW", "created"=>1463082203, "is_im"=>true, "is_org_shared"=>false, "user"=>"USLACKBOT", "is_user_deleted"=>false},
+   {"id"=>"D18E3GH2P", "created"=>1463082203, "is_im"=>true, "is_org_shared"=>false, "user"=>"U0VLZ5P51", "is_user_deleted"=>false},
+   {"id"=>"D18FG2WUQ", "created"=>1463082204, "is_im"=>true, "is_org_shared"=>false, "user"=>"U0VNMUXNZ", "is_user_deleted"=>false},
+   {"id"=>"D18FV4PAN", "created"=>1463082204, "is_im"=>true, "is_org_shared"=>false, "user"=>"U17DNLFQ9", "is_user_deleted"=>false},
+   {"id"=>"D18E3GHEX", "created"=>1463082204, "is_im"=>true, "is_org_shared"=>false, "user"=>"U17DUJVGA", "is_user_deleted"=>false},
+   {"id"=>"D18E3GHLK", "created"=>1463082204, "is_im"=>true, "is_org_shared"=>false, "user"=>"U17DUPQDQ", "is_user_deleted"=>false}]}
+=end
+  # Inputs: im_list, slack_channel_id
+    def find_dm_channel_from_im_list(options)
+      return nil if options.key?(:im_list) && options[:im_list].nil?
+      return nil if options.key?(:slack_channel_id) && options[:slack_channel_id].nil?
+      options[:im_list].each do |im|
+        next if im['is_user_deleted']
+        return im if im['id'] == options[:slack_channel_id]
+      end
+      nil
+    end
+
+    # Note: This code is based on the observation of rtm_start data returned
+    # when using a bot api token from the miado installer. In that case, the
+    # im channels seem to be team bot channels and a matching user_id would be
+    # the taskbot channel even if miado is not installed by that user.
+    # NOTE: if a bot token is used, the slack_user_id will find the Taskbot DM
+    #       channel for that user. IF a user token is used, the slack_user_id
+    #       will return the user's dm channel.
+    #
+    # Inputs: rtm_start, (slack_user_id or slack_channel_id)
+    # Returns: slackImObj{} or nil
+    def find_dm_channel_from_rtm_start(options)
+      return nil if options.key?(:slack_user_id) && options[:slack_user_id].nil?
+      return nil if options.key?(:slack_channel_id) && options[:slack_channel_id].nil?
+      slack_dm_channels = options[:rtm_start]['ims']
+      slack_dm_channels.each do |im|
+        next if im[:is_user_deleted]
+        return im if options.key?(:slack_user_id) && im['user'] == options[:slack_user_id]
+        return im if options.key?(:slack_channel_id) && im['id'] == options[:slack_channel_id]
+      end
+      nil
     end
 
     private
@@ -225,20 +347,6 @@ module InstallationExtensions
         last_activity_type: options[:type],
         last_activity_date: DateTime.current
       )
-    end
-
-    # Response: TRiMMED array of hashes. Team, users, channels, dms.
-    def start_data_from_rtm_start(api_token)
-      trim_rtm_start_data(slack_api('rtm.start', api_token))
-    end
-
-    def slack_api(method_name, api_token)
-      uri = URI.parse('https://slack.com')
-      http = Net::HTTP.new(uri.host, uri.port)
-      http.use_ssl = true
-      request = Net::HTTP::Get.new("/api/#{method_name}?token=#{api_token}")
-      response = http.request(request)
-      JSON.parse(response.body)
     end
   end
 end

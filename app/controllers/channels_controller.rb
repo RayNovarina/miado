@@ -13,12 +13,18 @@ class ChannelsController < ApplicationController
     # sorted in the same order as the installations report. We want both to
     # show most recently installed team first. Just easier to use
     # Installation.installations instead of Installation.teams.
-    teams = Installation.installations
-    @view.locals = { teams: teams.paginate(page: params[:page],
-                                           per_page: 1),
+    sort_by_param = params[:sortby] || 'install_date'
+    teams = Installation.installations(sort_by: sort_by_param)
+    paginate_per_page = 1
+    paginate_page_param_name = 'team_page'
+    @view.locals = { paginate_page_param_name: paginate_page_param_name,
+                     paginate_per_page: paginate_per_page,
+                     teams_paginated: teams.paginate(page: params[paginate_page_param_name],
+                                                     per_page: paginate_per_page),
                      num_channels: Channel.count,
-                     num_teams: Installation.teams.length
-                   }
+                     num_teams: teams.length,
+                     sort_by_param: sort_by_param
+                 }
     # authorize @view.channels
     # Response: Controller will forward_to
     #           /views/channels/index.html.erb with @view

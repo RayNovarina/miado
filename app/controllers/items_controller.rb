@@ -8,14 +8,23 @@ class ItemsController < ApplicationController
   #   index, show, new, edit, create, update and destroy.
   #
   def index
-    @view.items = ListItem.all
-    @view.teams = Installation.teams
-    @view.channels = Channel.all
-    @view.locals = { items: @view.items.paginate(page: params[:page],
-                                                 per_page: 2),
-                     total_items: @view.items.length,
-                     teams: @view.teams,
-                     channels: @view.channels
+    # team_channels = Installation.team_channels
+    # HACK: use installations instead of teams for reporting. Teams dont get
+    # sorted in the same order as the installations report. We want both to
+    # show most recently installed team first. Just easier to use
+    # Installation.installations instead of Installation.teams.
+    sort_by_param = params[:sortby] || 'install_date'
+    @view.teams = Installation.installations(sort_by: sort_by_param)
+    paginate_per_page = 1
+    paginate_page_param_name = 'team_page'
+    @view.locals = { paginate_page_param_name: paginate_page_param_name,
+                     paginate_per_page: paginate_per_page,
+                     teams_paginated: @view.teams.paginate(page: params[paginate_page_param_name],
+                                                           per_page: paginate_per_page),
+                     num_items: ListItem.count,
+                     num_channels: Channel.count,
+                     num_teams: @view.teams.length,
+                     sort_by_param: sort_by_param
                    }
     # authorize @view.items
     # Response: Controller will forward_to

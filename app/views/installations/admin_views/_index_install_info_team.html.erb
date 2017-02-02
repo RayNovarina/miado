@@ -1,10 +1,12 @@
-<% members = locals[:rtm_start_members]
-   channels = locals[:rtm_start_channels]
+<% this_page_team_page = params[locals[:this_page_teams_page_param_name]] || '1'
+   ui_page_num = ((this_page_team_page.to_i - 1) * locals[:paginate_per_page].to_i) + locals[:index] + 1
+   members = locals[:rtm_start_members] || {}
+   channels = locals[:rtm_start_channels] || {}
 %>
 
 <tr>
   <td><u><%= link_to locals[:auth_info]['team'],
-              installation_path(locals[:installation]),
+              "#{teams_path}?page=#{ui_page_num}",
               title: "" %>
       </u>
       <br>(<%= locals[:installation].id %>)

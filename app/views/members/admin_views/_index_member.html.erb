@@ -1,7 +1,10 @@
+<% last_activity = "*none*" if locals[:last_active].nil?
+   last_activity = "#{locals[:last_active].updated_at.in_time_zone('Pacific Time (US & Canada)').strftime('%a %B %e, %Y %l:%M%P - PT')} (#{locals[:last_active].debug_trace})" unless locals[:last_active].nil?
+%>
 <tr>
-  <td><%= "@#{locals[:member]['slack_user_name']}" %></td>
-  <td><%= locals[:member]['slack_real_name'] %></td>
+  <td><u><%= link_to "@#{locals[:member]['slack_user_name']}", member_path(locals[:member]) %></u>
+  </td>
   <td><%= locals[:member]['slack_user_id'] %></td>
   <td><%= "#{locals[:installation].nil? ? '*not installed*' : locals[:installation].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')}" %></td>
-  <td><%= "#{locals[:last_activity].nil? ? '*none*' :locals[:last_activity].in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')}" %></td>
+  <td><%= "#{last_activity}" %></td>
 </tr>

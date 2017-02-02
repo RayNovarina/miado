@@ -1,9 +1,17 @@
+<% this_page_info_page = params[locals[:this_page_info_page_param_name]] || '1'
+   ui_page_num = ((this_page_info_page.to_i - 1) * locals[:paginate_per_page].to_i) + locals[:index] + 1
+   last_activity_time = '*none*' if locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+   last_activity_type = '' if locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+   last_activity_time = locals[:last_active].last_activity_date.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') unless locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+   last_activity_type = "#{locals[:last_active].last_activity_type}" unless locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+%>
+
 <div class="row text-left" style="padding: 0px; margin: 0px;">
   <div class="col-sm-12">
     <h3><u><%= link_to locals[:auth_info]['team'],
-                       team_path(locals[:team]),
+               "#{installations_path}?options=info&#{locals[:info_page_param_name]}=#{ui_page_num}&sortby=#{locals[:sort_by_param]}",
                title: "Created on #{locals[:team].created_at.strftime('%c')}" %></u>
-        <%= " - #{locals[:installations].length} #{locals[:installations].length == 1 ? 'member has' : 'members have'} installed MiaDo." %>
+        <%= " - #{locals[:num_team_installations]} #{locals[:num_team_installations] == 1 ? 'member has' : 'members have'} installed MiaDo." %>
     </h3>
   </div>
 </div>
@@ -11,10 +19,10 @@
 <div class="row text-left">
   <div class="col-sm-12">
     <div class="col-sm-3">
-      <h4>First Added By:</h4>
+      <h4>Added By:</h4>
     </div>
      <div class="col-sm-9" style="padding-top: 0px;">
-       <h4><u><%= link_to locals[:auth_info]['user'], '' %></u></h4>
+       <h4><u><%= link_to locals[:auth_info]['user'], "#{members_path}?#{locals[:members_page_param_name]}=#{ui_page_num}" %></u></h4>
     </div>
   </div>
 </div>
@@ -30,16 +38,13 @@
   </div>
 </div>
 
-<% last_activity = '*none*' if locals[:last_activity].nil?
-   last_activity = locals[:last_activity].in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') unless locals[:last_activity].nil?
-%>
 <div class="row text-left">
   <div class="col-sm-12">
     <div class="col-sm-3">
       <h4>Last Activity:</h4>
     </div>
      <div class="col-sm-9" style="padding-top: 0px;">
-       <h5><%= last_activity %></h5>
+       <h5><%= last_activity_time %></h5>
     </div>
   </div>
 </div>
@@ -69,11 +74,13 @@
 <div class="row text-left">
   <div class="col-sm-12">
     <div class="col-sm-3">
-      <h4><u><%= link_to 'Members', team_members_path(locals[:team]) %></u>
-             <%= " (#{locals[:members].length})" %>:</h4>
+      <h4><u><%= link_to 'Members',
+                         "#{members_path}?#{locals[:members_page_param_name]}=#{ui_page_num}" %>
+         </u>
+             <%= " (#{locals[:team_members].length})" %>:</h4>
     </div>
      <div class="col-sm-9" style="padding-top: 0px;">
-       <h5><%= "#{locals[:members].map{|member|"@#{member.slack_user_name} "}}" %></h5>
+       <h5><%= "#{locals[:team_members].map{|member|"@#{member.slack_user_name} "}}" %></h5>
     </div>
   </div>
 </div>
@@ -81,11 +88,27 @@
 <div class="row text-left">
   <div class="col-sm-12">
     <div class="col-sm-3">
-      <h4><u><%= link_to 'Channels', team_channels_path(locals[:team]) %></u>
-             <%= " (#{locals[:channels].length})" %>:</h4>
+      <h4><u><%= link_to 'Channels',
+                         "#{channels_path}?#{locals[:channels_page_param_name]}=#{ui_page_num}" %>
+         </u>
+             <%= " (#{locals[:team_channels].length})" %>:</h4>
     </div>
      <div class="col-sm-9" style="padding-top: 0px;">
-       <h5><%= "#{locals[:channels].map{|channel|"##{channel.slack_channel_name} "}}" %></h5>
+       <h5><%= "#{locals[:team_channels].map{|channel|"##{channel.slack_channel_name} "}}" %></h5>
+    </div>
+  </div>
+</div>
+
+<div class="row text-left">
+  <div class="col-sm-12">
+    <div class="col-sm-3">
+      <h4><u><%= link_to 'Tasks',
+                 "#{items_path}?#{locals[:tasks_page_param_name]}=#{ui_page_num}" %>
+          </u>
+             <%= " (#{locals[:num_team_items]})" %>:</h4>
+    </div>
+     <div class="col-sm-9" style="padding-top: 0px;">
+       <h5><%= last_activity_type %></h5>
     </div>
   </div>
 </div>

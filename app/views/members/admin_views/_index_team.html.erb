@@ -1,6 +1,9 @@
-<h3><%= "Members(#{locals[:members].length}) for Team" %>
+<% this_page_team_page = params[locals[:this_page_teams_page_param_name]] || '1'
+  ui_page_num = ((this_page_team_page.to_i - 1) * locals[:paginate_per_page].to_i) + locals[:index] + 1
+%>
+<h3><%= "#{pluralize(locals[:members].length, '*Member')}* for Team" %>
     <u><%= link_to locals[:team].auth_json['info']['team'],
-                   team_path(locals[:team]),
+                   "#{teams_path}?#{locals[:teams_page_param_name]}=#{ui_page_num}",
                    title: "Team added #{locals[:team].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')}" %></u>
     <%= "(#{locals[:team].slack_team_id})" %>
 </h3>
@@ -9,10 +12,9 @@
     <thead>
       <tr>
         <th>Slack User Name</th>
-        <th>Real Name</th>
         <th>Slack User Id</th>
         <th>Installed MiaDo on Date</th>
-        <th>Last Created Task Date (now)<br>(<%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>)</th>
+        <th>Last Created Task Date (type)<br>Now:&nbsp;&nbsp;<%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %></th>
       </tr>
     </thead>
     <tbody>
@@ -22,9 +24,8 @@
                                        installation: Installation.installations(slack_team_id: locals[:team].slack_team_id,
                                                                                 slack_user_id: member['slack_user_id']
                                                                                ).first,
-                                       last_activity: ListItem.last_activity(slack_team_id: locals[:team].slack_team_id,
-                                                                             slack_user_id: member['slack_user_id']
-                                                                            )
+                                       last_active: ListItem.last_active(slack_team_id: locals[:team].slack_team_id,
+                                                                         slack_user_id: member['slack_user_id'])
                                      }
                            }
         %>

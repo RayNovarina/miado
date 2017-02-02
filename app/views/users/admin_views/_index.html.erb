@@ -1,37 +1,43 @@
 <header class="css-body-header">
-  <%= render partial: 'shared/index_page_header',
-             locals: { locals: { title: "Users (#{locals[:users].length})",
-                                 pagination_collection: locals[:users]
+  <%= render partial: 'shared/paginate_page_header',
+             locals: { locals: { title: "#{pluralize(locals[:num_users], '*User')}*",
+                                 path: method(:users_path),
+                                 pagination_collection: locals[:users_paginated]
                                }
                      }
   %>
 </header>
+<br>
 
 <main class="css-body-main">
   <div class="container">
     <table class="table table-bordered table-hover">
       <thead>
         <tr>
+          <th>Idx</th>
           <th>Name</th>
           <th>Email</th>
           <th>SignUp Date</th>
-          <th>Last Activity (now)<br>(<%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>)</th>
-          <th><u><%= link_to 'Installations', installations_path %></u><%= " (#{locals[:installations].length}) by" %></th>
-          <th><u><%= link_to 'Teams', teams_path %></u><%= " (#{locals[:teams].length})" %></th>
+          <th>Last Activity<br>Now:&nbsp;&nbsp;<%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %></th>
+          <th>Installations</th>
+          <th>Teams</th>
         </tr>
       </thead>
       <tbody>
-        <% User.all.each do |user| %>
+        <% locals[:users_paginated].each_with_index do |user, index| %>
           <%= render partial: 'users/admin_views/index_user',
-                     locals: { locals: { user: user,
-                                         installations: [], # locals[:installations],
-                                         teams: [], # locals[:teams],
-                                         last_active: Channel.last_active(user: user)
+                     locals: { locals: { index: index,
+                                         user: user,
+                                         per_page: locals[:per_page],
+                                         page: locals[:page],
+                                         num_installations: Installation.num_installations(user: user),
+                                         num_teams: Installation.num_teams(user: user),
+                                         last_activity_info: User.last_activity(info: true)
                                        }
                              }
           %>
         <% end %>
       </tbody>
     </table>
-    </div>
+  </div>
 </main>

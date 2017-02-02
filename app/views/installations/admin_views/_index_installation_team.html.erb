@@ -1,72 +1,17 @@
-<div class="row text-left" style="padding: 0px; margin: 0px;">
-  <div class="col-sm-12">
-    <h3><u><%= link_to locals[:auth_info]['team'],
-                       installation_path(locals[:installation]),
-               title: "" %></u>
-      &nbsp;&nbsp;Db recId: <%= locals[:installation].id %>.
-      &nbsp;&nbsp;Installed by:&nbsp;
-      <u><%= link_to locals[:auth_info]['user'],
-                     installation_path(locals[:installation]),
+<% this_page_team_page = params[locals[:this_page_teams_page_param_name]] || '1'
+   ui_page_num = ((this_page_team_page.to_i - 1) * locals[:paginate_per_page].to_i) + locals[:index] + 1
+%>
+<tr>
+  <td><%= ui_page_num %>
+  <td><u><%= link_to locals[:auth_info]['team'],
+                     "#{teams_path}?page=#{ui_page_num}&sortby=#{locals[:sort_by_param]}",
              title: "" %></u>
-    </h3>
-  </div>
-</div>
-
-<div class="row text-left">
-  <div class="col-sm-12">
-    <div class="col-sm-2">
-      <h4>Installed On:</h4>
-    </div>
-     <div class="col-sm-10" style="padding-top: 0px;">
-       <h5><%= locals[:installation].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %></h5>
-    </div>
-  </div>
-</div>
-
-<div class="row text-left">
-  <div class="col-sm-12">
-    <div class="col-sm-2">
-      <h4>Last Activity at:</h4>
-    </div>
-     <div class="col-sm-10" style="padding-top: 0px;">
-       <h5><%= locals[:installation].last_activity_date
-                                    .in_time_zone("Pacific Time (US & Canada)")
-                                    .strftime('%a %B %e, %Y %l:%M%P - PT') %>
-          &nbsp;(<%= locals[:installation].last_activity_type %>)                          
-      </h5>
-    </div>
-  </div>
-</div>
-
-<div class="row text-left">
-  <div class="col-sm-12">
-    <div class="col-sm-2">
-      <h4>Current Time:</h4>
-    </div>
-     <div class="col-sm-10" style="padding-top: 0px;">
-       <h5><%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT')  %></h5>
-    </div>
-  </div>
-</div>
-
-<div class="row text-left">
-  <div class="col-sm-12">
-    <div class="col-sm-2">
-      <h4>Api User Token:</h4>
-    </div>
-     <div class="col-sm-10" style="padding-top: 0px;">
-       <h5><%= locals[:installation].slack_user_api_token %></h5>
-    </div>
-  </div>
-</div>
-
-<div class="row text-left">
-  <div class="col-sm-12">
-    <div class="col-sm-2">
-      <h4>Api Bot Token:</h4>
-    </div>
-     <div class="col-sm-10" style="padding-top: 0px;">
-       <h5><%= locals[:installation].bot_api_token %></h5>
-    </div>
-  </div>
-</div>
+  </td>
+  <td><%= locals[:installation].id %></td>
+  <td><%= locals[:installation].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %></td>
+  <td><%= locals[:installation].last_activity_date
+                               .in_time_zone("Pacific Time (US & Canada)")
+                               .strftime('%a %B %e, %Y %l:%M%P - PT') %>
+     &nbsp;(<%= locals[:installation].last_activity_type %>)
+  </td>
+</tr>

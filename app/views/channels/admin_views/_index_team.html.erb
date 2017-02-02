@@ -1,62 +1,60 @@
-<% active_channels = locals[:shared_channels].length %>
-<h3><%= "Active Channels(#{active_channels}) for Team #{locals[:team].auth_json['info']['team']}" %></h3>
-<% unless active_channels == 0 %>
-  <table class="table table-bordered table-hover">
-    <span style="font-size: 1.2em;"><%= "Shared Channels(#{locals[:shared_channels].length})" %></span>
-    <thead>
-      <tr>
-        <th>Name - Creator<br>(db recId)</th>
-        <th>Slack Chan Id</th>
-        <th>Created Date</th>
-        <th>Last Task Activity type<br>@Date(now)<br>(<%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>)</th>
-        <th>Last Taskbot Msg to<br>@Date</th>
-        <th>Tasks</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% locals[:shared_channels].each do |channel| %>
-        <%= render partial: 'channels/admin_views/index_shared_channel',
-                   locals: { locals: { channel: channel,
-                                       items: ListItem.items(slack_team_id: channel.slack_team_id,
-                                                             slack_channel_id: channel.slack_channel_id),
-                                       last_item: ListItem.last_active(slack_team_id: channel.slack_team_id,
-                                                                       slack_channel_id: channel.slack_channel_id),
-                                       member: Member.find_from(source: :slack,
-                                                                slack_user_id: channel.slack_user_id,
-                                                                slack_team_id: channel.slack_team_id)
-                                     }
-                           }
-        %>
-      <% end %>
-    </tbody>
-  </table>
+<% this_page_team_page = params[locals[:this_page_teams_page_param_name]] || '1'
+   ui_page_num = ((this_page_team_page.to_i - 1) * locals[:paginate_per_page].to_i) + locals[:index] + 1
+   last_activity_time = '*none*' if locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+   last_activity_type = '' if locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+   last_activity_time = locals[:last_active].last_activity_date.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') unless locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+   last_activity_type = "#{locals[:last_active].last_activity_type}" unless locals[:last_active].nil? || locals[:last_active].last_activity_date.nil?
+%>
+<h3 style="margin-top: 0px;">
+  <u><%= link_to "#{locals[:team].auth_json['info']['team']}",
+                 "#{teams_path}?#{locals[:teams_page_param_name]}=#{ui_page_num}" %>
+  </u>
+  <%= ": (dbId-#{locals[:team].id} #{locals[:team].slack_team_id})" %>&nbsp;
+  <span style="font-size: 16px;">
+    First <u><%= link_to 'Installed',
+                         "#{installations_path}?options=info&#{locals[:info_page_param_name]}=#{ui_page_num}" %>
+          </u>&nbsp;
+    By: <u><%= link_to locals[:team].auth_json['info']['user'],
+                       "#{members_path}?#{locals[:members_page_param_name]}=#{ui_page_num}" %>
+        </u>&nbsp;
+    On: <%= locals[:team].created_at.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>
+  </span>
+  <br>
+  <span style="font-size: 16px; padding-left: 20px;">
+  Last Activity at:&nbsp;<%= "#{last_activity_time}." %>&nbsp;&nbsp;Type:&nbsp;<%= "\"#{last_activity_type}\"" %>
+  </span>
+</h3>
 
-  <table class="table table-bordered table-hover">
-    <span style="font-size: 1.2em;">Last Activity</span>
-    <thead>
-      <tr>
-        <th>Name - Creator<br>(db recId)</th>
-        <th>Task Activity type<br>@Date(now)<br>(<%= DateTime.current.in_time_zone("Pacific Time (US & Canada)").strftime('%a %B %e, %Y %l:%M%P - PT') %>)</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% locals[:shared_channels].each do |channel| %>
-        <%= render partial: 'channels/admin_views/index_channel_recent_activity',
-                   locals: { locals: { channel: channel,
-                                       items: ListItem.items(slack_team_id: channel.slack_team_id,
-                                                             slack_channel_id: channel.slack_channel_id),
-                                       last_item: ListItem.last_active(slack_team_id: channel.slack_team_id,
-                                                                       slack_channel_id: channel.slack_channel_id),
-                                       member: Member.find_from(source: :slack,
-                                                                slack_user_id: channel.slack_user_id,
-                                                                slack_team_id: channel.slack_team_id)
-                                     }
-                           }
-        %>
-      <% end %>
-    </tbody>
-
-  </table>
-  <% end %>
-<br>
+<%= render partial: 'shared/paginate_page_sub1',
+           locals: { locals: { title: "#{locals[:num_team_members]} Active #{'*member'.pluralize(locals[:num_team_members])}* with #{locals[:num_team_channels]} Active #{'Channel'.pluralize(locals[:num_team_channels])}",
+                               path: method(:members_path),
+                               total_records: locals[:num_team_members],
+                               pagination_collection: locals[:team_members_paginated],
+                               parent_page_param_name: '',
+                               page_param_name: locals[:paginate_param_name]
+                             }
+                  }
+%>
+<% locals[:team_members_paginated].each do |member| %>
+  <% paginate_param_name = 'channel_page'
+    if params[:clicked] == 'member_page' ||
+       params[:clicked] == 'team_page'
+      paginate_page_num = '1'
+    else
+      paginate_page_num = params[paginate_param_name]
+    end
+  %>
+  <%= render partial: 'channels/admin_views/index_member',
+             locals: { locals: { member: member,
+                                 num_member_channels: Channel.num_channels(member: member),
+                                 member_channels_paginated: Channel.channels(member: member)
+                                                                   .paginate(page: paginate_page_num, per_page: 1),
+                                 num_member_tasks: ListItem.num_items(slack_user_id: member.slack_user_id),
+                                 member_installation: Installation.installations(member: member).first,
+                                 ui_page_num: ui_page_num,
+                                 members_page_param_name: locals[:members_page_param_name],
+                                 info_page_param_name: 'page'
+                               }
+                         }
+  %>
+<% end %>

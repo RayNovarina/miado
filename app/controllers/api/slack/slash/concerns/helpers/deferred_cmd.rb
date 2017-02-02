@@ -370,7 +370,7 @@ end
 def build_impacted_team_members(parsed, task_am_hash)
   taskbot_trace_msg = ''
   impacted_members = []
-  Member.team_members(slack_team_id: parsed[:ccb].slack_team_id).each do |member|
+  Member.members(slack_team_id: parsed[:ccb].slack_team_id).each do |member|
     am_hash = am_hash_from_member_record(
       parsed: parsed,
       mcb: member,

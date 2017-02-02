@@ -65,23 +65,55 @@ module ListItemExtensions
     end
 
     def last_active(options = {})
+      reorder_clause = 'updated_at DESC'
       if options.key?(:slack_channel_id)
-        return ListItem.where(team_id: options[:slack_team_id])
-                       .where(channel_id: options[:slack_channel_id])
-                       .reorder('updated_at ASC').last
+        last = ListItem.where(team_id: options[:slack_team_id],
+                              channel_id: options[:slack_channel_id])
+                       .reorder(reorder_clause).first
+      elsif options.key?(:slack_user_id)
+        last = ListItem.where(team_id: options[:slack_team_id],
+                              slack_user_id: options[:slack_user_id])
+                       .reorder(reorder_clause).first
+      else
+        last = ListItem.all.reorder(reorder_clause).first
+        unless last.nil? || !options.key?(:info)
+          return { last_active_model: 'ListItem',
+                   last_active_rec: last,
+                   last_active_rec_name: '',
+                   last_activity_date: last.updated_at || '*none*',
+                   last_activity_date_jd: last.updated_at.nil? ? 0 : last.updated_at.to_s(:number).to_i,
+                   last_activity_type: "#{last.debug_trace} #{last.description}",
+                   last_active_team: Installation.installations(slack_team_id: last.team_id).first.auth_json['info']['team'] }
+        end
       end
-      if options.key?(:slack_user_id)
-        return ListItem.where(team_id: options[:slack_team_id])
-                       .where(slack_user_id: options[:slack_user_id])
-                       .reorder('updated_at ASC').last
-      end
-      nil
+      last
     end
 
     def last_activity(options = {})
       last_active_item = last_active(options)
       return last_active_item.updated_at unless last_active_item.nil?
       nil
+    end
+
+    def num_items(options = {})
+      if options.key?(:slack_team_id)
+        if options.key?(:slack_channel_id)
+          return ListItem.where(team_id: options[:slack_team_id])
+                         .where(channel_id: options[:slack_channel_id])
+                         .count
+        end
+        return ListItem.where(team_id: options[:slack_team_id])
+                       .count
+      elsif options.key?(:slack_user_id)
+        if options.key?(:slack_channel_id)
+          return ListItem.where(slack_user_id: options[:slack_user_id])
+                         .where(channel_id: options[:slack_channel_id])
+                         .count
+        end
+        return ListItem.where(slack_user_id: options[:slack_user_id])
+                       .count
+      end
+      ListItem.count
     end
     #
   end # module ClassMethods

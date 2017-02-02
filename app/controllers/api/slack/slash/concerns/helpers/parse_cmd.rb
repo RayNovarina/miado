@@ -244,6 +244,11 @@ def scan4_mentioned_member(p_hash)
   return unless p_hash[:err_msg].empty?
   at_pos = 0 if p_hash[:command].starts_with?('@')
   at_pos = p_hash[:command].index(' @') + 1 unless p_hash[:command].starts_with?('@') || p_hash[:command].index(' @').nil?
+  if at_pos.nil? && p_hash[:func] == :add && p_hash[:ccb].is_dm_channel
+    p_hash[:mentioned_member_id], p_hash[:mentioned_member_name] =
+      slack_member_from_name(p_hash, 'me')
+    return
+  end
   return p_hash[:err_msg] = 'Error: team member must be mentioned.' if at_pos.nil? && p_hash[:requires_mentioned_member]
   return if at_pos.nil?
   delimiter_pos = p_hash[:command].index(' ', at_pos) || p_hash[:command].index(',', at_pos)
@@ -252,6 +257,7 @@ def scan4_mentioned_member(p_hash)
   end_of_name_pos = delimiter_pos - 1 unless delimiter_pos.nil?
 
   name = p_hash[:command].slice(at_pos + 1, end_of_name_pos - at_pos)
+
   p_hash[:mentioned_member_id], p_hash[:mentioned_member_name] =
     slack_member_from_name(p_hash, name)
   if p_hash[:mentioned_member_id].nil?

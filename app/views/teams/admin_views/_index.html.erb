@@ -1,7 +1,8 @@
 <header class="css-body-header">
-  <%= render partial: 'shared/index_page_header',
-             locals: { locals: { title: "Teams(#{locals[:total_teams]}) whose members have installed MiaDo #{locals[:num_installations]} times.",
-                                 pagination_collection: locals[:teams]
+  <%= render partial: 'shared/paginate_page_header',
+             locals: { locals: { title: "#{pluralize(locals[:num_teams], '*Team')}* have installed MiaDo #{pluralize(locals[:num_installations], 'time')}.  Sorted by *#{locals[:sort_by_param]}*.",
+                                 path: method(:teams_path),
+                                 pagination_collection: locals[:teams_paginated]
                                }
                      }
   %>
@@ -9,16 +10,24 @@
 
 <main class="css-body-main">
   <div class="container">
-    <% locals[:teams].each do |installation| %>
+    <% locals[:teams_paginated].each_with_index do |installation, index| %>
       <%= render partial: 'teams/admin_views/show_team',
-                 locals: { locals: { team: installation,
-                                     members: Member.team_members(slack_team_id: installation.slack_team_id),
-                                     channels: Installation.team_channels(slack_team_id: installation.slack_team_id),
-                                     lists: Installation.team_lists(slack_team_id: installation.slack_team_id),
-                                     installations: Installation.installations(slack_team_id: installation.slack_team_id),
+                 locals: { locals: { index: index,
+                                     team: installation,
+                                     team_members: Member.members(installation: installation),
+                                     team_channels: Channel.channels(installation: installation),
+                                     num_team_items: ListItem.num_items(slack_team_id: installation.slack_team_id),
+                                     num_team_installations: Installation.num_installations(slack_team_id: installation.slack_team_id),
                                      auth_info: installation.auth_json['info'],
                                      auth_extra: installation.auth_json['extra'],
-                                     last_activity: Channel.last_activity(slack_team_id: installation.slack_team_id)
+                                     last_active: Channel.last_active(slack_team_id: installation.slack_team_id),
+                                     paginate_per_page: locals[:paginate_per_page],
+                                     this_page_info_page_param_name: 'page',
+                                     info_page_param_name: 'page',
+                                     members_page_param_name: 'page',
+                                     channels_page_param_name: 'team_page',
+                                     tasks_page_param_name: 'team_page',
+                                     sort_by_param: locals[:sort_by_param]
                                    }
                          }
       %>
