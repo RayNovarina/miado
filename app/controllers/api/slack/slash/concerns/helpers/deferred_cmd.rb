@@ -7,9 +7,9 @@ def after_action_deferred_logic(def_cmds)
   if def_cmds[0][:p_hash][:expedite_deferred_cmd]
     send_after_action_deferred_cmds(def_cmds)
   else
-    # Thread.new do
+    Thread.new do
       send_after_action_deferred_cmds(def_cmds)
-    # end
+    end
   end
 end
 
@@ -203,6 +203,9 @@ def determine_impacted_members(parsed, deferred_cmd)
   when :delete
     # delete command has already deleted the impacted task.
     return build_many_impacted_members_for_item_info_list(parsed) if parsed[:list_action_item_info].size > 1
+    # NOTE: bug - If someone is looking at taskbot All Tasks list then they can be
+    # looking at a completed/done task. Thier list is impacted if task is
+    # deleted. BUT we don't really know what list is being looked at.
     update_ccb_chan_taskbot_msg_info(
       { 'error' => 'Task not impacted: determine_impacted_members().:delete - impacted_task[:done]' },
       p_hash: { ccb: parsed[:ccb] }) if impacted_task[:done]
@@ -448,10 +451,12 @@ def build_many_impacted_members_for_item_info_list(parsed)
   impacted_members = []
   parsed[:list_action_item_info].each do |task_info|
     am_hash = am_hash_from_assigned_member_id(parsed, task_info[:assigned_member_id])
-    if am_hash.nil? || impacted_members.include?(am_hash['slack_user_id']) || am_hash['taskbot_list_scope'].nil?
+    if am_hash.nil? || impacted_members.include?(am_hash['slack_user_id']) ||
+       task_info[:done] || am_hash['taskbot_list_scope'].nil?
       reason = 'am.nil' if am_hash.nil?
+      reason = 'task is DONE' if task_info[:done]
       reason = "impacted_members.include?(#{am_hash['slack_user_id']}): " \
-               "#{impacted_members.include?(am_hash['slack_user_id'])}" unless am_hash.nil?
+               "#{impacted_members.include?(am_hash['slack_user_id'])}" unless am_hash.nil? || task_info[:done]
       taskbot_trace_msg.concat(
         'build_many_impacted_members_for_item_info_list().' \
         "Member.SlackId:#{task_info[:assigned_member_id]} we already saw " \
@@ -461,6 +466,7 @@ def build_many_impacted_members_for_item_info_list(parsed)
     # skip if we already saw this member or member is not looking at taskbot list
     next if am_hash.nil? ||
             impacted_members.include?(am_hash['slack_user_id']) ||
+            task_info[:done] ||
             am_hash['taskbot_list_scope'].nil?
     impacted_member_id, impacted_member = build_one_impacted_member(am_hash: am_hash)
     impacted_members << impacted_member_id

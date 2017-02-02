@@ -292,3 +292,22 @@ def lib_button_info_from_click(parsed)
     label: parsed[:first_button_value][:label] || ''
   }
 end
+
+=begin
+def lib_list_info(parsed)
+  info = {}
+  if parsed[:button_callback_id] &&
+     parsed[:button_actions].first['name'] == 'list'
+    # We just generated a list from a button.
+    info = {
+
+    }
+  elsif parsed[:func] == :list || parsed[:func] == :list_taskbot
+    # We generated a list from a slash command.
+    info = {
+      command: parsed[:text]
+    }
+  end
+  info
+end
+=end
