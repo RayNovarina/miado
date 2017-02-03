@@ -66,18 +66,20 @@ end
 # Returns: text msg.
 def archive_all_msg(parsed)
   num_archived = parsed[:list].size
+  more_text = ' i.e. No elgible tasks were found to be archived.' if num_archived == 0
+  more_text = '' if num_archived > 0
   if parsed[:list_scope] == :team
-    return "`archived #{num_archived} tasks in THIS channel for ALL team members.`" if parsed[:channel_scope] == :one_channel
-    return "`archived #{num_archived} tasks in ANY channel for ALL team members.`" if parsed[:channel_scope] == :all_channels
+    return "`archived #{num_archived} tasks in THIS channel for ALL team members.`#{more_text}" if parsed[:channel_scope] == :one_channel
+    return "`archived #{num_archived} tasks in ANY channel for ALL team members.`#{more_text}" if parsed[:channel_scope] == :all_channels
   end
   # parsed[:list_scope] == :one_member
   if parsed[:channel_scope] == :one_channel
-    return "`archived #{num_archived} of your tasks in this channel.`" if parsed[:list_owner] == :mine
-    return "`archived #{num_archived} of #{parsed[:list_owner_name]}\'s tasks in this channel.`"
+    return "`archived #{num_archived} of your tasks in this channel.`#{more_text}" if parsed[:list_owner] == :mine
+    return "`archived #{num_archived} of #{parsed[:list_owner_name]}\'s tasks in this channel.`#{more_text}"
   end
   # parsed[:channel_scope] == :all_channels
-  "`archived #{num_archived} of your tasks in ALL channels.`" if parsed[:list_owner] == :mine
-  "`archived #{num_archived} of #{parsed[:list_owner_name]}\'s tasks in ALL channels.`"
+  "`archived #{num_archived} of your tasks in ALL channels.`#{more_text}" if parsed[:list_owner] == :mine
+  "`archived #{num_archived} of #{parsed[:list_owner_name]}\'s tasks in ALL channels.`#{more_text}"
 end
 
 def archive_all_by_ids(list, parsed)
