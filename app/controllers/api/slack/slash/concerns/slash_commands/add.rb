@@ -49,6 +49,9 @@ def add_command(parsed)
     parsed[:response_headline] =
       "#{task_num_clause} as: `#{description_clause}` #{assigned_to_clause} " \
       "#{due_date_clause}"
+    parsed[:response_headline].concat("\nNote: Mention a member name to " \
+      "create a task assigned to someone. i.e. '/do new task for @joe' or @me. Or use the /do assign command.") if assigned_to_clause.empty?
+
     attachments = add_response_headline_attachments(parsed, parsed[:response_headline], item.id, 'add')
     # Special case: just doing an add task for the redo command.
     parsed[:list] = list if parsed[:on_behalf_of_redo_cmd]
@@ -70,7 +73,7 @@ end
 
 # Returns: [assigned_member_id, assigned_to_clause]
 def add_assigned_member(parsed)
-  return [nil, ''] if parsed[:assigned_member_id].nil?
+  return [nil, '', ''] if parsed[:assigned_member_id].nil?
   [parsed[:assigned_member_id], parsed[:assigned_member_name],
    " *Assigned* to @#{parsed[:assigned_member_name]}."
   ]
