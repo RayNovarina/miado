@@ -78,11 +78,12 @@ end
 # Returns: Replacement list headline [attachment{}]
 def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list')
   # Set color of list buttons.
+  #
   style_your_tasks, style_team_tasks = list_button_headline_colors(parsed)
   [{ text: '',
      fallback: 'Task list',
      callback_id: { id: 'lists',
-                    response_headline: rpt_headline,
+                    response_headline: rpt_headline.slice(0..100),
                     caller_id: caller_id,
                     debug: false
                   }.to_json,

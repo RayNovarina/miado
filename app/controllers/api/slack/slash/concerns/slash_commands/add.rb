@@ -50,7 +50,8 @@ def add_command(parsed)
       "#{task_num_clause} as: `#{description_clause}` #{assigned_to_clause} " \
       "#{due_date_clause}"
     parsed[:response_headline].concat("\nNote: Mention a member name to " \
-      "create a task assigned to someone. i.e. '/do new task for @joe' or @me. Or use the /do assign command.") if assigned_to_clause.empty?
+      "create a task assigned to someone. i.e. '/do new task for @joe' or " \
+      "@me. Or use the /do assign command.") if assigned_to_clause.empty?
 
     attachments = add_response_headline_attachments(parsed, parsed[:response_headline], item.id, 'add')
     # Special case: just doing an add task for the redo command.
@@ -98,7 +99,7 @@ def add_response_headline_attachments(parsed, response_text = '', item_db_id = '
      fallback: 'A task has been added.',
      callback_id: { id: 'add task',
                     item_db_id: item_db_id,
-                    response_headline: response_text,
+                    response_headline: response_text.slice(0..100),
                     caller_id: caller_id,
                     debug: false
                   }.to_json,
