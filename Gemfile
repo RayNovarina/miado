@@ -50,7 +50,7 @@ gem 'devise'
 #-------------------------------------------
 # Add omniauth strategy for Slack
 # per: https://github.com/kmrshntr/omniauth-slack
-# gem 'omniauth-slack'
+#gem 'omniauth-slack'
 # If you need to use the latest HEAD version, you can do so with:
 gem 'omniauth-slack', github: 'kmrshntr/omniauth-slack'
 #-------------------------------------------
