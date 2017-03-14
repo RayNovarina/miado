@@ -52,7 +52,7 @@ gem 'devise'
 # per: https://github.com/kmrshntr/omniauth-slack
 #gem 'omniauth-slack'
 # If you need to use the latest HEAD version, you can do so with:
-gem 'omniauth-slack', github: 'kmrshntr/omniauth-slack'
+#gem 'omniauth-slack', github: 'kmrshntr/omniauth-slack'
 #-------------------------------------------
 # Add omniauth strategy for GitHub
 # per: https://github.com/intridea/omniauth-github
@@ -60,7 +60,7 @@ gem 'omniauth-github'
 #-------------------------------------------
 # Add omniauth strategy for GoogleApps and Gmail
 # per: https://github.com/zquestz/omniauth-google-oauth2
-gem 'omniauth-google-oauth2'
+#gem 'omniauth-google-oauth2'
 #-------------------------------------------
 # Use Pundit authorization
 gem 'pundit'
