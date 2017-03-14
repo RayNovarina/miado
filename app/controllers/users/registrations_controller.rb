@@ -9,7 +9,19 @@ class Users::RegistrationsController < Devise::RegistrationsController
   def new
     if params.key?('oauth')
       # if oauth we want to auto start a login.
-      redirect_to user_omniauth_authorize_path(
+      # per: https://github.com/plataformatec/devise/blob/master/CHANGELOG.md
+      #      4.0.0.rc2 - 2016-03-09
+      #      deprecations
+      #         omniauth routes are no longer defined with a wildcard
+      #         :provider parameter, and provider specific routes are defined
+      #         instead, so route helpers
+      #         like user_omniauth_authorize_path(:github) are deprecated in
+      #         favor of user_github_omniauth_authorize_path. You can still use
+      #         omniauth_authorize_path(:user, :github) if you need to call the
+      #         helpers dynamically.
+      # redirect_to user_omniauth_authorize_path(
+      redirect_to omniauth_authorize_path(
+        :user,
         params[:oauth].to_sym,
         state: 'sign_up')
       return

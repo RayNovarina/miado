@@ -8,9 +8,10 @@ class User < ActiveRecord::Base
   # Include default devise modules. Others available are:
   # :lockable, :timeoutable,
   # :recoverable, :trackable
+  # :omniauthable, omniauth_providers: [:github, :slack, :google_oauth2]
   devise :database_authenticatable, :registerable,
          :confirmable, :rememberable, :validatable,
-         :omniauthable, omniauth_providers: [:github, :slack, :google_oauth2]
+         :omniauthable, omniauth_providers: [:github, :slack]
 
   validates :name, length: { minimum: 1, maximum: 100 }, presence: true
 

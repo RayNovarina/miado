@@ -56,7 +56,7 @@ gem 'omniauth-slack'
 #-------------------------------------------
 # Add omniauth strategy for GitHub
 # per: https://github.com/intridea/omniauth-github
-#gem 'omniauth-github'
+gem 'omniauth-github'
 #-------------------------------------------
 # Add omniauth strategy for GoogleApps and Gmail
 # per: https://github.com/zquestz/omniauth-google-oauth2
