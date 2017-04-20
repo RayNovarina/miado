@@ -95,7 +95,7 @@ def help_headline_replacement(parsed, response_text = nil, caller_id = 'help')
         { name: 'tutorial',
           text: lib_button_text(text: 'Tutorials', parsed: parsed, name: 'tutorial'),
           type: 'button',
-          value: {}.to_json
+          value: { label: 'Tutorials' }.to_json
         },
         # { name: 'faqs',
         #  text: 'FAQs',
@@ -105,7 +105,7 @@ def help_headline_replacement(parsed, response_text = nil, caller_id = 'help')
         { name: 'best',
           text: lib_button_text(text: 'Best Practices', parsed: parsed, name: 'best'),
           type: 'button',
-          value: {}.to_json
+          value: { label: 'Best Practices' }.to_json
         },
         # { name: 'online',
         #  text: 'Online Doc',
@@ -115,18 +115,18 @@ def help_headline_replacement(parsed, response_text = nil, caller_id = 'help')
         { name: 'lists',
           text: lib_button_text(text: 'Task Lists', parsed: parsed, name: 'lists'),
           type: 'button',
-          value: { command: '@me open' }.to_json
+          value: { command: '@me open', label: 'Task Lists' }.to_json
         },
         { name: 'feedback',
           text: lib_button_text(text: 'Feedback', parsed: parsed, name: 'feedback'),
           type: 'button',
-          value: { resp_options: { replace_original: false } }.to_json
+          value: { resp_options: { replace_original: false, label: 'Feedback' } }.to_json
         },
         { name: 'help',
           text: lib_button_text(text: 'Button Help', parsed: parsed,
                                 name: 'help', match: 'buttons'),
           type: 'button',
-          value: { command: 'buttons' }.to_json
+          value: { command: 'buttons', label: 'Button Help' }.to_json
         }
       ]
     }
@@ -223,7 +223,7 @@ ALL_HLP_TEXT =
   '• `/do rev 1 spec `' \
   ' Adds "rev 1 spec" task to this channel. It can later be ' \
   " updated via the assign, append or redo commands.\n\n" \
-  "*Update and delete tasks*\n" \
+  "*Update, archive, delete tasks*\n" \
   '• `/do append 3 Contact Jim.`' \
   " Adds \"Contact Jim.\" to the end of task 3.\n" \
   '• `/do assign 4 @joe`' \
@@ -237,6 +237,10 @@ ALL_HLP_TEXT =
   '• `/do redo 1 Send out newsletter /fri.`' \
   ' Deletes task 1, adds new task ' \
   "\"Send out newsletter /fri\"\n" \
+  '• `/do archive`' \
+  " Archive your DONE/completed tasks for THIS channel. Archived tasks may be listed or deleted.\n" \
+  '• `/do archive team all`' \
+  " Archive DONE/completed tasks for all TEAM members in ALL channels.\n" \
   '• `/do delete 2`' \
   " Deletes task number 2 from the list.\n\n" \
   "*List your tasks*\n" \
@@ -251,7 +255,8 @@ ALL_HLP_TEXT =
   '• `/do list open done`' \
   " Lists your ASSIGNED tasks, both OPEN and DONE, for THIS channel.\n" \
   '• `/do list unassigned`' \
-  " Lists tasks that are NOT ASSIGNED for THIS channel.\n\n" \
+  " Lists tasks that are NOT ASSIGNED for THIS channel.\n" \
+  "• list command options: all archived assigned done due open team unassigned\n\n" \
   '*Feedback and more resources*' \
   "\n".freeze
 

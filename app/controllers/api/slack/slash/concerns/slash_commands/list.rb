@@ -48,6 +48,10 @@ end
 
 # Returns: [text, attachments{}, response_options{}]
 def format_display_list(parsed, context, list_of_records)
+
+# NOTE: HACK:
+list_of_records = [] if list_of_records.nil?
+
   text, attachments, list_ids, options = list_formats(parsed, context, list_of_records)
   # Persist the channel.list_ids[] for the next transaction.
   save_after_action_list_context(parsed, context, list_ids) unless parsed[:display_after_action_list] # parser_class.rb
@@ -74,11 +78,12 @@ end
 # Returns: Replacement list headline [attachment{}]
 def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list')
   # Set color of list buttons.
+  #
   style_your_tasks, style_team_tasks = list_button_headline_colors(parsed)
   [{ text: '',
      fallback: 'Task list',
      callback_id: { id: 'lists',
-                    response_headline: rpt_headline,
+                    response_headline: rpt_headline.slice(0..100),
                     caller_id: caller_id,
                     debug: false
                   }.to_json,
@@ -90,7 +95,7 @@ def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list'
                                name: 'list', match: '@me open',
                                match_list_cmd: 'list'),
          type: 'button',
-         value: { command: '@me open' }.to_json,
+         value: { command: '@me open', label: 'Your To-Do\'s' }.to_json,
          style: style_your_tasks
        },
        { name: 'list',
@@ -98,7 +103,7 @@ def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list'
                                name: 'list', match: 'team open assigned',
                                match_list_cmd: 'list team'),
          type: 'button',
-         value: { command: 'team open assigned' }.to_json,
+         value: { command: 'team open assigned', label: 'Team To-Do\'s' }.to_json,
          style: style_team_tasks
        },
        { name: 'list',
@@ -106,19 +111,19 @@ def list_chan_headline_replacement(parsed, rpt_headline = '', caller_id = 'list'
                                name: 'list', match: 'team all assigned unassigned open done',
                                match_list_cmd: 'list team all open done'),
          type: 'button',
-         value: { command: 'team all assigned unassigned open done' }.to_json
+         value: { command: 'team all assigned unassigned open done', label: 'All Tasks' }.to_json
        },
        { name: 'feedback',
          text: lib_button_text(text: 'Feedback', parsed: parsed, name: 'feedback'),
          type: 'button',
          # value: { resp_options: { replace_original: false } }.to_json
-         value: {}.to_json
+         value: { label: 'Feedback' }.to_json
        },
        { name: 'help',
          text: lib_button_text(text: 'Button Help', parsed: parsed,
                                name: 'help', match: 'buttons'),
          type: 'button',
-         value: { command: 'buttons' }.to_json
+         value: { command: 'buttons', label: 'Button Help' }.to_json
        }
      ]
    },
@@ -178,7 +183,8 @@ def list_format_headline_text(parsed, context, list_of_records, add_chan_name = 
     channel_name = add_chan_name ? "*##{parsed[:url_params][:channel_name]}* channel" : ''
   end
   "`to-do list#{list_format_owner_title(context)}`" \
-  "#{list_of_records.empty? ? ' (empty)' : ''}" \
+  "#{list_of_records.nil? ? ' (nil)' : list_of_records.empty? ? ' (empty)' : ''}" \
+  "#{lib_format_archived_text(parsed: parsed, ccb: parsed[:ccb])}" \
   " #{channel_name}"
 end
 
@@ -196,6 +202,7 @@ end
 def list_format_owner_title(context)
   subtitle = ''
   subtitle.concat(' all') if context[:channel_scope] == :all_channels
+  subtitle.concat(' archived') if context[:archived_option]
   subtitle.concat(' assigned') if context[:assigned_option]
   subtitle.concat(' unassigned') if context[:unassigned_option]
   subtitle.concat(' open') if context[:open_option]
@@ -214,7 +221,6 @@ def list_add_item_to_display_list(parsed, attachments, attch_idx, item, tasknum)
   # Add task as another line of text in the specified attachment (usually the last one)
   task_desc = list_add_attachment_text(parsed, item, tasknum)
   attachments[(attch_idx == 'last' || attch_idx == 'new') ? attachments.length - 1 : attch_idx][:text].concat(task_desc)
-  # task_desc.length
 end
 
 def list_add_attachment_text(parsed, item, tasknum)
@@ -222,7 +228,8 @@ def list_add_attachment_text(parsed, item, tasknum)
   "\n#{s_num} #{item.description}" \
   "#{list_cmd_assigned_to_clause(parsed, item)}" \
   "#{list_cmd_due_date_clause(item)}" \
-  "#{list_cmd_task_completed_clause(item)}"
+  "#{list_cmd_task_completed_clause(item)}" \
+  "#{list_cmd_task_archived_clause(item)}"
 end
 
 def list_cmd_assigned_to_clause(parsed, item)
@@ -240,9 +247,14 @@ def list_cmd_task_completed_clause(item)
   ' | *Completed*'
 end
 
+def list_cmd_task_archived_clause(item)
+  return '' unless item.archived
+  ' | *Archived*'
+end
+
 def adjust_list_cmd_action_context(parsed)
   # list command defaults to OPEN  and ASSIGNED tasks.
-  parsed[:open_option] = true unless parsed[:done_option] == true
+  parsed[:open_option] = true unless parsed[:done_option] == true || parsed[:archived_option] == true
   parsed[:assigned_option] = true unless parsed[:unassigned_option] == true
   adjust_list_cmd_list_scope(parsed)
   adjust_list_cmd_channel_scope(parsed)

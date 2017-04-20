@@ -39,6 +39,7 @@ def format_all_chans_taskbot_header(options)
   parsed = options[:parsed]
   empty_text = ' *empty*' if options[:num_tasks] == 0
   empty_text = '' unless options[:num_tasks] == 0
+  archived_text = lib_format_archived_text(parsed: parsed, tcb: parsed[:tcb]) # in misc.rb
   channel_text = 'all channels' if options[:channel_scope] == :all_channels
   channel_text = "##{parsed[:url_params]['channel_name']}" if options[:channel_scope] == :one_channel
   member_text = "TEAM's current" if parsed[:mentioned_member_name].nil?
@@ -51,7 +52,7 @@ def format_all_chans_taskbot_header(options)
   options_text.concat(' and ') if (parsed[:open_option] || parsed[:due_option]) && parsed[:done_option]
   options_text.concat('Done') if parsed[:done_option]
   "#{debug_headers(parsed)}" \
-  "`#{member_text} (#{options_text}) tasks in #{channel_text}:`#{empty_text}"
+  "`#{member_text} (#{options_text}) tasks in #{channel_text}:`#{empty_text}#{archived_text}"
   # rpt_type = "`Your #{parsed[:list_owner_name] == 'team' ? 'team\'s ' : ''}current (open) tasks in All channels:`\n"
 end
 
@@ -71,26 +72,11 @@ def all_chans_taskbot_body(options, list_of_records)
         text: "---- ##{item.channel_name} channel ----------",
         mrkdwn_in: ['text']
       }
-      # options[:attachment_info].last[:channel_last_tasknum] = index unless options[:attachment_info].empty?
-      # options[:attachment_info] << {
-      #  type: 'body', attch_idx: options[:attachments].length,
-      #  channel_txt_begin: 0,
-      #  channel_txt_len: options[:attachments].last[:text].length,
-      #  channel_1st_tasknum: index + 1,
-      #  channel_last_tasknum: 0,
-      #  channel_name: item.channel_name
-      #  # task_info: []
-      # }
     end
-    # list_add_item_to_taskbot_display_list(parsed, attachments, attachments.size - 1, item, index + 1)
     list_add_item_to_display_list( # in list.rb
       parsed, options[:attachments], options[:attachments].size - 1, item, index + 1) # in list.rb
-    # task_text_len = list_add_item_to_display_list(
-    #  parsed, options[:attachments], options[:attachments].size - 1, item, index + 1) # in list.rb
     list_ids << item.id
-    # options[:attachment_info].last[:task_text_info] << { len: task_text_len }
   end
-  # options[:attachment_info].last[:channel_last_tasknum] = list_ids.size unless options[:attachment_info].empty?
   { attachments: options[:attachments], body_attch_idx: body_attch_idx,
     body_num_attch: options[:attachments].size + 1 - body_attch_idx,
     list_ids: list_ids, num_tasks: list_ids.size

@@ -71,7 +71,7 @@ module ChannelExtensions
     def last_activity(options = {})
       unless options.key?(:info)
         return nil if (last = last_active(options)).nil?
-        last.last_activity_date
+        return last.last_activity_date
       end
       return nil if options[:info][:last_active_model] == 'User'
       if options[:info][:last_active_model] == 'ListItem'

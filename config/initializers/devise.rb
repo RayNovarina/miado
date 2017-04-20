@@ -1,6 +1,6 @@
 require 'omniauth_slack_setup'
 require 'omniauth_github_setup'
-require 'omniauth_google_oauth2_setup'
+# require 'omniauth_google_oauth2_setup'
 
 # Use this hook to configure devise mailer, warden hooks and so forth.
 # Many of these configuration options can be set straight in your model.
@@ -298,8 +298,8 @@ Devise.setup do |config|
                   ENV['GITHUB_CLIENT_ID'],
                   ENV['GITHUB_CLIENT_SECRET'],
                   setup: OmniauthGithubSetup
-  config.omniauth :google_oauth2,
-                  ENV['GOOGLE_OAUTH2_CLIENT_ID'],
-                  ENV['GOOGLE_OAUTH2_CLIENT_SECRET'],
-                  setup: OmniauthGoogleOauth2Setup
+  # config.omniauth :google_oauth2,
+  #                ENV['GOOGLE_OAUTH2_CLIENT_ID'],
+  #                ENV['GOOGLE_OAUTH2_CLIENT_SECRET'],
+  #                setup: OmniauthGoogleOauth2Setup
 end

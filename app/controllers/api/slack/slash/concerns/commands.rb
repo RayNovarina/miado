@@ -1,6 +1,7 @@
 require_relative 'slash_commands/add'
 require_relative 'slash_commands/after_action_list'
 require_relative 'slash_commands/append'
+require_relative 'slash_commands/archive'
 require_relative 'slash_commands/assign'
 require_relative 'slash_commands/delete'
 require_relative 'slash_commands/discuss'

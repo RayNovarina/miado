@@ -48,9 +48,9 @@ def comment_from_slash_feedback(parsed)
 end
 
 FEEDBACK_PUBLIC_TEXT =
-  'Please use the MiaDo `/do feedback` command to email ' \
+  'Use the MiaDo `/do feedback` command to email ' \
   "MiaDo product support. \n" \
-  "Include an email address if you would like a reply.\n" \
+  "Please include an email address so we can respond and clarify if needed.\n" \
   'Example: `/do feedback From Jane@jj13@gmail.com This is my suggestion.`' \
   "\n".freeze
 

@@ -45,6 +45,7 @@ def make_parse_hash
     debug: false,
     cmd_splits: [],
     all_option: false,
+    archived_option: false,
     assigned_option: false,
     done_option: false,
     due_option: false,
@@ -124,6 +125,7 @@ def context_from_ccb_hash(previous_action_parse_hash)
     active_button_label: context['active_button_label'],
     slash_cmd_name: context['slash_cmd_name'],
     all_option: context['all_option'],
+    archived_option: context['archived_option'],
     done_option: context['done_option'],
     due_option: context['due_option'],
     open_option: context['open_option']
@@ -163,6 +165,7 @@ def after_action_list_context(context, list_ids = nil)
     slash_cmd_name: context[:slash_cmd_name],
     response_headline: context[:response_headline],
     all_option: context[:all_option],
+    archived_option: context[:archived_option],
     open_option: context[:open_option],
     done_option: context[:done_option],
     due_option: context[:due_option]
