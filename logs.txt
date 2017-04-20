@@ -1,0 +1,101 @@
+2017-03-14T07:30:46.545794+00:00 app[web.1]:   [1m[35mChannel Load (2.1ms)[0m  SELECT  "channels".* FROM "channels"  ORDER BY updated_at DESC LIMIT 1
+2017-03-14T07:30:46.547238+00:00 app[web.1]:   [1m[36mCACHE (0.0ms)[0m  [1mSELECT  "installations".* FROM "installations" WHERE "installations"."slack_team_id" = $1  ORDER BY created_at DESC LIMIT 1[0m  [["slack_team_id", "T0VN565N0"]]
+2017-03-14T07:30:46.549900+00:00 app[web.1]:   [1m[35mListItem Load (2.1ms)[0m  SELECT  "list_items".* FROM "list_items"  ORDER BY updated_at DESC LIMIT 1
+2017-03-14T07:30:46.552712+00:00 app[web.1]:   [1m[36mInstallation Load (1.4ms)[0m  [1mSELECT  "installations".* FROM "installations" WHERE "installations"."slack_team_id" = $1  ORDER BY created_at DESC LIMIT 1[0m  [["slack_team_id", "T4BGTTTT9"]]
+2017-03-14T07:30:46.557316+00:00 app[web.1]:   [1m[35mChannel Load (1.6ms)[0m  SELECT  "channels".* FROM "channels" WHERE "channels"."slack_team_id" = $1 AND "channels"."slack_user_id" = $2  ORDER BY updated_at DESC LIMIT 1  [["slack_team_id", "T0VN565N0"], ["slack_user_id", "U0VLZ5P51"]]
+2017-03-14T07:30:46.558200+00:00 app[web.1]:   Rendered users/admin_views/_index_user.html.erb (5.1ms)
+2017-03-14T07:30:46.558261+00:00 app[web.1]:   Rendered users/admin_views/_index.html.erb (114.7ms)
+2017-03-14T07:30:46.558328+00:00 app[web.1]:   Rendered users/index.html.erb within layouts/application (114.8ms)
+2017-03-14T07:30:46.560054+00:00 app[web.1]:   Rendered layouts/_page_header_navbar_left.html.erb (1.0ms)
+2017-03-14T07:30:46.560620+00:00 app[web.1]:   Rendered layouts/_page_header_navbar_right.html.erb (0.4ms)
+2017-03-14T07:30:46.561728+00:00 app[web.1]:   Rendered layouts/_page_header_navbar_admin_links.html.erb (0.9ms)
+2017-03-14T07:30:46.561824+00:00 app[web.1]:   Rendered layouts/_page_header.html.erb (2.9ms)
+2017-03-14T07:30:46.562305+00:00 app[web.1]:   Rendered shared/_page_main_header_flash_messages.html.erb (0.1ms)
+2017-03-14T07:30:46.562482+00:00 app[web.1]:   Rendered layouts/_page_main.html.erb (0.5ms)
+2017-03-14T07:30:46.562829+00:00 app[web.1]:   Rendered layouts/_page_footer_created_by.html.erb (0.0ms)
+2017-03-14T07:30:46.562881+00:00 app[web.1]:   Rendered layouts/_page_footer.html.erb (0.2ms)
+2017-03-14T07:30:46.563074+00:00 app[web.1]: Completed 200 OK in 126ms (Views: 28.3ms | ActiveRecord: 93.7ms)
+2017-03-14T07:30:53.062940+00:00 app[web.1]: Started GET "/installations" for 76.126.67.146 at 2017-03-14 07:30:53 +0000
+2017-03-14T07:30:53.066169+00:00 app[web.1]: Processing by InstallationsController#index as HTML
+2017-03-14T07:30:53.069541+00:00 app[web.1]:   [1m[36mUser Load (1.2ms)[0m  [1mSELECT  "users".* FROM "users" WHERE "users"."id" = $1  ORDER BY name ASC, created_at DESC LIMIT 1[0m  [["id", 1]]
+2017-03-14T07:30:53.151189+00:00 app[web.1]:   [1m[35mInstallation Load (80.4ms)[0m  SELECT "installations".* FROM "installations"  ORDER BY created_at DESC
+2017-03-14T07:30:53.240094+00:00 app[web.1]:   [1m[36mInstallation Load (79.1ms)[0m  [1mSELECT DISTINCT ON(slack_team_id) * FROM "installations"[0m
+2017-03-14T07:30:53.252772+00:00 app[web.1]:   [1m[35m (1.3ms)[0m  SELECT COUNT(*) FROM "installations"
+2017-03-14T07:30:53.254535+00:00 app[web.1]:   Rendered shared/_paginate_page_header.html.erb (4.4ms)
+2017-03-14T07:30:53.259296+00:00 app[web.1]:   [1m[36mInstallation Load (4.3ms)[0m  [1mSELECT  "installations".* FROM "installations"  ORDER BY created_at DESC LIMIT 10 OFFSET 0[0m
+2017-03-14T07:30:53.260308+00:00 app[web.1]:   Rendered installations/admin_views/_index_installation_team.html.erb (0.4ms)
+2017-03-14T07:30:53.260852+00:00 app[web.1]:   Rendered installations/admin_views/_index_installation_team.html.erb (0.4ms)
+2017-03-14T07:30:53.261399+00:00 app[web.1]:   Rendered installations/admin_views/_index_installation_team.html.erb (0.4ms)
+2017-03-14T07:30:53.261951+00:00 app[web.1]:   Rendered installations/admin_views/_index_installation_team.html.erb (0.4ms)
+2017-03-14T07:30:53.262465+00:00 app[web.1]:   Rendered installations/admin_views/_index_installation_team.html.erb (0.4ms)
+2017-03-14T07:30:53.263030+00:00 app[web.1]:   Rendered installations/admin_views/_index_installation_team.html.erb (0.4ms)
+2017-03-14T07:30:53.263620+00:00 app[web.1]:   Rendered installations/admin_views/_index_installation_team.html.erb (0.4ms)
+2017-03-14T07:30:53.264178+00:00 app[web.1]:   Rendered installations/admin_views/_index_installation_team.html.erb (0.4ms)
+2017-03-14T07:30:53.264691+00:00 app[web.1]:   Rendered installations/admin_views/_index_installation_team.html.erb (0.3ms)
+2017-03-14T07:30:53.265185+00:00 app[web.1]:   Rendered installations/admin_views/_index_installation_team.html.erb (0.3ms)
+2017-03-14T07:30:53.265236+00:00 app[web.1]:   Rendered installations/admin_views/_index_installations.html.erb (15.5ms)
+2017-03-14T07:30:53.265289+00:00 app[web.1]:   Rendered installations/admin_views/_index.html.erb (15.7ms)
+2017-03-14T07:30:53.265357+00:00 app[web.1]:   Rendered installations/index.html.erb within layouts/application (15.9ms)
+2017-03-14T07:30:53.266554+00:00 app[web.1]:   Rendered layouts/_page_header_navbar_left.html.erb (0.5ms)
+2017-03-14T07:30:53.266866+00:00 app[web.1]:   Rendered layouts/_page_header_navbar_right.html.erb (0.2ms)
+2017-03-14T07:30:53.267476+00:00 app[web.1]:   Rendered layouts/_page_header_navbar_admin_links.html.erb (0.5ms)
+2017-03-14T07:30:53.267532+00:00 app[web.1]:   Rendered layouts/_page_header.html.erb (1.6ms)
+2017-03-14T07:30:53.267791+00:00 app[web.1]:   Rendered shared/_page_main_header_flash_messages.html.erb (0.1ms)
+2017-03-14T07:30:53.267895+00:00 app[web.1]:   Rendered layouts/_page_main.html.erb (0.3ms)
+2017-03-14T07:30:53.268165+00:00 app[web.1]:   Rendered layouts/_page_footer_created_by.html.erb (0.0ms)
+2017-03-14T07:30:53.268220+00:00 app[web.1]:   Rendered layouts/_page_footer.html.erb (0.2ms)
+2017-03-14T07:30:53.268422+00:00 app[web.1]: Completed 200 OK in 202ms (Views: 13.8ms | ActiveRecord: 166.4ms)
+2017-03-14T07:30:53.274331+00:00 heroku[router]: at=info method=GET path="/installations" host=www.miado.net request_id=0ef3bb71-33c2-498a-9b2d-6afafcdc4def fwd="76.126.67.146" dyno=web.1 connect=0ms service=211ms status=200 bytes=10406 protocol=http
+2017-03-14T12:47:06.355369+00:00 app[web.1]: Started GET "/" for 163.172.65.40 at 2017-03-14 12:47:06 +0000
+2017-03-14T12:47:06.361473+00:00 app[web.1]:   Rendered pages/add_to_slack.html.erb within layouts/application (0.9ms)
+2017-03-14T12:47:06.362024+00:00 app[web.1]: Completed 200 OK in 3ms (Views: 1.9ms | ActiveRecord: 0.0ms)
+2017-03-14T12:47:06.358747+00:00 app[web.1]: Processing by PagesController#add_to_slack as */*
+2017-03-14T12:47:06.350171+00:00 heroku[router]: at=info method=GET path="/" host=www.miado.net request_id=c7168437-65e8-41dc-9c35-6fb6d0945ddc fwd="10.70.8.17,163.172.65.40" dyno=web.1 connect=0ms service=14ms status=200 bytes=10563 protocol=http
+2017-03-14T12:47:26.281394+00:00 heroku[router]: at=info method=GET path="/about" host=www.miado.net request_id=ddf5ba51-d37e-45a1-bfb4-42140516c58e fwd="10.70.8.17,163.172.65.40" dyno=web.1 connect=0ms service=77ms status=200 bytes=14321 protocol=http
+2017-03-14T12:47:26.221831+00:00 app[web.1]: Started GET "/about" for 163.172.65.40 at 2017-03-14 12:47:26 +0000
+2017-03-14T12:47:26.224275+00:00 app[web.1]: Processing by PagesController#about as */*
+2017-03-14T12:47:26.292216+00:00 app[web.1]:   Rendered pages/about.html.erb within layouts/application (2.5ms)
+2017-03-14T12:47:26.292843+00:00 app[web.1]:   Rendered shared/_page_main_header_flash_messages.html.erb (0.1ms)
+2017-03-14T12:47:26.293015+00:00 app[web.1]:   Rendered layouts/_page_main.html.erb (0.3ms)
+2017-03-14T12:47:26.293222+00:00 app[web.1]: Completed 200 OK in 69ms (Views: 68.0ms | ActiveRecord: 0.0ms)
+2017-03-14T12:47:31.337484+00:00 heroku[router]: at=info method=GET path="/robots.txt" host=www.miado.net request_id=f101b283-0422-4606-a0f9-9ef85fdde32b fwd="5.196.87.23" dyno=web.1 connect=0ms service=7ms status=200 bytes=418 protocol=http
+2017-03-14T13:09:24.059676+00:00 heroku[router]: at=info method=GET path="/robots.txt" host=www.miado.net request_id=02e907f2-ab6d-44ff-bab5-1865f7ec11f7 fwd="77.88.47.81" dyno=web.1 connect=0ms service=3ms status=200 bytes=418 protocol=http
+2017-03-14T13:09:28.046684+00:00 heroku[router]: at=info method=GET path="/about" host=www.miado.net request_id=4b5f9bcf-f918-474e-a3c3-449cffc60511 fwd="77.88.47.29" dyno=web.1 connect=0ms service=14ms status=200 bytes=14321 protocol=http
+2017-03-14T13:09:28.045888+00:00 app[web.1]: Started GET "/about" for 77.88.47.29 at 2017-03-14 13:09:28 +0000
+2017-03-14T13:09:28.048235+00:00 app[web.1]: Processing by PagesController#about as */*
+2017-03-14T13:09:28.049957+00:00 app[web.1]:   Rendered pages/about.html.erb within layouts/application (0.6ms)
+2017-03-14T13:09:28.050500+00:00 app[web.1]:   Rendered shared/_page_main_header_flash_messages.html.erb (0.1ms)
+2017-03-14T13:09:28.050630+00:00 app[web.1]:   Rendered layouts/_page_main.html.erb (0.3ms)
+2017-03-14T13:09:28.050815+00:00 app[web.1]: Completed 200 OK in 2ms (Views: 1.7ms | ActiveRecord: 0.0ms)
+2017-03-14T13:20:15.858953+00:00 heroku[router]: at=info method=GET path="/" host=www.miado.net request_id=dc71b146-4ea7-46de-9541-3aee3ed0e5c1 fwd="207.46.13.45" dyno=web.1 connect=0ms service=9ms status=200 bytes=10563 protocol=http
+2017-03-14T13:20:15.866066+00:00 app[web.1]: Started GET "/" for 207.46.13.45 at 2017-03-14 13:20:15 +0000
+2017-03-14T13:20:15.868321+00:00 app[web.1]: Processing by PagesController#add_to_slack as */*
+2017-03-14T13:20:15.870624+00:00 app[web.1]:   Rendered pages/add_to_slack.html.erb within layouts/application (0.9ms)
+2017-03-14T13:20:15.871106+00:00 app[web.1]: Completed 200 OK in 3ms (Views: 1.6ms | ActiveRecord: 0.0ms)
+2017-03-14T14:28:18.434494+00:00 heroku[router]: at=info method=GET path="/robots.txt" host=www.miado.net request_id=905fea68-eddc-4318-912b-304ba6fce65a fwd="180.76.15.163" dyno=web.1 connect=7ms service=18ms status=200 bytes=418 protocol=http
+2017-03-14T14:28:18.565521+00:00 heroku[router]: at=info method=GET path="/robots.txt" host=www.miado.net request_id=ac8a9ee8-e0c6-4982-90d2-bfc3d2a7c31a fwd="180.76.15.13" dyno=web.1 connect=7ms service=9ms status=200 bytes=418 protocol=http
+2017-03-14T14:28:35.321888+00:00 app[web.1]: Started GET "/" for 180.76.15.139 at 2017-03-14 14:28:35 +0000
+2017-03-14T14:28:35.428520+00:00 app[web.1]: Processing by PagesController#add_to_slack as */*
+2017-03-14T14:28:35.462714+00:00 app[web.1]:   Rendered pages/add_to_slack.html.erb within layouts/application (5.2ms)
+2017-03-14T14:28:35.468803+00:00 app[web.1]: Completed 200 OK in 40ms (Views: 11.1ms | ActiveRecord: 0.0ms)
+2017-03-14T14:28:35.459070+00:00 heroku[router]: at=info method=GET path="/" host=www.miado.net request_id=0016cadb-f83e-4c72-b641-b5025d694119 fwd="180.76.15.139" dyno=web.1 connect=4ms service=166ms status=200 bytes=10563 protocol=http
+2017-03-14T14:33:03.494911+00:00 heroku[router]: at=info method=GET path="/robots.txt" host=www.miado.net request_id=d0e0e056-3061-4a29-83ba-4d421aa18abe fwd="46.229.164.99" dyno=web.1 connect=1ms service=7ms status=200 bytes=418 protocol=http
+2017-03-14T15:27:36.991931+00:00 heroku[router]: at=info method=HEAD path="/" host=www.miado.net request_id=3f244513-5f7f-4cc8-a7f6-604b282604d5 fwd="52.90.121.46" dyno=web.1 connect=1ms service=11ms status=200 bytes=785 protocol=http
+2017-03-14T15:27:36.999693+00:00 app[web.1]: Started HEAD "/" for 52.90.121.46 at 2017-03-14 15:27:36 +0000
+2017-03-14T15:27:37.002024+00:00 app[web.1]: Processing by PagesController#add_to_slack as */*
+2017-03-14T15:27:37.004210+00:00 app[web.1]:   Rendered pages/add_to_slack.html.erb within layouts/application (0.9ms)
+2017-03-14T15:27:37.004701+00:00 app[web.1]: Completed 200 OK in 3ms (Views: 1.7ms | ActiveRecord: 0.0ms)
+2017-03-14T15:27:39.060375+00:00 heroku[router]: at=info method=HEAD path="/about" host=www.miado.net request_id=8342375b-8fff-4842-8055-d56bf1c4e07a fwd="54.209.231.248" dyno=web.1 connect=0ms service=10ms status=200 bytes=785 protocol=http
+2017-03-14T15:27:39.067596+00:00 app[web.1]: Started HEAD "/about" for 54.209.231.248 at 2017-03-14 15:27:39 +0000
+2017-03-14T15:27:39.069791+00:00 app[web.1]: Processing by PagesController#about as */*
+2017-03-14T15:27:39.071493+00:00 app[web.1]:   Rendered pages/about.html.erb within layouts/application (0.5ms)
+2017-03-14T15:27:39.072226+00:00 app[web.1]:   Rendered shared/_page_main_header_flash_messages.html.erb (0.1ms)
+2017-03-14T15:27:39.073111+00:00 app[web.1]:   Rendered layouts/_page_main.html.erb (1.2ms)
+2017-03-14T15:27:39.073987+00:00 app[web.1]: Completed 200 OK in 4ms (Views: 3.4ms | ActiveRecord: 0.0ms)
+2017-03-14T15:35:54.164855+00:00 heroku[router]: at=info method=GET path="/assets/photo-1-635d82f83b2cb4df3f1891d14e2fe87b126420884c5490182eb1c7a83bd70107.jpg" host=www.miado.net request_id=37e7400a-f126-43cf-8aaa-0da8ed049adb fwd="66.249.93.203" dyno=web.1 connect=1ms service=46ms status=200 bytes=596443 protocol=http
+2017-03-14T15:46:15.685304+00:00 heroku[router]: at=info method=GET path="/robots.txt" host=www.miado.net request_id=db2bdbc5-5615-4148-9250-549e7534f549 fwd="5.255.250.96" dyno=web.1 connect=1ms service=4ms status=200 bytes=418 protocol=http
+2017-03-14T15:46:19.629129+00:00 heroku[router]: at=info method=GET path="/" host=www.miado.net request_id=a36f3e4b-b567-4edd-a502-4abc385d643b fwd="5.255.250.96" dyno=web.1 connect=1ms service=11ms status=200 bytes=10563 protocol=http
+2017-03-14T15:46:19.631783+00:00 app[web.1]: Started GET "/" for 5.255.250.96 at 2017-03-14 15:46:19 +0000
+2017-03-14T15:46:19.634152+00:00 app[web.1]: Processing by PagesController#add_to_slack as */*
+2017-03-14T15:46:19.636230+00:00 app[web.1]:   Rendered pages/add_to_slack.html.erb within layouts/application (0.8ms)
+2017-03-14T15:46:19.637581+00:00 app[web.1]: Completed 200 OK in 3ms (Views: 2.4ms | ActiveRecord: 0.0ms)

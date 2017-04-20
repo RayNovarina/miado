@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="dataSourceStorageLocal">
+    <data-source name="Rails miado: test" uuid="94e5b626-4eae-4184-bc92-9ab5d0cc4790">
+      <database-info product="PostgreSQL" version="9.5.1" jdbc-version="4.0" driver-name="PostgreSQL Native Driver" driver-version="PostgreSQL 9.4 JDBC4 (build 1201)">
+        <identifier-quote-string>&quot;</identifier-quote-string>
+      </database-info>
+      <case-sensitivity plain-identifiers="lower" quoted-identifiers="exact" />
+      <introspection-schemas>db/test_postgresql:public</introspection-schemas>
+    </data-source>
+    <data-source name="Rails miado: development" uuid="48a8cc72-e920-42be-ac42-30c7c26309d1">
+      <database-info product="PostgreSQL" version="9.5.1" jdbc-version="4.0" driver-name="PostgreSQL Native Driver" driver-version="PostgreSQL 9.4 JDBC4 (build 1201)">
+        <identifier-quote-string>&quot;</identifier-quote-string>
+      </database-info>
+      <case-sensitivity plain-identifiers="lower" quoted-identifiers="exact" />
+      <introspection-schemas>db/development_postgresql:public</introspection-schemas>
+    </data-source>
+    <data-source name="Rails miado: production" uuid="4db0a282-1827-4569-b1a3-6bccc211d524">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" />
+      <first-sync>true</first-sync>
+    </data-source>
+    <data-source name="Rails miado: staging" uuid="29942507-5a80-4584-9489-b8d765946a93">
+      <database-info product="" version="" jdbc-version="" driver-name="" driver-version="" />
+      <first-sync>true</first-sync>
+    </data-source>
+  </component>
+</project>

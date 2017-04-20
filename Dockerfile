@@ -1,34 +1,19 @@
-FROM ruby:2.3
-MAINTAINER marko@codeship.com
+from ruby:2.3
 
-# Install apt based dependencies required to run Rails as
-# well as RubyGems. As the Ruby image itself is based on a
-# Debian image, we use apt-get to install those.
-RUN apt-get update && apt-get install -y \
-  build-essential \
-  nodejs
+env DEBIAN_FRONTEND=noninteractive \
+  NODE_VERSION=6.9.1
 
-# Configure the main working directory. This is the base
-# directory used in any further RUN, COPY, and ENTRYPOINT
-# commands.
-RUN mkdir -p /app
-WORKDIR /app
+run sed -i '/deb-src/d' /etc/apt/sources.list && \
+  apt-get update && \
+  apt-get install -y build-essential libpq-dev postgresql-client
 
-# Copy the Gemfile as well as the Gemfile.lock and install
-# the RubyGems. This is a separate step so the dependencies
-# will be cached unless changes to one of those two files
-# are made.
-COPY Gemfile Gemfile.lock ./
-RUN gem install bundler && bundle install --jobs 20 --retry 5
+run curl -sSL "https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-x64.tar.xz" | tar xfJ - -C /usr/local --strip-components=1 && \
+  npm install npm -g
 
-# Copy the main application.
-COPY . ./
+run useradd -m -s /bin/bash -u 1000 railsuser
+user railsuser
 
-# Expose port 3000 to the Docker host, so we can access it
-# from the outside.
-EXPOSE 3000
+workdir /app
 
-# The main command to run when the container starts. Also
-# tell the Rails dev server to bind to all interfaces by
-# default.
-CMD ["bundle", "exec", "rails", "server", "-b", "0.0.0.0"]
+# Works:
+# docker-compose run -p 3000:3000 web bash -c "bin/rails server -b 0.0.0.0"

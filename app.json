@@ -1,0 +1,7 @@
+{
+  "name": "MiaDo Slack app server",
+  "description": "Currently services Slack slash commands for MiaDo.",
+  "addons": [
+    "heroku-postgresql"
+  ]
+}

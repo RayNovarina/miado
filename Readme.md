@@ -1,4 +1,9 @@
 ===================================
+Dockerize app: 4/17/2017
+
+
+
+===================================
 Pushed to production: 8:30pm.
 1) Git push to heroku complained about unmerged changes in prod. Did a git pull
    and empty?/directories for rake, other rails related came over. Caused by
