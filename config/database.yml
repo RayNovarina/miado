@@ -7,10 +7,17 @@ default: &default
   pool: 5
   timeout: 5000
 
+# development:
+#  <<: *default
+#  database: db/development_postgresql
+# per: https://blog.codeminer42.com/zero-to-up-and-running-a-rails-project-only-using-docker-20467e15f1be
 development:
   <<: *default
   database: db/development_postgresql
-
+  encoding: unicode
+  host: db
+  username: postgres
+  password:
 
 # SQLite version 3.x
 #   gem install sqlite3
