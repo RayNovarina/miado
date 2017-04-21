@@ -197,6 +197,7 @@ class Api::Slack::Slash::CommandsController < Api::Slack::Slash::BaseController
   # Returns: [text, attachments]
   def process_cmd(parsed)
     parsed[:ccb].slack_messages = nil
+    binding.pry
     # log_to_channel(cb: parsed[:ccb],
     #               msg: { topic: 'ChanLog init',
     #                      subtopic: 'parsed[:func]',
