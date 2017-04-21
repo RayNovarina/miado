@@ -5,8 +5,23 @@ Dockerize app: 4/17/2017
 use puma as web server: per heroku at
 https://devcenter.heroku.com/articles/deploying-rails-applications-with-the-puma-web-server
 
+Adding Puma to your application
+Gemfile
+First, add Puma to your app’s Gemfile:
+gem 'puma'
+Procfile
+Set Puma as the server for your web process in the Procfile of your application. You can set most values inline:
+web: bundle exec puma -t 5:5 -p ${PORT:-3000} -e ${RACK_ENV:-development}
+However we recommend generating a config file:
+web: bundle exec puma -C config/puma.rb
+Make sure the Procfile is properly capitalized and checked into git.
 
 $ heroku config:set RAILS_MAX_THREADS=1
+
+# use pry to debug in container per:
+http://www.chris-kelly.net/2016/07/25/debugging-rails-with-pry-within-a-docker-container/
+
+
 
 
 

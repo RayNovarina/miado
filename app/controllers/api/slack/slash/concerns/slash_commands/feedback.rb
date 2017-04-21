@@ -23,7 +23,7 @@ def feedback_command(parsed)
     return ['Thank you, we appreciate your input.', []]
     # text = ''
     # attachments =
-    #  list_chan_headline_replacement(parsed, nil, 'feedback') # in list.rb
+    #  list_chan_headline_replacement(parsed, '', 'feedback') # in list.rb
     #  .concat([pretext: 'Thank you, we appreciate your input.',
     #           mrkdwn_in: ['pretext']])
     # return [text, attachments]
@@ -51,14 +51,14 @@ FEEDBACK_PUBLIC_TEXT =
   'Use the MiaDo `/do feedback` command to email ' \
   "MiaDo product support. \n" \
   "Please include an email address so we can respond and clarify if needed.\n" \
-  'Example: `/do feedback From Jane@jj13@gmail.com This is my suggestion.`' \
+  'Example: `/do feedback From Jane.jj13@gmail.com This is my suggestion.`' \
   "\n".freeze
 
 # Returns: [text, attachments, response_options]
 def feedback_button_public_chan(parsed)
   text = ''
   attachments =
-    list_chan_headline_replacement(parsed, nil, 'feedback') # in list.rb
+    list_chan_headline_replacement(parsed, '', 'feedback') # in list.rb
     .concat([pretext: FEEDBACK_PUBLIC_TEXT,
              mrkdwn_in: ['pretext']])
   update_channel_activity(parsed)
