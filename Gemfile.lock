@@ -177,6 +177,7 @@ GEM
       binding_of_caller (>= 0.7)
       pry (>= 0.9.11)
     public_suffix (2.0.5)
+    puma (3.8.2)
     pundit (1.1.0)
       activesupport (>= 3.0.0)
     quiet_safari (1.0.0)
@@ -326,6 +327,7 @@ DEPENDENCIES
   pg
   pry-rails
   pry-stack_explorer
+  puma (~> 3.0)
   pundit
   quiet_safari
   rails (= 4.2.5.1)

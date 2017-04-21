@@ -71,6 +71,9 @@ gem 'faker'
 # use postgre SQL db server for Active Record
 gem 'pg'
 #--------------------------------------------
+# Use Puma as the app server
+gem 'puma', '~> 3.0'
+#--------------------------------------------
 # Slack bot gem.
 # per: https://github.com/dblock/slack-ruby-bot/tree/v0.7.0
 # gem 'slack-ruby-bot'
