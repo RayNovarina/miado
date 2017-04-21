@@ -1,5 +1,8 @@
 ===================================
-Dockerize app: 4/17/2017
+Production release to Dockerize app: 4/21/2017
+
+#---------------------
+Delete all local dev gems. Using only container GEMS. Update to ruby 2.3.x
 
 #---------------------
 use puma as web server: per heroku at
@@ -9,6 +12,8 @@ Adding Puma to your application
 Gemfile
 First, add Puma to your app’s Gemfile:
 gem 'puma'
+$ docker-compose run --rm web bundle install
+
 Procfile
 Set Puma as the server for your web process in the Procfile of your application. You can set most values inline:
 web: bundle exec puma -t 5:5 -p ${PORT:-3000} -e ${RACK_ENV:-development}
@@ -16,10 +21,19 @@ However we recommend generating a config file:
 web: bundle exec puma -C config/puma.rb
 Make sure the Procfile is properly capitalized and checked into git.
 
-$ heroku config:set RAILS_MAX_THREADS=1
+# Note: i did not set RAILS_MAX_THREADS for production. Seems that u are suppose to use the default.
+# Note: the slash command web app spawns threads for deferred/background processing of taskbot events.
+# $ heroku config:set RAILS_MAX_THREADS=1
+
+$ docker exec -it miado_web_1 bash
+
+
 
 # use pry to debug in container per:
 http://www.chris-kelly.net/2016/07/25/debugging-rails-with-pry-within-a-docker-container/
+
+$ docker-compose run --service-ports web
+$ docker attach miado_web
 
 
 
