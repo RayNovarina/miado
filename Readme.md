@@ -1,6 +1,13 @@
 ===================================
 Dockerize app: 4/17/2017
 
+#---------------------
+use puma as web server: per heroku at
+https://devcenter.heroku.com/articles/deploying-rails-applications-with-the-puma-web-server
+
+
+$ heroku config:set RAILS_MAX_THREADS=1
+
 
 
 ===================================
